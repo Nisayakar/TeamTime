@@ -1,3 +1,5 @@
+import {Link} from "react-router-dom";
+
 function Home(){
     return(
         <div>
@@ -7,13 +9,17 @@ function Home(){
                     Proje süreçlerini tek platformda yönetin.
                 </p>
 
-            <button>
+          <Link to="/create-project">
+          <button>
                 Proje Oluştur
             </button>
+            </Link>
             
+            <Link to="/login">
             <button>
                 Giriş Yap
             </button>
+            </Link>
            </section>
         
              <section>
