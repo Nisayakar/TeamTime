@@ -5,7 +5,7 @@ type TaskCardProps={
 
 function TaskCard(props:TaskCardProps){
     return(
-        <div>
+        <div className="card">
             <h4>{props.title}</h4>
             <p>{props.status}</p>
         </div>

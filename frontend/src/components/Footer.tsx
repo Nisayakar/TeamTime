@@ -1,9 +1,8 @@
-function Footer(){
+function Footer() {
     return (
-        <footer>
-            <p>© 2026 TeamTime
-
-               Takım projelerini yönetmenin en kolay yolu.</p>
+        <footer className="footer">
+            <p>© 2026 TeamTime</p>
+            <p>Takım projelerini yönetmenin en kolay yolu.</p>
         </footer>
     );
 }

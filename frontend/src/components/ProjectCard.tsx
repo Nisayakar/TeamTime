@@ -10,7 +10,7 @@ type ProjectCardProps={
 function ProjectCard(props:ProjectCardProps){
     
     return (
-        <div>
+        <div className="card">
             <h3>{props.projectName}</h3>
             <p>Team: {props.teamName}</p>
             <p>Tasks: {props.taskCount}</p>
