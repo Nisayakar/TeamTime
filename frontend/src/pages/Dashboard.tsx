@@ -1,60 +1,52 @@
-import ProjectCard from "../components/ProjectCard";
-import TaskCard from "../components/TaskCard";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function Dashboard() {
-    const tasks = [
-        {
-            id: 1,
-            title: "Login ekranını tamamla",
-            status: "Devam Ediyor"
-        },
-        {
-            id: 2,
-            title: "Backend API yaz",
-            status: "Bekliyor"
-        },
-        {
-            id: 3,
-            title: "MySQL bağlantısını yap",
-            status: "Tamamlandı"
+    const [user, setUser] = useState<any>(null);
+    //"Ben bir kullanıcı saklayacağım ama tipi şu an
+    // belli değil.<any> ondan dolayı var"
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const data = localStorage.getItem("user");
+
+        if (data) {
+            setUser(JSON.parse(data));
         }
-    ];
-    const projects = [
-        {
-            id: 1,
-            projectName: "TeamTime",
-            teamName: "Frontend Ekibi",
-            taskCount: 5
-        },
-        {
-            id: 2,
-            projectName: "Bitirme Projesi",
-            teamName: "Backend Ekibi",
-            taskCount: 3
-        },
-        {
-            id: 3,
-            projectName: "Hackathon",
-            teamName: "Mobil Takım",
-            taskCount: 8
-        }
-    ];
+    }, []);
+    //useEffect: "Sayfa açıldığı zaman bunu çalıştır"
+
+    function logout() {
+
+        localStorage.removeItem("user");
+
+        navigate("/login");
+
+    }
 
     return (
         <div>
             <h1>Dashboard</h1>
-            <h2>Hoşgeldiniz</h2>
-            <h3>Projelerim</h3>
-            {
-                projects.map((project) => (<ProjectCard key={project.id} projectName={project.projectName} teamName={project.teamName} taskCount={project.taskCount} />))
-            }
+            {   // user && bu işaret "User varsa bunu göster" demek
+                user && (
+                    <section>
+                        <h2>
+                            Hoş Geldin {user.name}
+                        </h2>
 
-            <h3>Yaklaşan Görevler</h3>
-         {
-            tasks.map((task)=>(<TaskCard key={task.id} title={task.title} status={task.status} />))
-         }
+                        <p>
+                            Email:{user.email}
+                        </p>
+
+                        <button onClick={logout}>
+                            Çıkış Yap
+                        </button>
+                    </section>
+                )
+            }
         </div>
     )
 }
+
 
 export default Dashboard;
