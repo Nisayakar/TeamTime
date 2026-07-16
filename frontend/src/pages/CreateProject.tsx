@@ -1,20 +1,57 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+
 
 function CreateProject() {
-    const [projectName, setProjectName]=useState("");
-    const [projectDescription,setProjectDescription]=useState("");
-    const [teamName,setTeamName]=useState("");
-    const [startDate,setStartDate]=useState("");
-    const [endDate,setEndDate]=useState("");
+    const [projectName, setProjectName] = useState("");
+    const [projectDescription, setProjectDescription] = useState("");
+    const [teamName, setTeamName] = useState("");
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
+    const { id } = useParams();
 
-    function projeOlustur(e:any){
+    useEffect(() => {
+
+        if (id) {
+
+            fetch(`http://localhost:8085/api/projects/${id}`)
+                .then(response => response.json())
+                .then(data => {
+
+                    setProjectName(data.projectName);
+                    setProjectDescription(data.description);
+                    setTeamName(data.teamName);
+                    setStartDate(data.startDate);
+                    setEndDate(data.endDate);
+
+                })
+
+        }
+
+    }, [])
+
+    function projeOlustur(e: any) {
         e.preventDefault();
 
-        console.log(projectName);
-        console.log(projectDescription);
-        console.log(teamName);
-        console.log(startDate);
-        console.log(endDate);
+        const project = {
+            projectName: projectName,
+            description: projectDescription,
+            teamName: teamName,
+            startDate: startDate,
+            endDate: endDate
+        };
+
+        fetch("http://localhost:8085/api/projects", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(project)
+        })
+            .then(response => response.text())
+            .then(data => {
+                alert(data);
+            });
     }
 
     return <div>
@@ -39,7 +76,7 @@ function CreateProject() {
             <button type="submit"> Proje Oluştur </button>
         </form>
 
-       
+
 
     </div>
 }
