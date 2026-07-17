@@ -1,33 +1,84 @@
 # TeamTime
 
-TeamTime is a web-based project management platform developed as a Software Engineering project.
+TeamTime, ekiplerin proje süreçlerini daha düzenli ve verimli şekilde yönetebilmesi amacıyla geliştirilen web tabanlı bir proje yönetim platformudur.
 
-## 🚀 Project Goal
+Bu proje, yazılım geliştirme sürecindeki proje takibi, görev yönetimi ve ekip çalışması ihtiyaçlarını tek bir platform üzerinde toplamayı amaçlamaktadır.
 
-The aim of TeamTime is to help teams manage their projects from a single platform by providing:
+---
 
-- Project creation
-- Team management
-- Task management
-- Progress tracking
-- File sharing
+## 🚀 Proje Amacı
 
-## 🛠 Technologies
+TeamTime'ın temel amacı, ekiplerin projelerini merkezi bir sistem üzerinden yönetmesini sağlamaktır.
 
-### Frontend
+Platform üzerinde kullanıcılar:
+
+- Proje oluşturabilir ve yönetebilir
+- Projelere bağlı görevler oluşturabilir
+- Görevlerin durumlarını takip edebilir
+- Ekip üyeleriyle birlikte çalışabilir
+- Proje süreçlerini daha düzenli şekilde takip edebilir
+
+---
+
+## ✨ Planlanan Özellikler
+
+### 📁 Proje Yönetimi
+- Yeni proje oluşturma
+- Proje listeleme
+- Proje güncelleme
+- Proje silme
+- Proje detaylarını görüntüleme
+
+### ✅ Görev Yönetimi
+- Görev oluşturma
+- Görev güncelleme
+- Görev silme
+- Görev durumlarını takip etme
+
+### 👥 Ekip Yönetimi
+- Takım oluşturma
+- Kullanıcıları takımlara dahil etme
+- Rol bazlı yetkilendirme
+
+### 📊 İlerleme Takibi
+- Proje durumlarının izlenmesi
+- Görev ilerlemelerinin takip edilmesi
+
+### 📎 Dosya Paylaşımı
+- Proje dosyalarının yönetimi
+- Ekip içerisinde dosya paylaşımı
+
+---
+
+# 🛠 Kullanılan Teknolojiler
+
+## Frontend
+
 - React
 - TypeScript
 - Vite
+- React Router
 
-### Backend (Planned)
+## Backend
+
 - Java
 - Spring Boot
+- Spring Data JPA
 
-### Database
+## Database
+
 - PostgreSQL
 
-## 📅 Project Status
+## Development Tools
 
-Currently under development.
+- Git
+- GitHub
+- Docker
 
-Version: v0.1
+---
+
+# 🏗 Proje Mimarisi
+
+Proje geliştirilirken katmanlı mimari yaklaşımı kullanılmaktadır.
+
+Backend yapısı:
