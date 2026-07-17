@@ -188,3 +188,14 @@ label {
     color:#666;
 
 }
+
+.message-box{
+
+    background:#2563eb;
+    color:white;
+    padding:10px;
+    border-radius:8px;
+    margin-bottom:15px;
+    width:300px;
+
+}

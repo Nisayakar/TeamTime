@@ -11,6 +11,7 @@ import Projects from './pages/Projects';
 import Profile from './pages/Profile';
 import Navbar from './components/Navbar';
 import EditProject from './pages/EditProject';
+import ProjectDetails from "./pages/ProjectDetails";
 
 
 function App() {
@@ -26,6 +27,8 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/projects" element={<Projects />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/project/:id"  element={<ProjectDetails />}
+        />
       </Routes>
     </>
   )
