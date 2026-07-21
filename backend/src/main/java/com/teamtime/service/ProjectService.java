@@ -68,6 +68,10 @@ public class ProjectService {
         return projectRepository.findAll();
     }
 
+    public List<Project> getRecentProjects() {
+        return projectRepository.findAllByOrderByIdDesc();
+    }
+
     public Project getProject(Long id) {
 
         return projectRepository.findById(id)

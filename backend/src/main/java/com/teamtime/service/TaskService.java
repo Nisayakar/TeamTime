@@ -52,6 +52,13 @@ public class TaskService {
 
     }
 
+    public List<Task> getRecentTasks() {
+
+
+        return taskRepository.findAllByOrderByIdDesc();
+
+    }
+
 
 
     public Task updateTask(Long id, Task updatedTask) {

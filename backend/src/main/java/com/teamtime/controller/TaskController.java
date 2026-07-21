@@ -50,6 +50,13 @@ public class TaskController {
 
     }
 
+    @GetMapping("/recent")
+    public List<Task> getRecentTasks() {
+
+        return taskService.getRecentTasks();
+
+    }
+
     @PutMapping("/{id}")
     public String updateTask(
             @PathVariable Long id,

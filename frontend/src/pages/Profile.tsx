@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 function Profile(){
-    const [user, setUser]=useState({name:"Nisa",surname:"Yakar",email:"nisa@gmail.com"});
+    const [user]=useState({name:"Nisa",surname:"Yakar",email:"nisa@gmail.com"});
     const [oldPassword, setOldPassword] = useState("");
 const [newPassword, setNewPassword] = useState("");
     return(

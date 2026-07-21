@@ -35,6 +35,11 @@ public class ProjectController {
         return projectService.getAllProjects();
     }
 
+    @GetMapping("/projects/recent")
+    public List<Project> getRecentProjects() {
+        return projectService.getRecentProjects();
+    }
+
     @DeleteMapping("/projects/{id}")
     public String deleteProject(@PathVariable Long id) {
         return projectService.deleteProject(id);
