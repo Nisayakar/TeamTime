@@ -12,6 +12,8 @@ import Profile from './pages/Profile';
 import Navbar from './components/Navbar';
 import EditProject from './pages/EditProject';
 import ProjectDetails from "./pages/ProjectDetails";
+import Teams from "./pages/Teams";
+import TeamDetails from "./pages/TeamDetails";
 
 
 function App() {
@@ -26,6 +28,8 @@ function App() {
         <Route path="/edit-project/:id" element={<EditProject />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/projects" element={<Projects />} />
+        <Route path="/teams" element={<Teams />} />
+        <Route path="/teams/:id" element={<TeamDetails />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/project/:id"  element={<ProjectDetails />}
         />
