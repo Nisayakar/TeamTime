@@ -54,31 +54,42 @@ function CreateProject() {
             });
     }
 
-    return <div>
-        <h1>TEAMTIME</h1>
-        <p>Proje Oluştur</p>
-        <form onSubmit={projeOlustur}>
-            <label>Proje Adı  : </label>
-            <input type="text" value={projectName} onChange={(e) => setProjectName(e.target.value)}></input>
-            <br></br>
-            <label>Proje Açıklaması : </label>
-            <input type="text" value={projectDescription} onChange={(e) => setProjectDescription(e.target.value)}></input>
-            <br></br>
-            <label>Takım Adı : </label>
-            <input type="text" value={teamName} onChange={(e) => setTeamName(e.target.value)}></input>
-            <br></br>
-            <label> Başlangıç Tarihi : </label>
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}></input>
-            <br></br>
-            <label> Bitiş Tarihi : </label>
-            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}></input>
-            <br></br>
-            <button type="submit"> Proje Oluştur </button>
-        </form>
+    return (
+        <main className="page-shell narrow-page">
+            <section className="page-header">
+                <div>
+                    <span className="eyebrow">Proje</span>
+                    <h1>Proje Oluştur</h1>
+                    <p>Yeni bir proje alanı aç ve takım planını zaman çizelgesiyle başlat.</p>
+                </div>
+            </section>
 
+            <form className="form-card" onSubmit={projeOlustur}>
+                <label>Proje Adı</label>
+                <input type="text" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
 
+                <label>Proje Açıklaması</label>
+                <input type="text" value={projectDescription} onChange={(e) => setProjectDescription(e.target.value)} />
 
-    </div>
+                <label>Takım Adı</label>
+                <input type="text" value={teamName} onChange={(e) => setTeamName(e.target.value)} />
+
+                <div className="form-grid two-columns">
+                    <div>
+                        <label>Başlangıç Tarihi</label>
+                        <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                    </div>
+
+                    <div>
+                        <label>Bitiş Tarihi</label>
+                        <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                    </div>
+                </div>
+
+                <button className="button button-primary button-full" type="submit">Proje Oluştur</button>
+            </form>
+        </main>
+    );
 }
 
 export default CreateProject;

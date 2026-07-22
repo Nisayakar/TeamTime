@@ -96,82 +96,112 @@ function Teams() {
     }
 
     return (
-        <div>
-            <h1>Takımlarım</h1>
+        <main className="page-shell">
+            <section className="page-header">
+                <div>
+                    <span className="eyebrow">Takımlar</span>
+                    <h1>Takımlarım</h1>
+                    <p>Üyeleri, rolleri ve ekip odaklarını düzenli bir alanda yönet.</p>
+                </div>
+            </section>
 
-            <form onSubmit={createTeam}>
-                <label>Takım Adı</label>
-                <input
-                    type="text"
-                    value={name}
-                    onChange={event => setName(event.target.value)}
-                    required
-                />
+            <section className="panel">
+                <div className="section-heading">
+                    <span className="eyebrow">Yeni takım</span>
+                    <h2>Takım oluştur</h2>
+                </div>
 
-                <label>Açıklama</label>
-                <input
-                    type="text"
-                    value={description}
-                    onChange={event => setDescription(event.target.value)}
-                    required
-                />
+                <form className="inline-form" onSubmit={createTeam}>
+                    <div>
+                        <label>Takım Adı</label>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={event => setName(event.target.value)}
+                            required
+                        />
+                    </div>
 
-                <button type="submit">Takım Oluştur</button>
-            </form>
+                    <div>
+                        <label>Açıklama</label>
+                        <input
+                            type="text"
+                            value={description}
+                            onChange={event => setDescription(event.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <button className="button button-primary" type="submit">Takım Oluştur</button>
+                </form>
+            </section>
 
             {
                 teams.length === 0 ? (
-                    <p>Henüz takım yok</p>
+                    <p className="empty-state">Henüz takım yok</p>
                 ) : (
-                    teams.map(team => (
-                        <div className="card" key={team.id}>
-                            {
-                                editingTeamId === team.id ? (
-                                    <>
-                                        <input
-                                            type="text"
-                                            value={editName}
-                                            onChange={event => setEditName(event.target.value)}
-                                        />
+                    <section className="cards-grid">
+                        {
+                            teams.map(team => (
+                                <article className="data-card team-card" key={team.id}>
+                                    {
+                                        editingTeamId === team.id ? (
+                                            <>
+                                                <input
+                                                    type="text"
+                                                    value={editName}
+                                                    onChange={event => setEditName(event.target.value)}
+                                                />
 
-                                        <input
-                                            type="text"
-                                            value={editDescription}
-                                            onChange={event => setEditDescription(event.target.value)}
-                                        />
+                                                <input
+                                                    type="text"
+                                                    value={editDescription}
+                                                    onChange={event => setEditDescription(event.target.value)}
+                                                />
 
-                                        <button onClick={() => updateTeam(team)}>
-                                            Kaydet
-                                        </button>
+                                                <div className="button-row">
+                                                    <button className="button button-primary" onClick={() => updateTeam(team)}>
+                                                        Kaydet
+                                                    </button>
 
-                                        <button onClick={cancelEdit}>
-                                            Vazgeç
-                                        </button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <h3>{team.name}</h3>
-                                        <p>{team.description}</p>
+                                                    <button className="button button-secondary" onClick={cancelEdit}>
+                                                        Vazgeç
+                                                    </button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="project-card-body">
+                                                    <div className="card-icon">TM</div>
+                                                    <div>
+                                                        <h3>{team.name}</h3>
+                                                        <p>{team.description}</p>
+                                                    </div>
+                                                </div>
 
-                                        <button onClick={() => navigate(`/teams/${team.id}`)}>
-                                            Üyeleri Gör
-                                        </button>
+                                                <div className="button-row">
+                                                    <button className="button button-primary" onClick={() => navigate(`/teams/${team.id}`)}>
+                                                        Üyeleri Gör
+                                                    </button>
 
-                                        <button onClick={() => startEdit(team)}>
-                                            Düzenle
-                                        </button>
+                                                    <button className="button button-secondary" onClick={() => startEdit(team)}>
+                                                        Düzenle
+                                                    </button>
 
-                                        <button onClick={() => deleteTeam(team.id)}>
-                                            Sil
-                                        </button>
-                                    </>
-                                )
-                            }
-                        </div>
-                    ))
+                                                    <button className="button button-danger" onClick={() => deleteTeam(team.id)}>
+                                                        Sil
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )
+                                    }
+                                </article>
+                            ))
+                        }
+                    </section>
                 )
             }
-        </div>
+        </main>
     );
 }
 

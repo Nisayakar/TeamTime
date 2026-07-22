@@ -111,7 +111,7 @@ function TeamDetails() {
     }
 
     return (
-        <div>
+        <main className="page-shell">
             {
                 message &&
                 <div className="message-box">
@@ -119,57 +119,72 @@ function TeamDetails() {
                 </div>
             }
 
-            <h1>Takım Detayları</h1>
+            <section className="hero-card team-profile">
+                <div className="profile-avatar">TM</div>
 
-            {
-                team ? (
-                    <div className="card">
-                        <h3>{team.name}</h3>
-                        <p>{team.description}</p>
+                <div>
+                    <span className="eyebrow">Takım profili</span>
+                    <h1>{team ? team.name : "Takım Detayları"}</h1>
+                    <p>{team ? team.description : "Takım bilgisi bulunamadı"}</p>
+                    <span className="badge badge-purple">{members.length} üye</span>
+                </div>
+            </section>
+
+            <section className="content-grid two-columns">
+                <div className="panel">
+                    <div className="section-heading">
+                        <span className="eyebrow">Üyelik</span>
+                        <h2>Yeni Üye Ekle</h2>
                     </div>
-                ) : (
-                    <p>Takım bilgisi bulunamadı</p>
-                )
-            }
 
-            <h2>Yeni Üye Ekle</h2>
+                    <form className="stacked-form" onSubmit={addMember}>
+                        <label>Kullanıcı Id</label>
+                        <input
+                            type="number"
+                            value={userId}
+                            onChange={event => setUserId(event.target.value)}
+                            required
+                        />
 
-            <form onSubmit={addMember}>
-                <label>Kullanıcı Id</label>
-                <input
-                    type="number"
-                    value={userId}
-                    onChange={event => setUserId(event.target.value)}
-                    required
-                />
+                        <label>Rol</label>
+                        <input
+                            type="text"
+                            value={role}
+                            onChange={event => setRole(event.target.value)}
+                            required
+                        />
 
-                <label>Rol</label>
-                <input
-                    type="text"
-                    value={role}
-                    onChange={event => setRole(event.target.value)}
-                    required
-                />
+                        <button className="button button-primary button-full" type="submit">Üye Ekle</button>
+                    </form>
+                </div>
 
-                <button type="submit">Üye Ekle</button>
-            </form>
+                <div className="panel">
+                    <div className="section-heading">
+                        <span className="eyebrow">Takım</span>
+                        <h2>Takım Üyeleri</h2>
+                    </div>
 
-            <h2>Takım Üyeleri</h2>
+                    {
+                        members.length === 0 ? (
+                            <p className="empty-state">Bu takımda henüz üye yok</p>
+                        ) : (
+                            members.map(member => (
+                                <div className="member-card" key={member.id}>
+                                    <div className="user-avatar">{member.userName?.slice(0, 2).toUpperCase() || "US"}</div>
 
-            {
-                members.length === 0 ? (
-                    <p>Bu takımda henüz üye yok</p>
-                ) : (
-                    members.map(member => (
-                        <div className="card" key={member.id}>
-                            <h3>{member.userName}</h3>
-                            <p>Kullanıcı Id: {member.userId}</p>
-                            <p>Rol: {member.role}</p>
-                        </div>
-                    ))
-                )
-            }
-        </div>
+                                    <div>
+                                        <h3>{member.userName}</h3>
+                                        <p>Kullanıcı Id: {member.userId}</p>
+                                    </div>
+
+                                    <span className="badge badge-blue">{member.role}</span>
+                                </div>
+                            ))
+                        )
+                    }
+                </div>
+            </section>
+        </main>
     );
 }
 

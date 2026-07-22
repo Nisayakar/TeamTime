@@ -78,75 +78,65 @@ function EditProject() {
 
 
     return (
-        <div>
+        <main className="page-shell narrow-page">
+            <section className="page-header">
+                <div>
+                    <span className="eyebrow">Proje</span>
+                    <h1>Proje Düzenle</h1>
+                    <p>Proje bilgilerini güncelle ve takvimini düzenli tut.</p>
+                </div>
+            </section>
 
-            <h1>Proje Düzenle</h1>
+            <div className="form-card">
+                <label>Proje Adı</label>
+                <input
+                    name="projectName"
+                    value={project.projectName}
+                    onChange={handleChange}
+                />
 
+                <label>Açıklama</label>
+                <input
+                    name="description"
+                    value={project.description}
+                    onChange={handleChange}
+                />
 
-            <label>Proje Adı</label>
-            <input
-                name="projectName"
-                value={project.projectName}
-                onChange={handleChange}
-            />
+                <label>Takım</label>
+                <input
+                    name="teamName"
+                    value={project.teamName}
+                    onChange={handleChange}
+                />
 
+                <div className="form-grid two-columns">
+                    <div>
+                        <label>Başlangıç Tarihi</label>
+                        <input
+                            type="date"
+                            name="startDate"
+                            value={project.startDate}
+                            onChange={handleChange}
+                        />
+                    </div>
 
-            <br />
+                    <div>
+                        <label>Bitiş Tarihi</label>
+                        <input
+                            type="date"
+                            name="endDate"
+                            value={project.endDate}
+                            onChange={handleChange}
+                        />
+                    </div>
+                </div>
 
-
-            <label>Açıklama</label>
-            <input
-                name="description"
-                value={project.description}
-                onChange={handleChange}
-            />
-
-
-            <br />
-
-
-            <label>Takım</label>
-            <input
-                name="teamName"
-                value={project.teamName}
-                onChange={handleChange}
-            />
-
-
-            <br />
-
-
-            <label>Başlangıç Tarihi</label>
-            <input
-                type="date"
-                name="startDate"
-                value={project.startDate}
-                onChange={handleChange}
-            />
-
-
-            <br />
-
-
-            <label>Bitiş Tarihi</label>
-            <input
-                type="date"
-                name="endDate"
-                value={project.endDate}
-                onChange={handleChange}
-            />
-
-
-            <br />
-
-
-            <button onClick={updateProject}>
-                Güncelle
-            </button>
-
-
-        </div>
-    )
+                <button className="button button-primary button-full" onClick={updateProject}>
+                    Güncelle
+                </button>
+            </div>
+        </main>
+    );
 
 }
 

@@ -1,19 +1,18 @@
+type ProjectCardProps = {
+    projectName: string;
+    teamName: string;
+    taskCount: number;
+}
 
-
-type ProjectCardProps={
-            projectName:string;
-            teamName:string;
-            taskCount:number;
-        }
-
-
-function ProjectCard(props:ProjectCardProps){
-    
+function ProjectCard(props: ProjectCardProps) {
     return (
-        <div className="card">
-            <h3>{props.projectName}</h3>
-            <p>Team: {props.teamName}</p>
-            <p>Tasks: {props.taskCount}</p>
+        <div className="project-card-body">
+            <div className="card-icon">PR</div>
+            <div>
+                <h3>{props.projectName}</h3>
+                <p>Takım: {props.teamName}</p>
+                <span className="badge badge-blue">{props.taskCount} görev</span>
+            </div>
         </div>
     );
 }

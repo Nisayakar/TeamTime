@@ -283,13 +283,26 @@ function ProjectDetails() {
 
 
 
+    function getStatusClass(taskStatus: string) {
+        if (taskStatus === "TAMAMLANDI") {
+            return "badge badge-green";
+        }
+
+        if (taskStatus === "DEVAM_EDIYOR") {
+            return "badge badge-blue";
+        }
+
+        return "badge badge-warning";
+    }
+
+
 
 
 
     return (
 
 
-        <div>
+        <main className="page-shell">
 
 
 
@@ -307,202 +320,210 @@ function ProjectDetails() {
 
 
 
-            <h1>Proje Detayları</h1>
+            <section className="page-header">
+                <div>
+                    <span className="eyebrow">Proje</span>
+                    <h1>Proje Detayları</h1>
+                    <p>Görevleri oluştur, durumlarını güncelle ve proje ilerleyişini takip et.</p>
+                </div>
+            </section>
 
 
+            <section className="content-grid two-columns">
+                <div className="panel">
+                    <div className="section-heading">
+                        <span className="eyebrow">Görev formu</span>
+                        <h2>
 
-            <h2>
+                            {
 
-                {
+                                editId
 
-                    editId
+                                    ?
 
-                        ?
+                                    "Görevi Güncelle"
 
-                        "Görevi Güncelle"
+                                    :
 
-                        :
+                                    "Yeni Görev"
 
-                        "Yeni Görev"
+                            }
 
-                }
+                        </h2>
+                    </div>
 
-            </h2>
 
 
 
 
+                    <div className="stacked-form">
+                        <label>Görev başlığı</label>
+                        <input
 
-            <input
+                            placeholder="Görev başlığı"
 
-                placeholder="Görev başlığı"
+                            value={title}
 
-                value={title}
+                            onChange={(e) => setTitle(e.target.value)}
 
-                onChange={(e) => setTitle(e.target.value)}
+                        />
 
-            />
 
 
 
-            <br />
+                        <label>Açıklama</label>
+                        <textarea
 
+                            placeholder="Açıklama"
 
+                            value={description}
 
+                            onChange={(e) => setDescription(e.target.value)}
 
-            <textarea
+                        />
 
-                placeholder="Açıklama"
 
-                value={description}
 
-                onChange={(e) => setDescription(e.target.value)}
 
-            />
+                        <label>Durum</label>
+                        <select
 
+                            value={status}
 
+                            onChange={(e) => setStatus(e.target.value)}
 
-            <br />
+                        >
 
 
+                            <option value="BEKLIYOR">
+                                Bekliyor
+                            </option>
 
 
-            <select
+                            <option value="DEVAM_EDIYOR">
+                                Devam Ediyor
+                            </option>
 
-                value={status}
 
-                onChange={(e) => setStatus(e.target.value)}
+                            <option value="TAMAMLANDI">
+                                Tamamlandı
+                            </option>
 
-            >
 
+                        </select>
 
-                <option value="BEKLIYOR">
-                    Bekliyor
-                </option>
 
 
-                <option value="DEVAM_EDIYOR">
-                    Devam Ediyor
-                </option>
 
+                        <div className="button-row">
+                            <button className="button button-primary" onClick={saveTask}>
 
-                <option value="TAMAMLANDI">
-                    Tamamlandı
-                </option>
+                                {
 
+                                    editId
 
-            </select>
+                                        ?
 
+                                        "Güncelle"
 
+                                        :
 
-            <br />
+                                        "Görev Ekle"
 
-
-
-            <button onClick={saveTask}>
-
-                {
-
-                    editId
-
-                        ?
-
-                        "Güncelle"
-
-                        :
-
-                        "Görev Ekle"
-
-                }
-
-            </button>
-
-
-
-            <button onClick={clearForm}>
-
-                Temizle
-
-            </button>
-
-
-
-
-
-            <hr />
-
-
-
-
-            <h2>Görevler</h2>
-
-
-
-
-            {
-
-                tasks.length === 0
-
-                    ?
-
-                    <p>Bu projede henüz görev yok.</p>
-
-
-                    :
-
-
-                    tasks.map(task => (
-
-
-                        <div key={task.id}>
-
-
-                            <h3>{task.title}</h3>
-
-
-                            <p>{task.description}</p>
-
-
-                            <p>
-
-                                Durum: {task.status}
-
-                            </p>
-
-
-
-                            <button onClick={() => editTask(task)}>
-
-                                Düzenle
+                                }
 
                             </button>
 
 
 
-                            <button onClick={() => deleteTask(task.id)}>
+                            <button className="button button-secondary" onClick={clearForm}>
 
-                                Sil
+                                Temizle
 
                             </button>
-
-
-                            <hr />
-
-
                         </div>
-
-
-                    ))
-
-
-            }
+                    </div>
+                </div>
 
 
 
-        </div>
+
+                <div className="panel">
+                    <div className="section-heading">
+                        <span className="eyebrow">Akış</span>
+                        <h2>Görevler</h2>
+                    </div>
 
 
-    )
+
+
+                    {
+
+                        tasks.length === 0
+
+                            ?
+
+                            <p className="empty-state">Bu projede henüz görev yok.</p>
+
+
+                            :
+
+
+                            tasks.map(task => (
+
+
+                                <div className="task-card" key={task.id}>
+
+
+                                    <div>
+                                        <h3>{task.title}</h3>
+
+
+                                        <p>{task.description}</p>
+                                    </div>
+
+
+                                    <span className={getStatusClass(task.status)}>
+
+                                        {task.status}
+
+                                    </span>
+
+
+
+                                    <div className="button-row">
+                                        <button className="button button-secondary" onClick={() => editTask(task)}>
+
+                                            Düzenle
+
+                                        </button>
+
+
+
+                                        <button className="button button-danger" onClick={() => deleteTask(task.id)}>
+
+                                            Sil
+
+                                        </button>
+                                    </div>
+
+
+                                </div>
+
+
+                            ))
+
+
+                    }
+                </div>
+            </section>
+
+
+
+        </main>
+
+
+    );
 
 
 }

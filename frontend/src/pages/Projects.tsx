@@ -43,54 +43,65 @@ function Projects() {
     }
 
     return (
-        <div>
+        <main className="page-shell">
+            <section className="page-header">
+                <div>
+                    <span className="eyebrow">Projeler</span>
+                    <h1>Projelerim</h1>
+                    <p>Aktif proje portföyünü, ekipleri ve tarih aralıklarını takip et.</p>
+                </div>
 
-            <h1>Projelerim</h1>
+                <Link to="/create-project">
+                    <button className="button button-primary">Yeni Proje</button>
+                </Link>
+            </section>
 
-            <Link to="/create-project">
-                <button>+ Yeni Proje</button>
-            </Link>
+            <section className="cards-grid">
+                {
+                    projects.map((project) => (
 
-            <br /><br />
+                        <article className="data-card project-card" key={project.id}>
+                            <ProjectCard
+                                projectName={project.projectName}
+                                teamName={project.teamName}
+                                taskCount={0}
+                            />
 
-            {
-                projects.map((project) => (
+                            <p className="card-description">{project.description}</p>
 
-                    <div key={project.id}>
+                            <div className="meta-grid">
+                                <span>Başlangıç: {project.startDate || "-"}</span>
+                                <span>Bitiş: {project.endDate || "-"}</span>
+                            </div>
 
-                        <ProjectCard
-                            projectName={project.projectName}
-                            teamName={project.teamName}
-                            taskCount={0}
-                        />
+                            <div className="button-row">
+                                <button
+                                    className="button button-primary"
+                                    onClick={() => navigate(`/project/${project.id}`)}
+                                >
+                                    Görevleri Gör
+                                </button>
 
-                        <button
-                            onClick={() => navigate(`/project/${project.id}`)}
-                        >
-                            Görevleri Gör
-                        </button>
+                                <button
+                                    className="button button-secondary"
+                                    onClick={() => navigate(`/edit-project/${project.id}`)}
+                                >
+                                    Düzenle
+                                </button>
 
-                        <button
-                            onClick={() => navigate(`/edit-project/${project.id}`)}
-                        >
-                            Düzenle
-                        </button>
+                                <button
+                                    className="button button-danger"
+                                    onClick={() => deleteProject(project.id)}
+                                >
+                                    Sil
+                                </button>
+                            </div>
+                        </article>
 
-                        <button
-                            onClick={() => deleteProject(project.id)}
-                        >
-                            Sil
-                        </button>
-
-                        <br />
-                        <br />
-
-                    </div>
-
-                ))
-            }
-
-        </div>
+                    ))
+                }
+            </section>
+        </main>
     );
 }
 

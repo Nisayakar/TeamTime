@@ -43,12 +43,12 @@ function Register() {
 
             alert(data);
 
-            if(response.ok){
+            if (response.ok) {
                 navigate("/login");
             }
 
 
-        } catch(error) {
+        } catch (error) {
 
             alert("Sunucuya bağlanılamadı");
 
@@ -58,92 +58,81 @@ function Register() {
 
 
     return (
-        <div>
+        <div className="auth-page">
+            <section className="auth-panel auth-visual">
+                <span className="eyebrow">Yeni çalışma alanı</span>
+                <h1>TeamTime ile ekip ritmini düzenle.</h1>
+                <p>Projeleri, görevleri ve takım üyelerini profesyonel bir panelde takip et.</p>
 
-            <h1>TEAMTIME</h1>
-
-            <p>Kayıt Ol</p>
-
-
-            <section>
-
-                <label>Ad :</label>
-                <input 
-                    type="text"
-                    value={name}
-                    onChange={(e)=>setName(e.target.value)}
-                />
-
-                <br></br>
-
-
-                <label>Soyad :</label>
-                <input 
-                    type="text"
-                    value={surname}
-                    onChange={(e)=>setSurname(e.target.value)}
-                />
-
-
-                <br></br>
-
-
-                <label>E-mail :</label>
-                <input 
-                    type="email"
-                    value={email}
-                    onChange={(e)=>setEmail(e.target.value)}
-                />
-
-
-                <br></br>
-
-
-                <label>Şifre :</label>
-                <input 
-                    type="password"
-                    value={password}
-                    onChange={(e)=>setPassword(e.target.value)}
-                />
-
-
-                <br></br>
-
-
-                <label>Şifre Tekrar :</label>
-                <input 
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e)=>setConfirmPassword(e.target.value)}
-                />
-
-
+                <div className="auth-preview auth-preview-grid">
+                    <span className="badge badge-blue">Projeler</span>
+                    <span className="badge badge-purple">Takımlar</span>
+                    <span className="badge badge-green">Görevler</span>
+                </div>
             </section>
 
+            <section className="auth-panel auth-form-panel">
+                <div className="form-card">
+                    <span className="eyebrow">Kayıt</span>
+                    <h2>Hesap oluştur</h2>
+                    <p className="muted">TeamTime çalışma alanına katılmak için bilgilerini gir.</p>
 
-            <br></br>
+                    <div className="form-grid two-columns">
+                        <div>
+                            <label>Ad</label>
+                            <input
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                            />
+                        </div>
 
+                        <div>
+                            <label>Soyad</label>
+                            <input
+                                type="text"
+                                value={surname}
+                                onChange={(e) => setSurname(e.target.value)}
+                            />
+                        </div>
+                    </div>
 
-            <button onClick={handleRegister}>
-                Kayıt Ol
-            </button>
+                    <label>E-mail</label>
+                    <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                    />
 
+                    <label>Şifre</label>
+                    <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                    />
 
-            <br></br>
+                    <label>Şifre Tekrar</label>
+                    <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
 
+                    <button className="button button-primary button-full" onClick={handleRegister}>
+                        Kayıt Ol
+                    </button>
 
-            <p>Zaten hesabın var mı?</p>
+                    <p className="auth-switch">Zaten hesabın var mı?</p>
 
-            <Link to="/login">
-                <button>
-                    Giriş Yap
-                </button>
-            </Link>
-
-
+                    <Link to="/login">
+                        <button className="button button-secondary button-full">
+                            Giriş Yap
+                        </button>
+                    </Link>
+                </div>
+            </section>
         </div>
-    )
+    );
 }
-
 
 export default Register;
