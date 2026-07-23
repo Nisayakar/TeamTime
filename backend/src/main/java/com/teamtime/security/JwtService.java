@@ -51,6 +51,11 @@ public class JwtService {
         return parseClaims(token).getSubject();
     }
 
+    public Long extractUserId(String token) {
+        Number userId = parseClaims(token).get("id", Number.class);
+        return userId.longValue();
+    }
+
     private Claims parseClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())

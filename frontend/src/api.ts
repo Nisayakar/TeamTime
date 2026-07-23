@@ -56,6 +56,15 @@ export function getStoredUser() {
     return JSON.parse(data);
 }
 
+export function updateStoredUser(user: {
+    id: number;
+    name: string;
+    surname: string;
+    email: string;
+}) {
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+}
+
 export function isAuthenticated() {
     return getToken() !== null;
 }

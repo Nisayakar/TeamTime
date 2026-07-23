@@ -5,11 +5,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.teamtime.dto.LoginRequest;
 import com.teamtime.dto.LoginResponse;
+import com.teamtime.dto.ProfileResponse;
 import com.teamtime.dto.RegisterRequest;
+import com.teamtime.dto.UpdatePasswordRequest;
+import com.teamtime.dto.UpdateProfileRequest;
 import com.teamtime.service.UserService;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 
@@ -33,6 +40,37 @@ public class UserController {
     @PostMapping("/login")
     public LoginResponse login(@RequestBody LoginRequest request) {
         return userService.login(request);
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<ProfileResponse> getProfile(Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+
+        return ResponseEntity.ok(userService.getProfile(userId));
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<ProfileResponse> updateProfile(
+            Authentication authentication,
+            @RequestBody UpdateProfileRequest request
+    ) {
+        Long userId = (Long) authentication.getPrincipal();
+
+        return ResponseEntity.ok(userService.updateProfile(userId, request));
+    }
+
+    @PutMapping("/profile/password")
+    public ResponseEntity<String> updatePassword(
+            Authentication authentication,
+            @RequestBody UpdatePasswordRequest request
+    ) {
+        Long userId = (Long) authentication.getPrincipal();
+
+        try {
+            return ResponseEntity.ok(userService.updatePassword(userId, request));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(exception.getMessage());
+        }
     }
     
     
