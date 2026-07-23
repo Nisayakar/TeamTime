@@ -5,14 +5,19 @@ import org.springframework.stereotype.Service;
 import com.teamtime.dto.ProjectRequest;
 import com.teamtime.entity.Project;
 import com.teamtime.repository.ProjectRepository;
+import com.teamtime.repository.TaskRepository;
+import jakarta.transaction.Transactional;
+
 import java.util.List;
 
 @Service
 public class ProjectService {
     private final ProjectRepository projectRepository;
+    private final TaskRepository taskRepository;
 
-    public ProjectService(ProjectRepository projectRepository) {
+    public ProjectService(ProjectRepository projectRepository, TaskRepository taskRepository) {
         this.projectRepository = projectRepository;
+        this.taskRepository = taskRepository;
     }
 
     public String createProject(ProjectRequest request) {
@@ -59,7 +64,13 @@ public class ProjectService {
         return "Proje başarıyla güncellendi";
     }
 
+    @Transactional
     public String deleteProject(Long id) {
+        if (!projectRepository.existsById(id)) {
+            throw new RuntimeException("Proje Bulunamadı");
+        }
+
+        taskRepository.deleteByProjectId(id);
         projectRepository.deleteById(id);
         return "Proje başarıyla silindi";
     }

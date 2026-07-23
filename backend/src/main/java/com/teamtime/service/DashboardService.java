@@ -23,8 +23,8 @@ public class DashboardService {
 
         long projectCount = projectRepository.count();
         long taskCount = taskRepository.count();
-        long completedTaskCount = taskRepository.countByStatus("COMPLETED");
-        long inProgressTaskCount = taskRepository.countByStatus("IN_PROGRESS");
+        long completedTaskCount = taskRepository.countByStatus("TAMAMLANDI");
+        long inProgressTaskCount = taskRepository.countByStatus("DEVAM_EDIYOR");
 
         return new DashboardDataResponse(projectCount, taskCount, completedTaskCount, inProgressTaskCount);
 

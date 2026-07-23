@@ -1,7 +1,10 @@
 package com.teamtime.service;
 
 import com.teamtime.entity.Team;
+import com.teamtime.repository.TeamMemberRepository;
 import com.teamtime.repository.TeamRepository;
+import jakarta.transaction.Transactional;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,9 +13,11 @@ import java.util.List;
 public class TeamService {
 
     private final TeamRepository teamRepository;
+    private final TeamMemberRepository teamMemberRepository;
 
-    public TeamService(TeamRepository teamRepository) {
+    public TeamService(TeamRepository teamRepository, TeamMemberRepository teamMemberRepository) {
         this.teamRepository = teamRepository;
+        this.teamMemberRepository = teamMemberRepository;
     }
 
     public Team createTeam(Team team) {
@@ -34,10 +39,12 @@ public class TeamService {
         return teamRepository.save(existingTeam);
     }
 
+    @Transactional
     public void deleteTeam(Long id) {
         Team existingTeam = teamRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Team not found"));
 
+        teamMemberRepository.deleteByTeamId(id);
         teamRepository.delete(existingTeam);
     }
 }

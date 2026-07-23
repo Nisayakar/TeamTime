@@ -1,10 +1,23 @@
 package com.teamtime.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class RegisterRequest {
 
+    @NotBlank(message = "Ad boş bırakılamaz")
     private String name;
+
+    @NotBlank(message = "Soyad boş bırakılamaz")
     private String surname;
+
+    @NotBlank(message = "Email boş bırakılamaz")
+    @Email(message = "Email formatı doğru olmalı")
     private String email;
+
+    @NotBlank(message = "Şifre boş bırakılamaz")
+    @Size(min = 6, message = "Şifre en az 6 karakter olmalı")
     private String password;
 
     public RegisterRequest() {

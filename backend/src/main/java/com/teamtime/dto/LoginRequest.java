@@ -1,8 +1,13 @@
 package com.teamtime.dto;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class LoginRequest {
 
+    @NotBlank(message = "Email boş bırakılamaz")
     private String email;
+
+    @NotBlank(message = "Şifre boş bırakılamaz")
     private String password;
 
     public LoginRequest() {

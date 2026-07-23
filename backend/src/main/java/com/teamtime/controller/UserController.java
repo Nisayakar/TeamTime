@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import jakarta.validation.Valid;
+
 
 @RestController
 @RequestMapping("/api") //Bu sınıftaki bütün adreslerin başına /api ekler.
@@ -32,14 +34,14 @@ public class UserController {
 
 
     @PostMapping("/register")
-    public String register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest request) {
         
-        return userService.register(request);
+        return ResponseEntity.ok(userService.register(request));
     }
 
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody LoginRequest request) {
-        return userService.login(request);
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        return ResponseEntity.ok(userService.login(request));
     }
 
     @GetMapping("/profile")
@@ -66,11 +68,7 @@ public class UserController {
     ) {
         Long userId = (Long) authentication.getPrincipal();
 
-        try {
-            return ResponseEntity.ok(userService.updatePassword(userId, request));
-        } catch (IllegalArgumentException exception) {
-            return ResponseEntity.badRequest().body(exception.getMessage());
-        }
+        return ResponseEntity.ok(userService.updatePassword(userId, request));
     }
     
     

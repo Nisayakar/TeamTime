@@ -13,4 +13,6 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     long countByStatus(String status);
 
+    void deleteByProjectId(Long projectId);
+
 }

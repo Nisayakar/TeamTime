@@ -5,9 +5,20 @@ import { apiFetch, saveAuth } from "../api";
 function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [message, setMessage] = useState("");
     const navigate = useNavigate();
 
     async function handleLogin() {
+        if (email.trim() === "") {
+            setMessage("Email boş bırakılamaz");
+            return;
+        }
+
+        if (password.trim() === "") {
+            setMessage("Şifre boş bırakılamaz");
+            return;
+        }
+
         try {
             const response = await apiFetch("/login", {
                 method: "POST",
@@ -19,16 +30,35 @@ function Login() {
                 )
             });
 
-            const data = await response.json();
+            if (!response.ok) {
+                setMessage(await readErrorMessage(response));
+                return;
+            }
 
-            console.log(data);
+            const data = await response.json();
 
             saveAuth(data);
 
             navigate("/dashboard");
         } catch (error) {
-            alert("Sunucuya Bağlanılamadı");
+            setMessage("Sunucuya bağlanılamadı");
         }
+    }
+
+    async function readErrorMessage(response: Response) {
+        const contentType = response.headers.get("Content-Type") || "";
+
+        if (contentType.includes("application/json")) {
+            const data = await response.json();
+
+            if (data.errors) {
+                return Object.values(data.errors).join("\n");
+            }
+
+            return data.message || "Giriş yapılamadı";
+        }
+
+        return await response.text();
     }
 
     return (
@@ -53,11 +83,22 @@ function Login() {
                     <h2>Hesabına giriş yap</h2>
                     <p className="muted">Takım panona devam etmek için bilgilerini gir.</p>
 
-                    <label>E-mail</label>
-                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                    {
+                        message &&
+                        <div className="message-box">
+                            {message}
+                        </div>
+                    }
 
-                    <label>Şifre</label>
-                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <div className="field">
+                        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder=" " />
+                        <label>E-mail</label>
+                    </div>
+
+                    <div className="field">
+                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder=" " />
+                        <label>Şifre</label>
+                    </div>
 
                     <button className="button button-primary button-full" type="button" onClick={handleLogin}>
                         Giriş Yap

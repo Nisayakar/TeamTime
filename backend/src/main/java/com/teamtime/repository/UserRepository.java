@@ -10,6 +10,8 @@ import javax.swing.Spring;
 
 public interface UserRepository extends JpaRepository<User, Long> {
         Optional<User> findByEmail(String email);
+        Optional<User> findByEmailIgnoreCase(String email);
+        boolean existsByEmailIgnoreCase(String email);
         //"Email'e göre kullanıcı bul."
 //Spring Data JPA metodun ismine bakarak arka planda otomatik SQL oluşturuyor.
 }

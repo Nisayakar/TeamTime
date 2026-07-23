@@ -12,6 +12,8 @@ import com.teamtime.dto.LoginResponse;
 import com.teamtime.dto.ProfileResponse;
 import com.teamtime.dto.UpdatePasswordRequest;
 import com.teamtime.dto.UpdateProfileRequest;
+import com.teamtime.exception.DuplicateEmailException;
+import com.teamtime.exception.InvalidCredentialsException;
 
 import java.util.Optional;
 
@@ -29,11 +31,17 @@ public class UserService {
     }
 
     public String register(RegisterRequest request) {
+        String email = request.getEmail().trim();
+
+        if (userRepository.existsByEmailIgnoreCase(email)) {
+            throw new DuplicateEmailException("Bu email adresi ile kayıtlı bir kullanıcı zaten var");
+        }
+
         User user = new User();
 
-        user.setName(request.getName());
-        user.setSurname(request.getSurname());
-        user.setEmail(request.getEmail());
+        user.setName(request.getName().trim());
+        user.setSurname(request.getSurname().trim());
+        user.setEmail(email);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         userRepository.save(user);
@@ -43,14 +51,14 @@ public class UserService {
 
     public LoginResponse login(LoginRequest request) {
 
-        Optional<User> user = userRepository.findByEmail(request.getEmail());
+        Optional<User> user = userRepository.findByEmailIgnoreCase(request.getEmail().trim());
 
         if (user.isEmpty()) {
-            return null;
+            throw new InvalidCredentialsException("Email veya şifre hatalı");
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.get().getPassword())) {
-            return null;
+            throw new InvalidCredentialsException("Email veya şifre hatalı");
         }
 
         User loggedUser = user.get();
@@ -72,10 +80,15 @@ public class UserService {
 
     public ProfileResponse updateProfile(Long userId, UpdateProfileRequest request) {
         User user = findUserById(userId);
+        String email = request.getEmail().trim();
 
-        user.setName(request.getName());
-        user.setSurname(request.getSurname());
-        user.setEmail(request.getEmail());
+        if (!user.getEmail().equalsIgnoreCase(email) && userRepository.existsByEmailIgnoreCase(email)) {
+            throw new DuplicateEmailException("Bu email adresi ile kayıtlı bir kullanıcı zaten var");
+        }
+
+        user.setName(request.getName().trim());
+        user.setSurname(request.getSurname().trim());
+        user.setEmail(email);
 
         User updatedUser = userRepository.save(user);
 

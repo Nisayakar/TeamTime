@@ -8,14 +8,46 @@ function Register() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [message, setMessage] = useState("");
 
     const navigate = useNavigate();
 
 
     async function handleRegister() {
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (name.trim() === "") {
+            setMessage("Ad boş bırakılamaz");
+            return;
+        }
+
+        if (surname.trim() === "") {
+            setMessage("Soyad boş bırakılamaz");
+            return;
+        }
+
+        if (email.trim() === "") {
+            setMessage("Email boş bırakılamaz");
+            return;
+        }
+
+        if (!emailPattern.test(email.trim())) {
+            setMessage("Email formatı doğru olmalı");
+            return;
+        }
+
+        if (password.trim() === "") {
+            setMessage("Şifre boş bırakılamaz");
+            return;
+        }
+
+        if (password.length < 6) {
+            setMessage("Şifre en az 6 karakter olmalı");
+            return;
+        }
 
         if (password !== confirmPassword) {
-            alert("Şifreler uyuşmuyor");
+            setMessage("Şifreler uyuşmuyor");
             return;
         }
 
@@ -39,21 +71,39 @@ function Register() {
             );
 
 
-            const data = await response.text();
-
-            alert(data);
-
             if (response.ok) {
+                const data = await response.text();
+                setMessage(data || "Kayıt başarılı");
+
                 navigate("/login");
+                return;
             }
+
+            setMessage(await readErrorMessage(response));
 
 
         } catch (error) {
 
-            alert("Sunucuya bağlanılamadı");
+            setMessage("Sunucuya bağlanılamadı");
 
         }
 
+    }
+
+    async function readErrorMessage(response: Response) {
+        const contentType = response.headers.get("Content-Type") || "";
+
+        if (contentType.includes("application/json")) {
+            const data = await response.json();
+
+            if (data.errors) {
+                return Object.values(data.errors).join("\n");
+            }
+
+            return data.message || "Kayıt oluşturulamadı";
+        }
+
+        return await response.text();
     }
 
 
@@ -77,46 +127,64 @@ function Register() {
                     <h2>Hesap oluştur</h2>
                     <p className="muted">TeamTime çalışma alanına katılmak için bilgilerini gir.</p>
 
+                    {
+                        message &&
+                        <div className="message-box">
+                            {message}
+                        </div>
+                    }
+
                     <div className="form-grid two-columns">
-                        <div>
-                            <label>Ad</label>
+                        <div className="field">
                             <input
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
+                                placeholder=" "
                             />
+                            <label>Ad</label>
                         </div>
 
-                        <div>
-                            <label>Soyad</label>
+                        <div className="field">
                             <input
                                 type="text"
                                 value={surname}
                                 onChange={(e) => setSurname(e.target.value)}
+                                placeholder=" "
                             />
+                            <label>Soyad</label>
                         </div>
                     </div>
 
-                    <label>E-mail</label>
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                    />
+                    <div className="field">
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder=" "
+                        />
+                        <label>E-mail</label>
+                    </div>
 
-                    <label>Şifre</label>
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
+                    <div className="field">
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder=" "
+                        />
+                        <label>Şifre</label>
+                    </div>
 
-                    <label>Şifre Tekrar</label>
-                    <input
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                    />
+                    <div className="field">
+                        <input
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder=" "
+                        />
+                        <label>Şifre Tekrar</label>
+                    </div>
 
                     <button className="button button-primary button-full" onClick={handleRegister}>
                         Kayıt Ol
