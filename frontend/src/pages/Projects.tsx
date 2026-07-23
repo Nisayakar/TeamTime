@@ -1,6 +1,7 @@
 import ProjectCard from "../components/ProjectCard";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { apiFetch } from "../api";
 
 function Projects() {
 
@@ -17,7 +18,7 @@ function Projects() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetch("http://localhost:8085/api/projects")
+        apiFetch("/projects")
             .then(response => response.json())
             .then(data => {
                 setProjects(data);
@@ -26,7 +27,7 @@ function Projects() {
 
     function deleteProject(id: number) {
 
-        fetch(`http://localhost:8085/api/projects/${id}`, {
+        apiFetch(`/projects/${id}`, {
             method: "DELETE"
         })
             .then(response => response.text())

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { apiFetch } from "../api";
 
 
 function EditProject() {
@@ -20,7 +21,7 @@ function EditProject() {
 
     useEffect(() => {
 
-        fetch(`http://localhost:8085/api/projects/${id}`)
+        apiFetch(`/projects/${id}`)
             .then(response => response.json())
             .then(data => {
                 console.log("Backend'den gelen:", data);
@@ -52,13 +53,9 @@ function EditProject() {
 
     function updateProject() {
 
-        fetch(`http://localhost:8085/api/projects/${id}`, {
+        apiFetch(`/projects/${id}`, {
 
             method: "PUT",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
 
             body: JSON.stringify(project)
 

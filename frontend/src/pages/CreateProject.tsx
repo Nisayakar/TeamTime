@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { apiFetch } from "../api";
 
 
 function CreateProject() {
@@ -14,7 +15,7 @@ function CreateProject() {
 
         if (id) {
 
-            fetch(`http://localhost:8085/api/projects/${id}`)
+            apiFetch(`/projects/${id}`)
                 .then(response => response.json())
                 .then(data => {
 
@@ -41,11 +42,8 @@ function CreateProject() {
             endDate: endDate
         };
 
-        fetch("http://localhost:8085/api/projects", {
+        apiFetch("/projects", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
             body: JSON.stringify(project)
         })
             .then(response => response.text())

@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import com.teamtime.dto.RegisterRequest;
 import com.teamtime.entity.User;
 import com.teamtime.repository.UserRepository;
+import com.teamtime.security.JwtService;
 import com.teamtime.dto.LoginRequest;
 import com.teamtime.dto.LoginResponse;
 
@@ -14,9 +15,11 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final JwtService jwtService;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, JwtService jwtService) {
         this.userRepository = userRepository;
+        this.jwtService = jwtService;
     }
 
     public String register(RegisterRequest request) {
@@ -45,10 +48,13 @@ public class UserService {
         }
 
         User loggedUser = user.get();
+        String token = jwtService.generateToken(loggedUser);
+
         return new LoginResponse(
                 loggedUser.getId(),
                 loggedUser.getName(),
                 loggedUser.getSurname(),
-                loggedUser.getEmail());
+                loggedUser.getEmail(),
+                token);
     }
 }

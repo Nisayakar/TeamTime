@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { apiFetch, saveAuth } from "../api";
 
 function Login() {
     const [email, setEmail] = useState("");
@@ -8,11 +9,8 @@ function Login() {
 
     async function handleLogin() {
         try {
-            const response = await fetch("http://localhost:8085/api/login", {
+            const response = await apiFetch("/login", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
                 body: JSON.stringify(
                     {
                         email,
@@ -25,10 +23,7 @@ function Login() {
 
             console.log(data);
 
-            localStorage.setItem(
-                "user",
-                JSON.stringify(data)
-            );
+            saveAuth(data);
 
             navigate("/dashboard");
         } catch (error) {

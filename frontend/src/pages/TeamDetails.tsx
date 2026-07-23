@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { apiFetch } from "../api";
 
 type Team = {
     id: number;
@@ -41,7 +42,7 @@ function TeamDetails() {
     }
 
     function getTeam() {
-        fetch("http://localhost:8085/api/teams")
+        apiFetch("/teams")
             .then(response => response.json())
             .then(data => {
                 const teams = Array.isArray(data) ? data : [];
@@ -55,7 +56,7 @@ function TeamDetails() {
     }
 
     function getMembers() {
-        fetch(`http://localhost:8085/api/teams/${id}/members`)
+        apiFetch(`/teams/${id}/members`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error();
@@ -79,11 +80,8 @@ function TeamDetails() {
             return;
         }
 
-        fetch(`http://localhost:8085/api/teams/${id}/members`, {
+        apiFetch(`/teams/${id}/members`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
             body: JSON.stringify({
                 userId: Number(userId),
                 role

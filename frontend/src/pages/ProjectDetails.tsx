@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { apiFetch } from "../api";
 
 
 function ProjectDetails() {
@@ -43,7 +44,7 @@ function ProjectDetails() {
     function getTasks() {
 
 
-        fetch(`http://localhost:8085/api/tasks/project/${id}`)
+        apiFetch(`/tasks/project/${id}`)
 
             .then(response => {
 
@@ -126,7 +127,7 @@ function ProjectDetails() {
         if (editId) {
 
 
-            url = `http://localhost:8085/api/tasks/${editId}`;
+            url = `/tasks/${editId}`;
 
             method = "PUT";
 
@@ -136,7 +137,7 @@ function ProjectDetails() {
         else {
 
 
-            url = `http://localhost:8085/api/tasks/${id}`;
+            url = `/tasks/${id}`;
 
             method = "POST";
 
@@ -146,15 +147,9 @@ function ProjectDetails() {
 
 
 
-        fetch(url, {
+        apiFetch(url, {
 
             method: method,
-
-            headers: {
-
-                "Content-Type": "application/json"
-
-            },
 
             body: JSON.stringify(task)
 
@@ -218,7 +213,7 @@ function ProjectDetails() {
 
 
 
-        fetch(`http://localhost:8085/api/tasks/${taskId}`, {
+        apiFetch(`/tasks/${taskId}`, {
 
             method: "DELETE"
 

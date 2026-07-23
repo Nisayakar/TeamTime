@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiFetch, clearAuth, getStoredUser } from "../api";
 
 function Dashboard() {
     type DashboardData = {
@@ -28,15 +29,11 @@ function Dashboard() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const data = localStorage.getItem("user");
-
-        if (data) {
-            setUser(JSON.parse(data));
-        }
+        setUser(getStoredUser());
     }, []);
 
     useEffect(() => {
-        fetch("http://localhost:8085/api/dashboard")
+        apiFetch("/dashboard")
             .then(response => response.json())
             .then(data => {
                 setDashboardData(data);
@@ -44,7 +41,7 @@ function Dashboard() {
     }, []);
 
     useEffect(() => {
-        fetch("http://localhost:8085/api/tasks/recent")
+        apiFetch("/tasks/recent")
             .then(response => response.json())
             .then(data => {
                 setRecentTasks(data);
@@ -52,7 +49,7 @@ function Dashboard() {
     }, []);
 
     useEffect(() => {
-        fetch("http://localhost:8085/api/projects/recent")
+        apiFetch("/projects/recent")
             .then(response => response.json())
             .then(data => {
                 setRecentProjects(Array.isArray(data) ? data : []);
@@ -61,7 +58,7 @@ function Dashboard() {
 
     function logout() {
 
-        localStorage.removeItem("user");
+        clearAuth();
 
         navigate("/login");
 

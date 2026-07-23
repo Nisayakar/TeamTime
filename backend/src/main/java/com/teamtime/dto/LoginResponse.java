@@ -6,17 +6,19 @@ public class LoginResponse {
     private String name;
     private String surname;
     private String email;
+    private String token;
 
 
     public LoginResponse() {
     }
 
 
-    public LoginResponse(Long id, String name, String surname, String email) {
+    public LoginResponse(Long id, String name, String surname, String email, String token) {
         this.id = id;
         this.name = name;
         this.surname = surname;
         this.email = email;
+        this.token = token;
     }
 
 
@@ -57,5 +59,15 @@ public class LoginResponse {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+
+    public String getToken() {
+        return token;
+    }
+
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }

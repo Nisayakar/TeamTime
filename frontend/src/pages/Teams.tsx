@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiFetch } from "../api";
 
 type Team = {
     id: number;
@@ -22,7 +23,7 @@ function Teams() {
     }, []);
 
     function getTeams() {
-        fetch("http://localhost:8085/api/teams")
+        apiFetch("/teams")
             .then(response => response.json())
             .then(data => {
                 setTeams(Array.isArray(data) ? data : []);
@@ -32,11 +33,8 @@ function Teams() {
     function createTeam(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
-        fetch("http://localhost:8085/api/teams", {
+        apiFetch("/teams", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
             body: JSON.stringify({
                 name,
                 description
@@ -63,11 +61,8 @@ function Teams() {
     }
 
     function updateTeam(team: Team) {
-        fetch(`http://localhost:8085/api/teams/${team.id}`, {
+        apiFetch(`/teams/${team.id}`, {
             method: "PUT",
-            headers: {
-                "Content-Type": "application/json"
-            },
             body: JSON.stringify({
                 name: editName,
                 description: editDescription,
@@ -87,7 +82,7 @@ function Teams() {
     }
 
     function deleteTeam(id: number) {
-        fetch(`http://localhost:8085/api/teams/${id}`, {
+        apiFetch(`/teams/${id}`, {
             method: "DELETE"
         })
             .then(() => {

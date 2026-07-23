@@ -1,12 +1,13 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { clearAuth, isAuthenticated } from "../api";
 
 function Navbar() {
     useLocation();
     const navigate = useNavigate();
-    const isLoggedIn = localStorage.getItem("user") !== null;
+    const isLoggedIn = isAuthenticated();
 
     function logout() {
-        localStorage.removeItem("user");
+        clearAuth();
         navigate("/login");
     }
 
