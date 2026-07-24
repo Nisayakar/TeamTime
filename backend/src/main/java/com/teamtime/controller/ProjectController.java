@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
 
 import com.teamtime.dto.ProjectRequest;
 import com.teamtime.service.ProjectService;
@@ -26,35 +27,42 @@ public class ProjectController {
     }
 
     @PostMapping("/projects")
-    public String createProject(@RequestBody ProjectRequest request) {
-        return projectService.createProject(request);
+    public String createProject(@RequestBody ProjectRequest request, Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        return projectService.createProject(request, userId);
     }
 
     @GetMapping("/projects")
-    public List<Project> getProjects() {
-        return projectService.getAllProjects();
+    public List<Project> getProjects(Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        return projectService.getAllProjects(userId);
     }
 
     @GetMapping("/projects/recent")
-    public List<Project> getRecentProjects() {
-        return projectService.getRecentProjects();
+    public List<Project> getRecentProjects(Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        return projectService.getRecentProjects(userId);
     }
 
     @DeleteMapping("/projects/{id}")
-    public String deleteProject(@PathVariable Long id) {
-        return projectService.deleteProject(id);
+    public String deleteProject(@PathVariable Long id, Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        return projectService.deleteProject(id, userId);
     }
 
     @PutMapping("/projects/{id}")
     public String updateProject(@PathVariable Long id,
-            @RequestBody ProjectRequest request) {
-        return projectService.updateProject(id, request);
+            @RequestBody ProjectRequest request,
+            Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        return projectService.updateProject(id, request, userId);
     }
 
     @GetMapping("/projects/{id}")
-    public Project getProject(@PathVariable Long id) {
+    public Project getProject(@PathVariable Long id, Authentication authentication) {
 
-        return projectService.getProject(id);
+        Long userId = (Long) authentication.getPrincipal();
+        return projectService.getProject(id, userId);
 
     }
 }

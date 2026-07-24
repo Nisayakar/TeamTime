@@ -19,12 +19,12 @@ public class DashboardService {
 
     }
 
-    public DashboardDataResponse getDashboardData() {
+    public DashboardDataResponse getDashboardData(Long userId) {
 
-        long projectCount = projectRepository.count();
-        long taskCount = taskRepository.count();
-        long completedTaskCount = taskRepository.countByStatus("TAMAMLANDI");
-        long inProgressTaskCount = taskRepository.countByStatus("DEVAM_EDIYOR");
+        long projectCount = projectRepository.countByUserId(userId);
+        long taskCount = taskRepository.countByProjectUserId(userId);
+        long completedTaskCount = taskRepository.countByProjectUserIdAndStatus(userId, "TAMAMLANDI");
+        long inProgressTaskCount = taskRepository.countByProjectUserIdAndStatus(userId, "DEVAM_EDIYOR");
 
         return new DashboardDataResponse(projectCount, taskCount, completedTaskCount, inProgressTaskCount);
 

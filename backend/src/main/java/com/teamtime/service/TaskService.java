@@ -27,12 +27,12 @@ public class TaskService {
     }
 
 
-    public Task createTask(Task task, Long projectId) {
+    public Task createTask(Task task, Long projectId, Long userId) {
 
 
-        Project project = projectRepository.findById(projectId)
+        Project project = projectRepository.findByIdAndUserId(projectId, userId)
                 .orElseThrow(() ->
-                        new RuntimeException("Proje bulunamadı")
+                        new IllegalArgumentException("Proje bulunamadı veya bu proje için yetkiniz yok")
                 );
 
 
@@ -45,33 +45,33 @@ public class TaskService {
 
 
 
-    public List<Task> getTasksByProject(Long projectId) {
+    public List<Task> getTasksByProject(Long projectId, Long userId) {
 
 
-        return taskRepository.findByProjectId(projectId);
-
-    }
-
-    public List<Task> getRecentTasks() {
-
-
-        return taskRepository.findAllByOrderByIdDesc();
+        return taskRepository.findByProjectIdAndProjectUserId(projectId, userId);
 
     }
 
+    public List<Task> getRecentTasks(Long userId) {
 
 
-    public Task updateTask(Long id, Task updatedTask) {
+        return taskRepository.findAllByProjectUserIdOrderByIdDesc(userId);
+
+    }
+
+
+
+    public Task updateTask(Long id, Task updatedTask, Long userId) {
 
 
         Optional<Task> task =
-                taskRepository.findById(id);
+                taskRepository.findByIdAndProjectUserId(id, userId);
 
 
 
         if(task.isEmpty()){
 
-            throw new RuntimeException("Görev bulunamadı");
+            throw new IllegalArgumentException("Görev bulunamadı veya bu görev için yetkiniz yok");
 
         }
 
@@ -94,17 +94,19 @@ public class TaskService {
 
 
 
-    public void deleteTask(Long id) {
+    public void deleteTask(Long id, Long userId) {
 
 
-        if(!taskRepository.existsById(id)){
+        Optional<Task> task = taskRepository.findByIdAndProjectUserId(id, userId);
 
-            throw new RuntimeException("Görev bulunamadı");
+        if(task.isEmpty()){
+
+            throw new IllegalArgumentException("Görev bulunamadı veya bu görev için yetkiniz yok");
 
         }
 
 
-        taskRepository.deleteById(id);
+        taskRepository.delete(task.get());
 
     }
 

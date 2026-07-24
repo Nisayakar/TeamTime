@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -24,11 +25,13 @@ public class TaskController {
     @PostMapping("/{projectId}")
     public ResponseEntity<?> createTask(
             @RequestBody Task task,
-            @PathVariable Long projectId) {
+            @PathVariable Long projectId,
+            Authentication authentication) {
 
         try {
 
-            Task createdTask = taskService.createTask(task, projectId);
+            Long userId = (Long) authentication.getPrincipal();
+            Task createdTask = taskService.createTask(task, projectId, userId);
 
             return ResponseEntity.ok(createdTask);
 
@@ -44,25 +47,30 @@ public class TaskController {
 
     @GetMapping("/project/{projectId}")
     public List<Task> getTasksByProject(
-            @PathVariable Long projectId) {
+            @PathVariable Long projectId,
+            Authentication authentication) {
 
-        return taskService.getTasksByProject(projectId);
+        Long userId = (Long) authentication.getPrincipal();
+        return taskService.getTasksByProject(projectId, userId);
 
     }
 
     @GetMapping("/recent")
-    public List<Task> getRecentTasks() {
+    public List<Task> getRecentTasks(Authentication authentication) {
 
-        return taskService.getRecentTasks();
+        Long userId = (Long) authentication.getPrincipal();
+        return taskService.getRecentTasks(userId);
 
     }
 
     @PutMapping("/{id}")
     public String updateTask(
             @PathVariable Long id,
-            @RequestBody Task task) {
+            @RequestBody Task task,
+            Authentication authentication) {
 
-        taskService.updateTask(id, task);
+        Long userId = (Long) authentication.getPrincipal();
+        taskService.updateTask(id, task, userId);
 
         return "Görev başarıyla güncellendi";
 
@@ -70,9 +78,11 @@ public class TaskController {
 
     @DeleteMapping("/{id}")
     public String deleteTask(
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            Authentication authentication) {
 
-        taskService.deleteTask(id);
+        Long userId = (Long) authentication.getPrincipal();
+        taskService.deleteTask(id, userId);
 
         return "Görev silindi";
 

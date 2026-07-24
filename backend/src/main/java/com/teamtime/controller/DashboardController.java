@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/api")
@@ -21,9 +22,10 @@ public class DashboardController {
     }
 
     @GetMapping("/dashboard")
-    public DashboardDataResponse getDashboardData() {
+    public DashboardDataResponse getDashboardData(Authentication authentication) {
 
-        return dashboardService.getDashboardData();
+        Long userId = (Long) authentication.getPrincipal();
+        return dashboardService.getDashboardData(userId);
 
     }
 

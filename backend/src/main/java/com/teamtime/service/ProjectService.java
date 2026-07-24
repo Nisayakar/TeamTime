@@ -4,8 +4,10 @@ import org.springframework.stereotype.Service;
 
 import com.teamtime.dto.ProjectRequest;
 import com.teamtime.entity.Project;
+import com.teamtime.entity.User;
 import com.teamtime.repository.ProjectRepository;
 import com.teamtime.repository.TaskRepository;
+import com.teamtime.repository.UserRepository;
 import jakarta.transaction.Transactional;
 
 import java.util.List;
@@ -14,13 +16,18 @@ import java.util.List;
 public class ProjectService {
     private final ProjectRepository projectRepository;
     private final TaskRepository taskRepository;
+    private final UserRepository userRepository;
 
-    public ProjectService(ProjectRepository projectRepository, TaskRepository taskRepository) {
+    public ProjectService(ProjectRepository projectRepository, TaskRepository taskRepository, UserRepository userRepository) {
         this.projectRepository = projectRepository;
         this.taskRepository = taskRepository;
+        this.userRepository = userRepository;
     }
 
-    public String createProject(ProjectRequest request) {
+    public String createProject(ProjectRequest request, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Kullanıcı bulunamadı"));
+
         Project project = new Project();
 
         project.setProjectName(request.getProjectName());
@@ -28,6 +35,7 @@ public class ProjectService {
         project.setTeamName(request.getTeamName());
         project.setStartDate(request.getStartDate());
         project.setEndDate(request.getEndDate());
+        project.setUser(user);
 
         projectRepository.save(project);
 
@@ -35,9 +43,8 @@ public class ProjectService {
 
     }
 
-    public String updateProject(Long id, ProjectRequest request) {
-        Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Proje Bulunamadı"));
+    public String updateProject(Long id, ProjectRequest request, Long userId) {
+        Project project = findProjectForUser(id, userId);
 
         if (request.getProjectName() != null) {
             project.setProjectName(request.getProjectName());
@@ -65,29 +72,31 @@ public class ProjectService {
     }
 
     @Transactional
-    public String deleteProject(Long id) {
-        if (!projectRepository.existsById(id)) {
-            throw new RuntimeException("Proje Bulunamadı");
-        }
+    public String deleteProject(Long id, Long userId) {
+        Project project = findProjectForUser(id, userId);
 
-        taskRepository.deleteByProjectId(id);
-        projectRepository.deleteById(id);
+        taskRepository.deleteByProjectIdAndProjectUserId(id, userId);
+        projectRepository.delete(project);
         return "Proje başarıyla silindi";
     }
 
-    public List<Project> getAllProjects() {
-        return projectRepository.findAll();
+    public List<Project> getAllProjects(Long userId) {
+        return projectRepository.findByUserId(userId);
     }
 
-    public List<Project> getRecentProjects() {
-        return projectRepository.findAllByOrderByIdDesc();
+    public List<Project> getRecentProjects(Long userId) {
+        return projectRepository.findAllByUserIdOrderByIdDesc(userId);
     }
 
-    public Project getProject(Long id) {
+    public Project getProject(Long id, Long userId) {
 
-        return projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Proje bulunamadı"));
+        return findProjectForUser(id, userId);
 
+    }
+
+    private Project findProjectForUser(Long id, Long userId) {
+        return projectRepository.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new IllegalArgumentException("Proje bulunamadı veya bu proje için yetkiniz yok"));
     }
 
 }
