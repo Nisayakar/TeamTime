@@ -1,9 +1,18 @@
 package com.teamtime.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+
 public class UpdateProfileRequest {
 
+    @NotBlank(message = "Ad boş bırakılamaz")
     private String name;
+
+    @NotBlank(message = "Soyad boş bırakılamaz")
     private String surname;
+
+    @NotBlank(message = "Email boş bırakılamaz")
+    @Email(message = "Email formatı doğru olmalı")
     private String email;
 
     public UpdateProfileRequest() {

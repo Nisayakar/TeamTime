@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "http://localhost:5173")
@@ -28,7 +30,7 @@ public class TeamMemberController {
 
     @PostMapping("/teams/{teamId}/members")
     public ResponseEntity<TeamMemberResponse> addMember(@PathVariable Long teamId,
-            @RequestBody AddTeamMemberRequest request) {
+            @Valid @RequestBody AddTeamMemberRequest request) {
         TeamMemberResponse teamMember = teamMemberService.addMember(teamId, request);
         return ResponseEntity.ok(teamMember);
     }

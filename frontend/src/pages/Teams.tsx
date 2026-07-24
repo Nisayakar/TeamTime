@@ -30,22 +30,70 @@ function Teams() {
             });
     }
 
-    function createTeam(event: React.FormEvent<HTMLFormElement>) {
+    async function readErrorMessage(response: Response) {
+        const contentType = response.headers.get("Content-Type") || "";
+
+        if (contentType.includes("application/json")) {
+            const data = await response.json();
+
+            if (data.errors) {
+                return Object.values(data.errors).join("\n");
+            }
+
+            if (data.message) {
+                return data.message;
+            }
+
+            return "Takım oluşturulamadı";
+        }
+
+        const message = await response.text();
+
+        if (message) {
+            return message;
+        }
+
+        switch (response.status) {
+            case 401:
+                return "Bu işlem için giriş yapmalısınız";
+            case 403:
+                return "Bu işlem için yetkiniz yok";
+            case 404:
+                return "İstenen kaynak bulunamadı";
+            case 409:
+                return "Bu işlem mevcut kayıtlarla çakışıyor";
+            case 500:
+                return "Sunucuda beklenmeyen bir hata oluştu";
+            default:
+                return "Takım oluşturulamadı";
+        }
+    }
+
+    async function createTeam(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
-        apiFetch("/teams", {
-            method: "POST",
-            body: JSON.stringify({
-                name,
-                description
-            })
-        })
-            .then(response => response.json())
-            .then(createdTeam => {
-                setTeams([...teams, createdTeam]);
-                setName("");
-                setDescription("");
+        try {
+            const response = await apiFetch("/teams", {
+                method: "POST",
+                body: JSON.stringify({
+                    name,
+                    description
+                })
             });
+
+            if (!response.ok) {
+                alert(await readErrorMessage(response));
+                return;
+            }
+
+            const createdTeam = await response.json();
+
+            setTeams([...teams, createdTeam]);
+            setName("");
+            setDescription("");
+        } catch (error) {
+            alert("Sunucuya bağlanılamadı");
+        }
     }
 
     function startEdit(team: Team) {

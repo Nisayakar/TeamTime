@@ -9,6 +9,7 @@ import com.teamtime.dto.ProfileResponse;
 import com.teamtime.dto.RegisterRequest;
 import com.teamtime.dto.UpdatePasswordRequest;
 import com.teamtime.dto.UpdateProfileRequest;
+import com.teamtime.dto.UserSearchResponse;
 import com.teamtime.service.UserService;
 
 import org.springframework.http.ResponseEntity;
@@ -17,9 +18,11 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import jakarta.validation.Valid;
+import java.util.List;
 
 
 @RestController
@@ -51,10 +54,15 @@ public class UserController {
         return ResponseEntity.ok(userService.getProfile(userId));
     }
 
+    @GetMapping("/users/search")
+    public ResponseEntity<List<UserSearchResponse>> searchUsers(@RequestParam String query) {
+        return ResponseEntity.ok(userService.searchUsers(query));
+    }
+
     @PutMapping("/profile")
     public ResponseEntity<ProfileResponse> updateProfile(
             Authentication authentication,
-            @RequestBody UpdateProfileRequest request
+            @Valid @RequestBody UpdateProfileRequest request
     ) {
         Long userId = (Long) authentication.getPrincipal();
 
@@ -64,7 +72,7 @@ public class UserController {
     @PutMapping("/profile/password")
     public ResponseEntity<String> updatePassword(
             Authentication authentication,
-            @RequestBody UpdatePasswordRequest request
+            @Valid @RequestBody UpdatePasswordRequest request
     ) {
         Long userId = (Long) authentication.getPrincipal();
 

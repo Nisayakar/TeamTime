@@ -12,9 +12,11 @@ import com.teamtime.dto.LoginResponse;
 import com.teamtime.dto.ProfileResponse;
 import com.teamtime.dto.UpdatePasswordRequest;
 import com.teamtime.dto.UpdateProfileRequest;
+import com.teamtime.dto.UserSearchResponse;
 import com.teamtime.exception.DuplicateEmailException;
 import com.teamtime.exception.InvalidCredentialsException;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -106,6 +108,23 @@ public class UserService {
         userRepository.save(user);
 
         return "Şifre başarıyla güncellendi";
+    }
+
+    public List<UserSearchResponse> searchUsers(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return List.of();
+        }
+
+        String searchTerm = query.trim();
+
+        return userRepository
+                .findTop10ByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(searchTerm, searchTerm)
+                .stream()
+                .map(user -> new UserSearchResponse(
+                        user.getId(),
+                        user.getName(),
+                        user.getSurname()))
+                .toList();
     }
 
     private User findUserByEmail(String email) {

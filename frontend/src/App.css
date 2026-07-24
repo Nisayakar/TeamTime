@@ -527,6 +527,44 @@ label {
   gap: 13px;
 }
 
+.autocomplete-field {
+  position: relative;
+}
+
+.autocomplete-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 15;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+}
+
+.autocomplete-option {
+  width: 100%;
+  padding: 11px 13px;
+  background: #ffffff;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.autocomplete-option:hover {
+  background: var(--primary-soft);
+}
+
+.selected-user {
+  margin-top: 8px;
+  color: var(--primary-dark);
+  font-size: 14px;
+  font-weight: 800;
+}
+
 .form-grid,
 .inline-form {
   display: grid;

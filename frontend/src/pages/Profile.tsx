@@ -40,6 +40,22 @@ function Profile() {
         }, 3000);
     }
 
+    async function readErrorMessage(response: Response) {
+        const contentType = response.headers.get("Content-Type") || "";
+
+        if (contentType.includes("application/json")) {
+            const data = await response.json();
+
+            if (data.errors) {
+                return Object.values(data.errors).join("\n");
+            }
+
+            return data.message || "İşlem tamamlanamadı";
+        }
+
+        return await response.text();
+    }
+
     async function updateProfile() {
         try {
             const response = await apiFetch("/profile", {
@@ -52,7 +68,7 @@ function Profile() {
             });
 
             if (!response.ok) {
-                throw new Error(await response.text());
+                throw new Error(await readErrorMessage(response));
             }
 
             const updatedUser = await response.json();
@@ -75,11 +91,11 @@ function Profile() {
                 })
             });
 
-            const data = await response.text();
-
             if (!response.ok) {
-                throw new Error(data);
+                throw new Error(await readErrorMessage(response));
             }
+
+            const data = await response.text();
 
             setOldPassword("");
             setNewPassword("");

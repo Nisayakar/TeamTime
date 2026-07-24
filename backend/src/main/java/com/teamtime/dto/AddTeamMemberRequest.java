@@ -1,9 +1,14 @@
 package com.teamtime.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 public class AddTeamMemberRequest {
 
+    @NotNull(message = "Kullanıcı seçilmelidir")
     private Long userId;
 
+    @NotBlank(message = "Rol seçilmelidir")
     private String role;
 
     public AddTeamMemberRequest() {

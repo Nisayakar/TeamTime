@@ -29,13 +29,13 @@ public class TeamMemberService {
 
     public TeamMemberResponse addMember(Long teamId, AddTeamMemberRequest request) {
         Team team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new RuntimeException("Team not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Takım bulunamadı."));
 
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Kullanıcı bulunamadı."));
 
         if (teamMemberRepository.findByTeamIdAndUserId(teamId, request.getUserId()).isPresent()) {
-            throw new RuntimeException("User is already in this team");
+            throw new IllegalArgumentException("Bu kullanıcı zaten takımda.");
         }
 
         TeamMember teamMember = new TeamMember();

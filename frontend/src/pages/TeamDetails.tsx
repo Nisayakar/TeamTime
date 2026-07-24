@@ -19,12 +19,20 @@ type TeamMember = {
     joinedDate: string;
 }
 
+type UserSearchResult = {
+    id: number;
+    name: string;
+    surname: string;
+}
+
 function TeamDetails() {
     const { id } = useParams();
 
     const [team, setTeam] = useState<Team | null>(null);
     const [members, setMembers] = useState<TeamMember[]>([]);
-    const [userId, setUserId] = useState("");
+    const [userSearch, setUserSearch] = useState("");
+    const [userResults, setUserResults] = useState<UserSearchResult[]>([]);
+    const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
     const [role, setRole] = useState("MEMBER");
     const [message, setMessage] = useState("");
 
@@ -33,12 +41,73 @@ function TeamDetails() {
         getMembers();
     }, [id]);
 
+    useEffect(() => {
+        const query = userSearch.trim();
+
+        if (query === "" || selectedUser) {
+            setUserResults([]);
+            return;
+        }
+
+        const timeoutId = window.setTimeout(() => {
+            apiFetch(`/users/search?query=${encodeURIComponent(query)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error();
+                    }
+
+                    return response.json();
+                })
+                .then(data => {
+                    setUserResults(Array.isArray(data) ? data.slice(0, 10) : []);
+                })
+                .catch(() => {
+                    setUserResults([]);
+                });
+        }, 250);
+
+        return () => {
+            window.clearTimeout(timeoutId);
+        };
+    }, [userSearch, selectedUser]);
+
     function showMessage(text: string) {
         setMessage(text);
 
         setTimeout(() => {
             setMessage("");
         }, 3000);
+    }
+
+    async function readErrorMessage(response: Response) {
+        const contentType = response.headers.get("Content-Type") || "";
+
+        if (contentType.includes("application/json")) {
+            const data = await response.json();
+
+            if (data.errors) {
+                return Object.values(data.errors).join("\n");
+            }
+
+            return data.message || "Üye eklenemedi";
+        }
+
+        return await response.text();
+    }
+
+    function getFullName(user: UserSearchResult) {
+        return `${user.name} ${user.surname}`;
+    }
+
+    function handleUserSearchChange(value: string) {
+        setUserSearch(value);
+        setSelectedUser(null);
+    }
+
+    function selectUser(user: UserSearchResult) {
+        setSelectedUser(user);
+        setUserSearch(getFullName(user));
+        setUserResults([]);
     }
 
     function getTeam() {
@@ -75,21 +144,21 @@ function TeamDetails() {
     function addMember(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
-        if (userId.trim() === "") {
-            showMessage("Kullanıcı id boş olamaz");
+        if (!selectedUser) {
+            showMessage("Lütfen bir kullanıcı seçin");
             return;
         }
 
         apiFetch(`/teams/${id}/members`, {
             method: "POST",
             body: JSON.stringify({
-                userId: Number(userId),
+                userId: selectedUser.id,
                 role
             })
         })
             .then(response => {
                 if (!response.ok) {
-                    return response.text()
+                    return readErrorMessage(response)
                         .then(errorMessage => {
                             throw new Error(errorMessage);
                         });
@@ -99,7 +168,9 @@ function TeamDetails() {
             })
             .then(createdMember => {
                 setMembers([...members, createdMember]);
-                setUserId("");
+                setSelectedUser(null);
+                setUserSearch("");
+                setUserResults([]);
                 setRole("MEMBER");
                 showMessage("Üye takıma eklendi");
             })
@@ -136,21 +207,53 @@ function TeamDetails() {
                     </div>
 
                     <form className="stacked-form" onSubmit={addMember}>
-                        <label>Kullanıcı Id</label>
-                        <input
-                            type="number"
-                            value={userId}
-                            onChange={event => setUserId(event.target.value)}
-                            required
-                        />
+                        <div className="autocomplete-field">
+                            <label>Kullanıcı Ara</label>
+                            <input
+                                type="text"
+                                value={userSearch}
+                                onChange={event => handleUserSearchChange(event.target.value)}
+                                autoComplete="off"
+                                required
+                            />
+
+                            {
+                                userResults.length > 0 && (
+                                    <div className="autocomplete-list">
+                                        {
+                                            userResults.map(user => (
+                                                <button
+                                                    className="autocomplete-option"
+                                                    key={user.id}
+                                                    type="button"
+                                                    onClick={() => selectUser(user)}
+                                                >
+                                                    {getFullName(user)}
+                                                </button>
+                                            ))
+                                        }
+                                    </div>
+                                )
+                            }
+
+                            {
+                                selectedUser && (
+                                    <p className="selected-user">
+                                        {getFullName(selectedUser)}
+                                    </p>
+                                )
+                            }
+                        </div>
 
                         <label>Rol</label>
-                        <input
-                            type="text"
+                        <select
                             value={role}
                             onChange={event => setRole(event.target.value)}
                             required
-                        />
+                        >
+                            <option value="MEMBER">Üye</option>
+                            <option value="ADMIN">Yönetici</option>
+                        </select>
 
                         <button className="button button-primary button-full" type="submit">Üye Ekle</button>
                     </form>
