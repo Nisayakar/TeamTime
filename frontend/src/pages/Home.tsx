@@ -294,7 +294,8 @@ function Home() {
                 <div className="template-container">
                     <div className="template-footer-top">
                         <Link className="template-footer-logo" to="/">
-                            <img src="/teamtime-logo.svg" alt="TeamTime" />
+                            <img src="/home/teamtime-symbol.png" alt="" aria-hidden="true" />
+                            <span>TeamTime</span>
                         </Link>
                         <div className="template-newsletter">
                             <input aria-label="E-posta adresi" placeholder="E-posta adresinizi girin" readOnly />

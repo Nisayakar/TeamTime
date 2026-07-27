@@ -185,6 +185,11 @@ body:has(.template-home) .app-navbar {
     justify-content: flex-end;
 }
 
+.template-header-login a {
+    font-weight: 700;
+    text-shadow: 0 10px 28px rgba(0, 0, 0, 0.42);
+}
+
 .template-menu-button {
     display: none;
     width: 48px;
@@ -312,11 +317,13 @@ body:has(.template-home) .app-navbar {
     color: #f8fafc;
 }
 
-.video-primary-cta:visited {
+.template-home .video-primary-cta,
+.template-home .video-primary-cta:visited {
     color: #ffffff;
 }
 
-.video-secondary-cta:visited {
+.template-home .video-secondary-cta,
+.template-home .video-secondary-cta:visited {
     color: #f8fafc;
 }
 
@@ -339,9 +346,23 @@ body:has(.template-home) .app-navbar {
 
 .template-footer-logo {
     display: inline-flex;
+    align-items: center;
+    gap: 12px;
     overflow: hidden;
-    border-radius: 12px;
-    background: #ffffff;
+    color: #ffffff;
+}
+
+.template-footer-logo img {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+}
+
+.template-footer-logo span {
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1;
 }
 
 .video-primary-cta:active,
@@ -429,6 +450,22 @@ body:has(.template-home) .app-navbar {
     font-weight: 500;
     text-align: center;
     transition: ease-in all 0.5s;
+}
+
+.template-home .template-read-more,
+.template-home .template-read-more:visited,
+.template-home .template-small-button,
+.template-home .template-small-button:visited,
+.template-home .template-send-button,
+.template-home .template-send-button:visited,
+.template-home .template-newsletter a,
+.template-home .template-newsletter a:visited {
+    color: #ffffff;
+}
+
+.template-home .template-choose-button,
+.template-home .template-choose-button:visited {
+    color: #111827;
 }
 
 .template-slide-actions .template-read-more {
@@ -594,7 +631,8 @@ body:has(.template-home) .app-navbar {
     max-width: 131px;
     min-height: 41px;
     margin-left: auto;
-    background: #464646;
+    background: linear-gradient(135deg, #2563eb 0%, #111827 100%);
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.18);
     font-size: 15px;
 }
 
