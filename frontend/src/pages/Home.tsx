@@ -9,54 +9,60 @@ const features = [
         category: "Görev Akışı",
         description:
             "Görevleri oluşturun, sorumluları belirleyin ve çalışma durumlarını takip edin.",
-        image: "/home/feature/6.png",
+        image: "/home/features/6.png",
         alt:
             "Planlanan, devam eden ve tamamlanan görevlerin yönetildiği görev panosu",
+        tags: ["Atama", "Durum", "Son tarih"],
     },
     {
         title: "Proje Takibi",
         category: "Proje Kontrolü",
         description:
             "Proje tarihlerini, aşamalarını ve ilerleme durumunu tek alanda görüntüleyin.",
-        image: "/home/feature/4.png",
+        image: "/home/features/4.png",
         alt:
             "Proje aşamalarını ve zaman çizelgesini gösteren proje takip ekranı",
+        tags: ["Aşamalar", "Tarihler", "İlerleme"],
     },
     {
         title: "Ekip Koordinasyonu",
         category: "Ortak Çalışma",
         description:
             "Ekip üyelerinin aynı çalışma alanında koordineli biçimde ilerlemesini sağlayın.",
-        image: "/home/feature/2.png",
+        image: "/home/features/2.png",
         alt:
             "Ortak masa etrafında koordineli çalışan ekip üyeleri",
+        tags: ["Ortak alan", "Sorumluluk", "İş birliği"],
     },
     {
         title: "Takım Yönetimi",
         category: "Takım Yapısı",
         description:
             "Takımları oluşturun, düzenleyin ve ilgili projelerle ilişkilendirin.",
-        image: "/home/feature/3.png",
+        image: "/home/features/3.png",
         alt:
             "Birden fazla ekip grubunun merkezi alandan yönetildiği takım yönetimi ekranı",
+        tags: ["Takım oluşturma", "Düzenleme", "Proje bağlantısı"],
     },
     {
         title: "Üye ve Rol Yönetimi",
         category: "Yetki Dağılımı",
         description:
             "Takım üyelerini ekleyin ve proje içindeki yetki ve sorumluluklarını belirleyin.",
-        image: "/home/feature/1.png",
+        image: "/home/features/1.png",
         alt:
             "Üyelere rollerin ve yetkilerin atandığı rol yönetimi ekranı",
+        tags: ["Üye ekleme", "Rol", "Yetki"],
     },
     {
         title: "İlerleme Görünürlüğü",
         category: "Durum Özeti",
         description:
             "Tamamlanan, devam eden ve bekleyen işleri tek bakışta ayırt edin.",
-        image: "/home/feature/5.png",
+        image: "/home/features/5.png",
         alt:
             "Projelerin ilerleme oranlarını gösteren görsel durum özeti",
+        tags: ["Tamamlanan", "Devam eden", "Bekleyen"],
     },
 ];
 
@@ -172,11 +178,11 @@ function Home() {
 
             const repeat = () => {
                 moveFeatureDeck(direction);
-                featureHoverRepeatRef.current = window.setTimeout(repeat, 280);
+                featureHoverRepeatRef.current = window.setTimeout(repeat, 340);
             };
 
-            featureHoverRepeatRef.current = window.setTimeout(repeat, 280);
-        }, 90);
+            featureHoverRepeatRef.current = window.setTimeout(repeat, 340);
+        }, 120);
     }
 
     function getFeatureDeckPosition(index: number) {
@@ -220,9 +226,7 @@ function Home() {
         <main className="template-home">
             {loading && (
                 <div className="template-loader" role="status" aria-label="Sayfa yükleniyor">
-                    <div>
-                        <img src="/hightech/loading.gif" alt="" />
-                    </div>
+                    <div aria-hidden="true" />
                 </div>
             )}
 
@@ -262,17 +266,18 @@ function Home() {
                 className="video-hero"
                 aria-labelledby="video-hero-title"
             >
-                <video
-                    className="video-hero-media"
-                    src="/media/teamtime-hero.mp4"
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    aria-hidden="true"
-                    tabIndex={-1}
-                />
-                <div className="video-hero-overlay" aria-hidden="true" />
+                <div className="video-hero-media" aria-hidden="true">
+                    <video
+                        className="video-hero-video"
+                        src="/media/teamtime-hero.mp4"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        tabIndex={-1}
+                    />
+                    <div className="video-hero-overlay" />
+                </div>
 
                 <div className="template-container video-hero-inner">
                     <div className="video-hero-copy">
@@ -329,12 +334,22 @@ function Home() {
                                                     </figure>
                                                     <h3>{feature.title}</h3>
                                                     <p>{feature.description}</p>
+                                                    <ul className="template-feature-tags" aria-label={`${feature.title} detayları`}>
+                                                        {feature.tags.map((tag) => (
+                                                            <li key={tag}>{tag}</li>
+                                                        ))}
+                                                    </ul>
                                                     <div className="template-feature-accent" aria-hidden="true" />
                                                 </div>
                                             </>
                                         ) : (
                                             <div className="template-feature-final">
-                                                <span className="template-feature-label">TeamTime</span>
+                                                <span className="template-feature-label">TEAMTIME</span>
+                                                <div className="template-feature-cta-mark" aria-hidden="true">
+                                                    <i />
+                                                    <i />
+                                                    <i />
+                                                </div>
                                                 <h3>{feature.title}</h3>
                                                 <p>{feature.description}</p>
                                                 <Link className="template-feature-button" to="/register">Ücretsiz Başla</Link>
@@ -359,16 +374,34 @@ function Home() {
                             </div>
 
                             <div className="template-contact-info">
-                                <h3>Doğrudan E-posta</h3>
+                                <span>TEAMTIME</span>
+                                <h3>Doğrudan iletişim</h3>
                                 <p>
-                                    En hızlı yanıt için bize doğrudan yazın. Ekibimiz en kısa
-                                    sürede geri dönüş yapacaktır.
+                                    TeamTime ile ilgili soru, öneri ve iş birliği mesajlarınızı doğrudan
+                                    e-posta üzerinden de iletebilirsiniz.
                                 </p>
                                 <a className="template-mail-link" href={`mailto:${contactEmail}`}>
                                     <span aria-hidden="true">➤</span>
                                     {contactEmail}
                                     <span aria-hidden="true">→</span>
                                 </a>
+                                <dl className="template-contact-details">
+                                    <div>
+                                        <dt>Yanıt süresi</dt>
+                                        <dd>Genellikle 1–2 iş günü</dd>
+                                    </div>
+                                    <div>
+                                        <dt>Konular</dt>
+                                        <dd>Destek · Öneri · İş birliği</dd>
+                                    </div>
+                                    <div>
+                                        <dt>İletişim</dt>
+                                        <dd>{contactEmail}</dd>
+                                    </div>
+                                </dl>
+                                <p className="template-contact-privacy">
+                                    Paylaştığınız bilgiler yalnızca size geri dönüş yapmak amacıyla kullanılır.
+                                </p>
                             </div>
                         </div>
 
