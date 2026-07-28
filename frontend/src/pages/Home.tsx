@@ -372,37 +372,6 @@ function Home() {
                                 <h2>Bizimle İletişime Geçin</h2>
                                 <p>TeamTime hakkında sorularınızı, görüşlerinizi ve önerilerinizi bizimle paylaşın.</p>
                             </div>
-
-                            <div className="template-contact-info">
-                                <span>TEAMTIME</span>
-                                <h3>Doğrudan iletişim</h3>
-                                <p>
-                                    TeamTime ile ilgili soru, öneri ve iş birliği mesajlarınızı doğrudan
-                                    e-posta üzerinden de iletebilirsiniz.
-                                </p>
-                                <a className="template-mail-link" href={`mailto:${contactEmail}`}>
-                                    <span aria-hidden="true">➤</span>
-                                    {contactEmail}
-                                    <span aria-hidden="true">→</span>
-                                </a>
-                                <dl className="template-contact-details">
-                                    <div>
-                                        <dt>Yanıt süresi</dt>
-                                        <dd>Genellikle 1–2 iş günü</dd>
-                                    </div>
-                                    <div>
-                                        <dt>Konular</dt>
-                                        <dd>Destek · Öneri · İş birliği</dd>
-                                    </div>
-                                    <div>
-                                        <dt>İletişim</dt>
-                                        <dd>{contactEmail}</dd>
-                                    </div>
-                                </dl>
-                                <p className="template-contact-privacy">
-                                    Paylaştığınız bilgiler yalnızca size geri dönüş yapmak amacıyla kullanılır.
-                                </p>
-                            </div>
                         </div>
 
                         <form className="template-contact-form" onSubmit={submitContactForm}>
