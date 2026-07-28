@@ -437,6 +437,11 @@ body:has(.template-home) .app-navbar {
     isolation: isolate;
 }
 
+.template-feature-carousel:focus-visible {
+    outline: 3px solid rgba(12, 29, 54, 0.32);
+    outline-offset: -8px;
+}
+
 .template-feature-carousel::before {
     content: none;
 }
@@ -602,6 +607,56 @@ body:has(.template-home) .app-navbar {
 
 .template-feature-card[data-deck-position="0"] {
     filter: none;
+}
+
+.template-feature-card[data-deck-position="-1"] .template-feature-label,
+.template-feature-card[data-deck-position="1"] .template-feature-label,
+.template-feature-card[data-deck-position="-1"] p,
+.template-feature-card[data-deck-position="1"] p,
+.template-feature-card[data-deck-position="-1"] .template-feature-tags,
+.template-feature-card[data-deck-position="1"] .template-feature-tags,
+.template-feature-card[data-deck-position="-1"] .template-feature-accent,
+.template-feature-card[data-deck-position="1"] .template-feature-accent,
+.template-feature-card[data-deck-position="-1"] .template-feature-button,
+.template-feature-card[data-deck-position="1"] .template-feature-button {
+    display: none;
+}
+
+.template-feature-card[data-deck-position="-1"] h3,
+.template-feature-card[data-deck-position="1"] h3 {
+    margin-top: 20px;
+    font-size: clamp(24px, 1.7vw, 30px);
+}
+
+.template-feature-card[data-deck-position="-2"] .template-feature-label,
+.template-feature-card[data-deck-position="2"] .template-feature-label,
+.template-feature-card[data-deck-position="hidden-left"] .template-feature-label,
+.template-feature-card[data-deck-position="hidden-right"] .template-feature-label,
+.template-feature-card[data-deck-position="-2"] .template-feature-media,
+.template-feature-card[data-deck-position="2"] .template-feature-media,
+.template-feature-card[data-deck-position="hidden-left"] .template-feature-media,
+.template-feature-card[data-deck-position="hidden-right"] .template-feature-media,
+.template-feature-card[data-deck-position="-2"] h3,
+.template-feature-card[data-deck-position="2"] h3,
+.template-feature-card[data-deck-position="hidden-left"] h3,
+.template-feature-card[data-deck-position="hidden-right"] h3,
+.template-feature-card[data-deck-position="-2"] p,
+.template-feature-card[data-deck-position="2"] p,
+.template-feature-card[data-deck-position="hidden-left"] p,
+.template-feature-card[data-deck-position="hidden-right"] p,
+.template-feature-card[data-deck-position="-2"] .template-feature-tags,
+.template-feature-card[data-deck-position="2"] .template-feature-tags,
+.template-feature-card[data-deck-position="hidden-left"] .template-feature-tags,
+.template-feature-card[data-deck-position="hidden-right"] .template-feature-tags,
+.template-feature-card[data-deck-position="-2"] .template-feature-accent,
+.template-feature-card[data-deck-position="2"] .template-feature-accent,
+.template-feature-card[data-deck-position="hidden-left"] .template-feature-accent,
+.template-feature-card[data-deck-position="hidden-right"] .template-feature-accent,
+.template-feature-card[data-deck-position="-2"] .template-feature-button,
+.template-feature-card[data-deck-position="2"] .template-feature-button,
+.template-feature-card[data-deck-position="hidden-left"] .template-feature-button,
+.template-feature-card[data-deck-position="hidden-right"] .template-feature-button {
+    display: none;
 }
 
 .template-feature-card:hover,
@@ -807,6 +862,43 @@ body:has(.template-home) .app-navbar {
 .template-feature-button:focus-visible {
     outline: 3px solid rgba(20, 184, 166, 0.38);
     outline-offset: 4px;
+}
+
+.template-feature-hint {
+    display: none;
+    margin: -18px 0 0;
+    color: rgba(12, 29, 54, 0.58);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.template-feature-hint.is-hidden {
+    visibility: hidden;
+}
+
+.template-feature-progress {
+    display: none;
+    margin-top: 12px;
+    color: rgba(12, 29, 54, 0.66);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    line-height: 1;
+    text-align: center;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .template-feature-hint {
+        display: block;
+    }
+}
+
+@media (hover: none), (pointer: coarse) {
+    .template-feature-progress {
+        display: block;
+    }
 }
 
 .template-contact {

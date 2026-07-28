@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type PointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent, type PointerEvent } from "react";
 import { useForm } from "@formspree/react";
 import { Link } from "react-router-dom";
 import "./Home.css";
@@ -83,6 +83,7 @@ function Home() {
     const [menuOpen, setMenuOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [activeFeatureIndex, setActiveFeatureIndex] = useState(0);
+    const [hasFeatureDeckChanged, setHasFeatureDeckChanged] = useState(false);
     const [contactFields, setContactFields] = useState({
         name: "",
         email: "",
@@ -92,6 +93,7 @@ function Home() {
     const activeFeatureIndexRef = useRef(0);
     const featureHoverDelayRef = useRef<number | null>(null);
     const featureHoverRepeatRef = useRef<number | null>(null);
+    const featureHoverLockedRef = useRef(false);
     const featureTouchStartXRef = useRef<number | null>(null);
     const featureItems = useMemo(() => featureDeckItems, []);
     const contactEmail = import.meta.env.VITE_CONTACT_EMAIL;
@@ -159,30 +161,48 @@ function Home() {
 
         if (next === current) {
             clearFeatureDeckTimers();
-            return;
+            return false;
         }
 
         activeFeatureIndexRef.current = next;
         setActiveFeatureIndex(next);
+        setHasFeatureDeckChanged(true);
+        return true;
     }
 
     function startFeatureDeckHover(direction: "left" | "right") {
-        if (!canUseFeatureDeckHover()) {
+        if (!canUseFeatureDeckHover() || featureHoverLockedRef.current) {
             return;
         }
 
         clearFeatureDeckTimers();
 
         featureHoverDelayRef.current = window.setTimeout(() => {
-            moveFeatureDeck(direction);
+            const moved = moveFeatureDeck(direction);
 
-            const repeat = () => {
-                moveFeatureDeck(direction);
-                featureHoverRepeatRef.current = window.setTimeout(repeat, 340);
-            };
+            if (moved) {
+                featureHoverLockedRef.current = true;
+            }
 
-            featureHoverRepeatRef.current = window.setTimeout(repeat, 340);
+            featureHoverDelayRef.current = null;
         }, 120);
+    }
+
+    function resetFeatureDeckHover() {
+        featureHoverLockedRef.current = false;
+        clearFeatureDeckTimers();
+    }
+
+    function handleFeatureDeckKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+        if (event.key === "ArrowLeft") {
+            event.preventDefault();
+            moveFeatureDeck("left");
+        }
+
+        if (event.key === "ArrowRight") {
+            event.preventDefault();
+            moveFeatureDeck("right");
+        }
     }
 
     function getFeatureDeckPosition(index: number) {
@@ -300,9 +320,12 @@ function Home() {
                         onPointerUp={handleFeatureDeckPointerUp}
                         onPointerCancel={() => {
                             featureTouchStartXRef.current = null;
-                            clearFeatureDeckTimers();
+                            resetFeatureDeckHover();
                         }}
-                        onPointerLeave={clearFeatureDeckTimers}
+                        onPointerLeave={resetFeatureDeckHover}
+                        onKeyDown={handleFeatureDeckKeyDown}
+                        tabIndex={0}
+                        aria-label="Özellik kartları. Sağ ve sol ok tuşlarıyla kartlar arasında gezinin."
                     >
                         <div className="template-feature-viewport">
                             <div className="template-feature-grid">
@@ -322,7 +345,7 @@ function Home() {
                                                 clearFeatureDeckTimers();
                                             }
                                         }}
-                                        onPointerLeave={clearFeatureDeckTimers}
+                                        onPointerLeave={resetFeatureDeckHover}
                                     >
                                         {feature.type === "feature" ? (
                                             <>
@@ -354,6 +377,12 @@ function Home() {
                                 ))}
                             </div>
                         </div>
+                    </div>
+                    <p className={`template-feature-hint ${hasFeatureDeckChanged ? "is-hidden" : ""}`}>
+                        Yan kartların üzerine gelerek özellikleri keşfedin.
+                    </p>
+                    <div className="template-feature-progress" aria-live="polite">
+                        {String(activeFeatureIndex + 1).padStart(2, "0")} / {String(featureItems.length).padStart(2, "0")}
                     </div>
                 </div>
             </section>
