@@ -388,6 +388,17 @@ function Home() {
             </section>
 
             <section id="contact" className="template-contact">
+                <div className="template-contact-video" aria-hidden="true">
+                    <video
+                        src="/media/13729409_1920_1080_60fps.mp4"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        preload="metadata"
+                        tabIndex={-1}
+                    />
+                </div>
                 <div className="template-container">
                     <div className="template-contact-grid">
                         <div className="template-contact-copy">
