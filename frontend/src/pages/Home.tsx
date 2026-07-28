@@ -345,11 +345,6 @@ function Home() {
                                         ) : (
                                             <div className="template-feature-final">
                                                 <span className="template-feature-label">TEAMTIME</span>
-                                                <div className="template-feature-cta-mark" aria-hidden="true">
-                                                    <i />
-                                                    <i />
-                                                    <i />
-                                                </div>
                                                 <h3>{feature.title}</h3>
                                                 <p>{feature.description}</p>
                                                 <Link className="template-feature-button" to="/register">Ücretsiz Başla</Link>
