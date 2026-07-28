@@ -1,6 +1,7 @@
 .template-home {
     --home-bg: #050711;
     --home-bg-soft: #0b1020;
+    --home-mist-bg: #15181e;
     --home-surface: #fbfbfd;
     --home-surface-muted: #f2f4f8;
     --home-surface-strong: #ffffff;
@@ -421,7 +422,7 @@ body:has(.template-home) .app-navbar {
     overflow: hidden;
     margin-top: 0;
     padding: 24px 0 36px;
-    background: #f6f7fb;
+    background: var(--home-mist-bg);
 }
 
 .template-feature-shell {
@@ -465,7 +466,7 @@ body:has(.template-home) .app-navbar {
 }
 
 .template-feature-card {
-    --feature-accent: #0c1d36;
+    --feature-accent: #22252c;
     position: absolute;
     top: 50%;
     left: 50%;
@@ -477,11 +478,11 @@ body:has(.template-home) .app-navbar {
     justify-content: center;
     overflow: hidden;
     padding: clamp(24px, 3vh, 34px) 24px;
-    border: 3px solid #0c1d36;
+    border: 3px solid #2a2d34;
     border-radius: 24px;
     background:
-        radial-gradient(circle at 18% 10%, rgba(255, 255, 255, 0.08), transparent 38%),
-        linear-gradient(180deg, #0c1d36 0%, #0a192f 100%);
+        radial-gradient(circle at 18% 10%, rgba(255, 255, 255, 0.075), transparent 38%),
+        linear-gradient(180deg, #191c22 0%, #0d1015 100%);
     box-shadow:
         var(--home-shadow),
         inset 0 0 0 1px rgba(12, 29, 54, 0.04);
@@ -510,27 +511,27 @@ body:has(.template-home) .app-navbar {
 }
 
 .template-feature-card[data-feature-accent="1"] {
-    --feature-accent: #0c1d36;
+    --feature-accent: #22252c;
 }
 
 .template-feature-card[data-feature-accent="2"] {
-    --feature-accent: #0c1d36;
+    --feature-accent: #22252c;
 }
 
 .template-feature-card[data-feature-accent="3"] {
-    --feature-accent: #0c1d36;
+    --feature-accent: #22252c;
 }
 
 .template-feature-card[data-feature-accent="4"] {
-    --feature-accent: #0c1d36;
+    --feature-accent: #22252c;
 }
 
 .template-feature-card[data-feature-accent="5"] {
-    --feature-accent: #0c1d36;
+    --feature-accent: #22252c;
 }
 
 .template-feature-card[data-feature-accent="6"] {
-    --feature-accent: #0c1d36;
+    --feature-accent: #22252c;
 }
 
 .template-feature-card::before {
@@ -662,7 +663,7 @@ body:has(.template-home) .app-navbar {
 .template-feature-card:hover,
 .template-feature-card:focus-within,
 .template-feature-card:focus-visible {
-    border-color: #0c1d36;
+    border-color: #343840;
 }
 
 .template-feature-card[data-deck-position="0"]:hover,
@@ -805,11 +806,11 @@ body:has(.template-home) .app-navbar {
 }
 
 .template-feature-card-cta {
-    --feature-accent: #0c1d36;
+    --feature-accent: #22252c;
     gap: 0;
     background:
         radial-gradient(circle at 50% 16%, rgba(255, 255, 255, 0.1), transparent 38%),
-        linear-gradient(180deg, #0c1d36 0%, #0a192f 100%);
+        linear-gradient(180deg, #191c22 0%, #0d1015 100%);
 }
 
 .template-feature-card-cta .template-feature-final {
@@ -874,7 +875,7 @@ body:has(.template-home) .app-navbar {
 .template-feature-hint {
     display: none;
     margin: -18px 0 0;
-    color: rgba(12, 29, 54, 0.58);
+    color: rgba(248, 250, 252, 0.64);
     font-size: 13px;
     font-weight: 600;
     line-height: 1.4;
@@ -888,7 +889,7 @@ body:has(.template-home) .app-navbar {
 .template-feature-progress {
     display: none;
     margin-top: 12px;
-    color: rgba(12, 29, 54, 0.66);
+    color: rgba(248, 250, 252, 0.7);
     font-size: 12px;
     font-weight: 800;
     letter-spacing: 0.12em;
@@ -916,7 +917,7 @@ body:has(.template-home) .app-navbar {
     overflow: hidden;
     margin-top: 0;
     padding: clamp(80px, 8vw, 116px) 0;
-    background: #f6f7fb;
+    background: var(--home-mist-bg);
     color: var(--home-text);
 }
 
@@ -1026,11 +1027,12 @@ body:has(.template-home) .app-navbar {
     flex-direction: column;
     justify-content: center;
     gap: 20px;
-    padding: clamp(10px, 2vw, 18px) 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
+    margin-top: clamp(84px, 8vw, 132px);
+    padding: clamp(30px, 3vw, 42px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 24px;
+    background: rgba(10, 12, 16, 0.86);
+    box-shadow: 0 26px 58px rgba(0, 0, 0, 0.28);
 }
 
 .template-contact-form-fields {
@@ -1050,7 +1052,7 @@ body:has(.template-home) .app-navbar {
 }
 
 .template-field label {
-    color: #778196;
+    color: rgba(248, 250, 252, 0.72);
     font-size: 15px;
     font-weight: 600;
     line-height: 1.2;
@@ -1115,7 +1117,7 @@ body:has(.template-home) .app-navbar {
 .template-contact-actions p {
     max-width: 250px;
     margin: 0;
-    color: var(--home-text-soft);
+    color: rgba(248, 250, 252, 0.72);
     font-size: 12px;
     font-weight: 700;
     line-height: 1.45;
@@ -1188,7 +1190,7 @@ body:has(.template-home) .app-navbar {
 
 .template-contact-feedback p {
     margin: 0;
-    color: var(--home-text);
+    color: rgba(248, 250, 252, 0.84);
     font-size: 13px;
     font-weight: 700;
     line-height: 1.5;
@@ -1207,7 +1209,7 @@ body:has(.template-home) .app-navbar {
     overflow: hidden;
     margin-top: 0;
     padding-top: 64px;
-    background: #f6f7fb;
+    background: var(--home-mist-bg);
     border-top: 0;
 }
 
@@ -1228,7 +1230,7 @@ body:has(.template-home) .app-navbar {
 
 .template-footer h3 {
     margin: 26px 0 15px;
-    color: var(--home-text);
+    color: #f8fafc;
     font-size: 22px;
     font-weight: 760;
     line-height: 21px;
@@ -1242,20 +1244,20 @@ body:has(.template-home) .app-navbar {
 
 .template-footer li,
 .template-footer li a {
-    color: var(--home-text-soft);
+    color: rgba(248, 250, 252, 0.68);
     font-size: 16px;
     line-height: 37px;
 }
 
 .template-footer li a:hover {
-    color: #0c1d36;
+    color: #f2a3b4;
 }
 
 .template-copyright {
     margin-top: 58px;
     padding: 20px 0;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
-    background: #0c1d36;
+    background: var(--home-mist-bg);
 }
 
 .template-copyright p {
@@ -1468,6 +1470,10 @@ body:has(.template-home) .app-navbar {
         background:
             radial-gradient(ellipse at 16% 0%, rgba(25, 211, 223, 0.12), transparent 42%),
             var(--contact-navy);
+    }
+
+    .template-contact-form {
+        margin-top: 0;
     }
 
     .video-hero {
