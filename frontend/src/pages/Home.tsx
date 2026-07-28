@@ -1,89 +1,108 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type PointerEvent } from "react";
+import { useForm } from "@formspree/react";
 import { Link } from "react-router-dom";
 import "./Home.css";
 
-const featureSlides = [
-    [
-        {
-            image: "/hightech/we1.png",
-            title: "Görev Yönetimi",
-            text: "Görevleri oluştur, durumlarını takip et ve ekip içinde sorumlulukları görünür yap.",
-        },
-        {
-            image: "/hightech/we2.png",
-            title: "Proje Takibi",
-            text: "Proje başlangıç ve bitiş tarihlerini, açıklamaları ve ilerleme akışını düzenli tut.",
-        },
-        {
-            image: "/hightech/we3.png",
-            title: "Ekip Koordinasyonu",
-            text: "Takımları ve üyeleri aynı çalışma alanında buluştur.",
-        },
-    ],
-    [
-        {
-            image: "/hightech/we2.png",
-            title: "İlerleme Görünürlüğü",
-            text: "Bekleyen, devam eden ve tamamlanan işleri tek bakışta ayırt et.",
-        },
-        {
-            image: "/hightech/we1.png",
-            title: "Kişisel Dashboard",
-            text: "Son görevler ve son projelerle çalışma ritmini hızlıca yakala.",
-        },
-        {
-            image: "/hightech/we3.png",
-            title: "Takım Alanları",
-            text: "Ortak projelerde ekip bilgisini ve üyelikleri daha düzenli yönet.",
-        },
-    ],
-];
-
-const showcaseItems = [
+const features = [
     {
-        image: "/hightech/prot1.png",
-        title: "Proje Panosu",
-        text: "Projelerin, açıklamaların ve tarih aralıklarının düzenli görünümü.",
+        title: "Görev Yönetimi",
+        category: "Görev Akışı",
+        description:
+            "Görevleri oluşturun, sorumluları belirleyin ve çalışma durumlarını takip edin.",
+        image: "/home/feature/6.png",
+        alt:
+            "Planlanan, devam eden ve tamamlanan görevlerin yönetildiği görev panosu",
     },
     {
-        image: "/hightech/prot2.png",
-        title: "Görev Akışı",
-        text: "Her proje içindeki görevleri durumlarına göre takip etme deneyimi.",
+        title: "Proje Takibi",
+        category: "Proje Kontrolü",
+        description:
+            "Proje tarihlerini, aşamalarını ve ilerleme durumunu tek alanda görüntüleyin.",
+        image: "/home/feature/4.png",
+        alt:
+            "Proje aşamalarını ve zaman çizelgesini gösteren proje takip ekranı",
     },
     {
-        image: "/hightech/prot3.png",
+        title: "Ekip Koordinasyonu",
+        category: "Ortak Çalışma",
+        description:
+            "Ekip üyelerinin aynı çalışma alanında koordineli biçimde ilerlemesini sağlayın.",
+        image: "/home/feature/2.png",
+        alt:
+            "Ortak masa etrafında koordineli çalışan ekip üyeleri",
+    },
+    {
         title: "Takım Yönetimi",
-        text: "Takım oluşturma, düzenleme ve üye ekleme akışları.",
+        category: "Takım Yapısı",
+        description:
+            "Takımları oluşturun, düzenleyin ve ilgili projelerle ilişkilendirin.",
+        image: "/home/feature/3.png",
+        alt:
+            "Birden fazla ekip grubunun merkezi alandan yönetildiği takım yönetimi ekranı",
     },
     {
-        image: "/hightech/prot4.png",
-        title: "Profil ve Hesap",
-        text: "Kullanıcı bilgilerini güncel tutan sade hesap yönetimi.",
+        title: "Üye ve Rol Yönetimi",
+        category: "Yetki Dağılımı",
+        description:
+            "Takım üyelerini ekleyin ve proje içindeki yetki ve sorumluluklarını belirleyin.",
+        image: "/home/feature/1.png",
+        alt:
+            "Üyelere rollerin ve yetkilerin atandığı rol yönetimi ekranı",
+    },
+    {
+        title: "İlerleme Görünürlüğü",
+        category: "Durum Özeti",
+        description:
+            "Tamamlanan, devam eden ve bekleyen işleri tek bakışta ayırt edin.",
+        image: "/home/feature/5.png",
+        alt:
+            "Projelerin ilerleme oranlarını gösteren görsel durum özeti",
     },
 ];
 
-const benefits = [
+const featureDeckItems = [
+    ...features.map((feature) => ({
+        type: "feature" as const,
+        ...feature,
+    })),
     {
-        image: "/hightech/chose1.png",
-        title: "Net İş Akışı",
-        value: "Düzen",
-    },
-    {
-        image: "/hightech/chose2.png",
-        title: "Görünür Sorumluluk",
-        value: "Şeffaflık",
-    },
-    {
-        image: "/hightech/chose3.png",
-        title: "Takım Odağı",
-        value: "Uyum",
+        type: "cta" as const,
+        title: "Ekibinizle aynı çalışma alanında buluşun.",
+        description:
+            "Görevleri, projeleri ve ekip ilerlemesini tek bir ortak akışta yönetin.",
     },
 ];
 
 function Home() {
-    const [featureIndex, setFeatureIndex] = useState(0);
     const [menuOpen, setMenuOpen] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [activeFeatureIndex, setActiveFeatureIndex] = useState(0);
+    const [contactFields, setContactFields] = useState({
+        name: "",
+        email: "",
+        subject: "",
+        message: "",
+    });
+    const activeFeatureIndexRef = useRef(0);
+    const featureHoverDelayRef = useRef<number | null>(null);
+    const featureHoverRepeatRef = useRef<number | null>(null);
+    const featureTouchStartXRef = useRef<number | null>(null);
+    const featureItems = useMemo(() => featureDeckItems, []);
+    const contactEmail = import.meta.env.VITE_CONTACT_EMAIL;
+    const formspreeFormId = import.meta.env.VITE_FORMSPREE_FORM_ID;
+    const [contactState, submitContactForm] = useForm(formspreeFormId);
+
+    const clearFeatureDeckTimers = useCallback(() => {
+        if (featureHoverDelayRef.current !== null) {
+            window.clearTimeout(featureHoverDelayRef.current);
+            featureHoverDelayRef.current = null;
+        }
+
+        if (featureHoverRepeatRef.current !== null) {
+            window.clearTimeout(featureHoverRepeatRef.current);
+            featureHoverRepeatRef.current = null;
+        }
+    }, []);
 
     useEffect(() => {
         const timer = window.setTimeout(() => {
@@ -93,12 +112,108 @@ function Home() {
         return () => window.clearTimeout(timer);
     }, []);
 
-    function previousFeature() {
-        setFeatureIndex((current) => (current === 0 ? featureSlides.length - 1 : current - 1));
+    useEffect(() => clearFeatureDeckTimers, [clearFeatureDeckTimers]);
+
+    useEffect(() => {
+        activeFeatureIndexRef.current = activeFeatureIndex;
+    }, [activeFeatureIndex]);
+
+    useEffect(() => {
+        if (contactState.succeeded) {
+            setContactFields({
+                name: "",
+                email: "",
+                subject: "",
+                message: "",
+            });
+        }
+    }, [contactState.succeeded]);
+
+    function handleContactFieldChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+        const { name, value } = event.target;
+
+        setContactFields((current) => ({
+            ...current,
+            [name]: value,
+        }));
     }
 
-    function nextFeature() {
-        setFeatureIndex((current) => (current + 1) % featureSlides.length);
+    function canUseFeatureDeckHover() {
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+        const coarsePointer = window.matchMedia("(pointer: coarse)");
+
+        return !reducedMotion.matches && !coarsePointer.matches;
+    }
+
+    function moveFeatureDeck(direction: "left" | "right") {
+        const current = activeFeatureIndexRef.current;
+        const next = direction === "left"
+            ? Math.max(0, current - 1)
+            : Math.min(featureItems.length - 1, current + 1);
+
+        if (next === current) {
+            clearFeatureDeckTimers();
+            return;
+        }
+
+        activeFeatureIndexRef.current = next;
+        setActiveFeatureIndex(next);
+    }
+
+    function startFeatureDeckHover(direction: "left" | "right") {
+        if (!canUseFeatureDeckHover()) {
+            return;
+        }
+
+        clearFeatureDeckTimers();
+
+        featureHoverDelayRef.current = window.setTimeout(() => {
+            moveFeatureDeck(direction);
+
+            const repeat = () => {
+                moveFeatureDeck(direction);
+                featureHoverRepeatRef.current = window.setTimeout(repeat, 280);
+            };
+
+            featureHoverRepeatRef.current = window.setTimeout(repeat, 280);
+        }, 90);
+    }
+
+    function getFeatureDeckPosition(index: number) {
+        const position = index - activeFeatureIndex;
+
+        if (position < -2) {
+            return "hidden-left";
+        }
+
+        if (position > 2) {
+            return "hidden-right";
+        }
+
+        return String(position);
+    }
+
+    function handleFeatureDeckPointerDown(event: PointerEvent<HTMLDivElement>) {
+        if (!window.matchMedia("(pointer: coarse)").matches) {
+            return;
+        }
+
+        featureTouchStartXRef.current = event.clientX;
+    }
+
+    function handleFeatureDeckPointerUp(event: PointerEvent<HTMLDivElement>) {
+        if (featureTouchStartXRef.current === null) {
+            return;
+        }
+
+        const deltaX = event.clientX - featureTouchStartXRef.current;
+        featureTouchStartXRef.current = null;
+
+        if (Math.abs(deltaX) < 44) {
+            return;
+        }
+
+        moveFeatureDeck(deltaX > 0 ? "left" : "right");
     }
 
     return (
@@ -132,7 +247,6 @@ function Home() {
                         <ul id="template-nav-links" className={menuOpen ? "open" : ""}>
                             <li><a href="#top">Ana Sayfa</a></li>
                             <li><a href="#features">Özellikler</a></li>
-                            <li><a href="#how-it-works">Nasıl Çalışır</a></li>
                             <li><a href="#about">Hakkımızda</a></li>
                             <li><a href="#contact">İletişim</a></li>
                         </ul>
@@ -174,30 +288,63 @@ function Home() {
                 </div>
             </section>
 
-            <section id="features" className="template-we-do">
-                <div className="template-container">
-                    <div className="template-title centered">
-                        <h2>Özellikler</h2>
-                    </div>
-
-                    <div className="template-feature-carousel">
-                        <div className="template-feature-grid">
-                            {featureSlides[featureIndex].map((feature) => (
-                                <article className="template-feature-card" key={feature.title}>
-                                    <i><img src={feature.image} alt="" /></i>
-                                    <h3>{feature.title}</h3>
-                                    <p>{feature.text}</p>
-                                    <Link className="template-small-button" to="/register">Başla</Link>
-                                </article>
-                            ))}
+            <section id="features" className="template-we-do" aria-label="TeamTime özellikleri">
+                <div className="template-feature-shell">
+                    <div
+                        className="template-feature-carousel"
+                        onPointerDown={handleFeatureDeckPointerDown}
+                        onPointerUp={handleFeatureDeckPointerUp}
+                        onPointerCancel={() => {
+                            featureTouchStartXRef.current = null;
+                            clearFeatureDeckTimers();
+                        }}
+                        onPointerLeave={clearFeatureDeckTimers}
+                    >
+                        <div className="template-feature-viewport">
+                            <div className="template-feature-grid">
+                                {featureItems.map((feature, index) => (
+                                    <article
+                                        className={`template-feature-card ${feature.type === "cta" ? "template-feature-card-cta" : ""}`}
+                                        data-deck-position={getFeatureDeckPosition(index)}
+                                        data-feature-accent={index}
+                                        key={feature.title}
+                                        tabIndex={0}
+                                        onPointerEnter={() => {
+                                            if (index === activeFeatureIndex - 1) {
+                                                startFeatureDeckHover("left");
+                                            } else if (index === activeFeatureIndex + 1) {
+                                                startFeatureDeckHover("right");
+                                            } else {
+                                                clearFeatureDeckTimers();
+                                            }
+                                        }}
+                                        onPointerLeave={clearFeatureDeckTimers}
+                                    >
+                                        {feature.type === "feature" ? (
+                                            <>
+                                                <div className="template-feature-content">
+                                                    <span className="template-feature-index">{String(index + 1).padStart(2, "0")}</span>
+                                                    <span className="template-feature-label">{feature.category}</span>
+                                                    <figure className="template-feature-media">
+                                                        <img src={feature.image} alt={feature.alt} />
+                                                    </figure>
+                                                    <h3>{feature.title}</h3>
+                                                    <p>{feature.description}</p>
+                                                    <div className="template-feature-accent" aria-hidden="true" />
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="template-feature-final">
+                                                <span className="template-feature-label">TEAMTIME</span>
+                                                <h3>{feature.title}</h3>
+                                                <p>{feature.description}</p>
+                                                <Link className="template-feature-button" to="/register">Ücretsiz Başla</Link>
+                                            </div>
+                                        )}
+                                    </article>
+                                ))}
+                            </div>
                         </div>
-
-                        <button className="template-section-prev" type="button" onClick={previousFeature} aria-label="Önceki özellikler">
-                            ‹
-                        </button>
-                        <button className="template-section-next" type="button" onClick={nextFeature} aria-label="Sonraki özellikler">
-                            ›
-                        </button>
                     </div>
                 </div>
             </section>
@@ -215,77 +362,95 @@ function Home() {
                 </div>
             </section>
 
-            <section id="how-it-works" className="template-portfolio">
-                <div className="template-container">
-                    <div className="template-title left">
-                        <h2>Ürün Vitrini</h2>
-                    </div>
-
-                    <div className="template-portfolio-grid">
-                        {showcaseItems.map((item) => (
-                            <article className="template-portfolio-card" key={item.title}>
-                                <figure>
-                                    <img src={item.image} alt="" />
-                                    <figcaption>
-                                        <div className="template-portfolio-icons" aria-hidden="true">
-                                            <span>⌕</span>
-                                            <span>↗</span>
-                                        </div>
-                                        <h3>{item.title}</h3>
-                                        <p>{item.text}</p>
-                                    </figcaption>
-                                </figure>
-                            </article>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            <section className="template-choose">
-                <div className="template-container">
-                    <div className="template-title left light">
-                        <h2>Neden TeamTime?</h2>
-                    </div>
-
-                    <div className="template-benefit-grid">
-                        {benefits.map((benefit) => (
-                            <article className="template-benefit" key={benefit.title}>
-                                <i><img src={benefit.image} alt="" /></i>
-                                <h3>{benefit.title}</h3>
-                                <strong>{benefit.value}</strong>
-                                <Link className="template-choose-button" to="/register">Deneyin</Link>
-                            </article>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
             <section id="contact" className="template-contact">
-                <div className="template-container template-contact-grid">
-                    <div>
-                        <div className="template-title left">
-                            <h2>Başlamak İçin</h2>
-                        </div>
-                        <div className="template-contact-form">
-                            <input aria-label="Ad Soyad" placeholder="Ad Soyad" readOnly />
-                            <input aria-label="E-posta" placeholder="E-posta" readOnly />
-                            <textarea aria-label="Mesaj" placeholder="Projeniz hakkında kısa not" readOnly />
-                            <Link className="template-send-button" to="/register">Hemen Başla</Link>
-                        </div>
+                <div className="template-container">
+                    <div className="template-contact-heading">
+                        <span>İletişim</span>
+                        <h2>Bizimle İletişime Geçin</h2>
+                        <p>TeamTime hakkında sorularınızı, görüşlerinizi ve önerilerinizi bizimle paylaşın.</p>
                     </div>
 
-                    <div>
-                        <div className="template-title left">
-                            <h2>Örnek Kullanıcı Yorumu</h2>
-                        </div>
-                        <article className="template-testimonial">
-                            <i><img src="/hightech/clint.jpg" alt="" /></i>
-                            <h3>Örnek ekip üyesi <img src="/hightech/icon.png" alt="" /></h3>
+                    <div className="template-contact-grid">
+                        <form className="template-contact-form" onSubmit={submitContactForm}>
+                            <div className="template-field">
+                                <label htmlFor="contact-name">Ad Soyad</label>
+                                <input
+                                    id="contact-name"
+                                    name="name"
+                                    type="text"
+                                    value={contactFields.name}
+                                    onChange={handleContactFieldChange}
+                                    autoComplete="name"
+                                    required
+                                />
+                            </div>
+
+                            <div className="template-field">
+                                <label htmlFor="contact-email">E-posta</label>
+                                <input
+                                    id="contact-email"
+                                    name="email"
+                                    type="email"
+                                    value={contactFields.email}
+                                    onChange={handleContactFieldChange}
+                                    autoComplete="email"
+                                    required
+                                />
+                            </div>
+
+                            <div className="template-field">
+                                <label htmlFor="contact-subject">Konu</label>
+                                <input
+                                    id="contact-subject"
+                                    name="subject"
+                                    type="text"
+                                    value={contactFields.subject}
+                                    onChange={handleContactFieldChange}
+                                    required
+                                />
+                            </div>
+
+                            <div className="template-field">
+                                <label htmlFor="contact-message">Mesaj</label>
+                                <textarea
+                                    id="contact-message"
+                                    name="message"
+                                    value={contactFields.message}
+                                    onChange={handleContactFieldChange}
+                                    required
+                                />
+                            </div>
+
+                            <button className="template-send-button" type="submit" disabled={contactState.submitting}>
+                                {contactState.submitting ? "Gönderiliyor..." : "Mesaj Gönder"}
+                            </button>
+
+                            <div className="template-contact-feedback" aria-live="polite">
+                                {contactState.succeeded && (
+                                    <p className="success">Mesajınız başarıyla gönderildi. En kısa sürede size dönüş yapacağız.</p>
+                                )}
+                                {!contactState.succeeded && contactState.errors && (
+                                    <p className="error">Mesaj gönderilemedi. Lütfen tekrar deneyin veya doğrudan e-posta gönderin.</p>
+                                )}
+                            </div>
+                        </form>
+
+                        <div className="template-contact-info">
+                            <span>TeamTime</span>
+                            <h3>Doğrudan E-posta</h3>
                             <p>
-                                Bu alan örnek içeriktir. TeamTime gibi bir araç, ekiplerin görevleri
-                                daha düzenli takip etmesine ve proje akışını tek yerde görmesine yardımcı olur.
+                                TeamTime ile ilgili soru, öneri ve iş birliği mesajlarınızı
+                                doğrudan e-posta üzerinden de iletebilirsiniz.
                             </p>
-                        </article>
+                            <a className="template-mail-link" href={`mailto:${contactEmail}`}>
+                                {contactEmail}
+                            </a>
+                            <div className="template-contact-lines" aria-hidden="true">
+                                <i />
+                                <i />
+                                <i />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -297,10 +462,6 @@ function Home() {
                             <img src="/home/teamtime-symbol.png" alt="" aria-hidden="true" />
                             <span>TeamTime</span>
                         </Link>
-                        <div className="template-newsletter">
-                            <input aria-label="E-posta adresi" placeholder="E-posta adresinizi girin" readOnly />
-                            <Link to="/register">Kayıt Ol</Link>
-                        </div>
                     </div>
 
                     <div className="template-footer-grid">
@@ -309,7 +470,6 @@ function Home() {
                             <ul>
                                 <li><a href="#top">Ana Sayfa</a></li>
                                 <li><a href="#features">Özellikler</a></li>
-                                <li><a href="#how-it-works">Nasıl Çalışır</a></li>
                                 <li><a href="#contact">İletişim</a></li>
                             </ul>
                         </div>
@@ -332,9 +492,9 @@ function Home() {
                         <div>
                             <h3>İletişim</h3>
                             <ul>
-                                <li>TeamTime proje ekibi</li>
-                                <li>Web tabanlı çalışma alanı</li>
-                                <li>Öğrenci ve ekip projeleri</li>
+                                <li><a href={`mailto:${contactEmail}`}>{contactEmail}</a></li>
+                                <li>TeamTime destek ve iletişim</li>
+                                <li>Proje, görev ve ekip yönetimi</li>
                             </ul>
                         </div>
                     </div>
