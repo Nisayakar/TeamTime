@@ -129,7 +129,7 @@ function Home() {
         }
     }, [contactState.succeeded]);
 
-    function handleContactFieldChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    function handleContactFieldChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
         const { name, value } = event.target;
 
         setContactFields((current) => ({
@@ -247,7 +247,6 @@ function Home() {
                         <ul id="template-nav-links" className={menuOpen ? "open" : ""}>
                             <li><a href="#top">Ana Sayfa</a></li>
                             <li><a href="#features">Özellikler</a></li>
-                            <li><a href="#about">Hakkımızda</a></li>
                             <li><a href="#contact">İletişim</a></li>
                         </ul>
                     </nav>
@@ -335,7 +334,7 @@ function Home() {
                                             </>
                                         ) : (
                                             <div className="template-feature-final">
-                                                <span className="template-feature-label">TEAMTIME</span>
+                                                <span className="template-feature-label">TeamTime</span>
                                                 <h3>{feature.title}</h3>
                                                 <p>{feature.description}</p>
                                                 <Link className="template-feature-button" to="/register">Ücretsiz Başla</Link>
@@ -349,81 +348,100 @@ function Home() {
                 </div>
             </section>
 
-            <section id="about" className="template-about">
-                <div className="template-container">
-                    <div className="template-title centered light">
-                        <h2>TeamTime Hakkında</h2>
-                        <p>
-                            TeamTime, ekiplerin projelerini, görevlerini ve iş birliği süreçlerini
-                            tek bir alanda takip edebilmesi için geliştirilen web tabanlı bir proje
-                            yönetim platformudur.
-                        </p>
-                    </div>
-                </div>
-            </section>
-
             <section id="contact" className="template-contact">
                 <div className="template-container">
-                    <div className="template-contact-heading">
-                        <span>İletişim</span>
-                        <h2>Bizimle İletişime Geçin</h2>
-                        <p>TeamTime hakkında sorularınızı, görüşlerinizi ve önerilerinizi bizimle paylaşın.</p>
-                    </div>
-
                     <div className="template-contact-grid">
+                        <div className="template-contact-copy">
+                            <div className="template-contact-heading">
+                                <span>İLETİŞİM</span>
+                                <h2>Bizimle İletişime Geçin</h2>
+                                <p>TeamTime hakkında sorularınızı, görüşlerinizi ve önerilerinizi bizimle paylaşın.</p>
+                            </div>
+
+                            <div className="template-contact-info">
+                                <h3>Doğrudan E-posta</h3>
+                                <p>
+                                    En hızlı yanıt için bize doğrudan yazın. Ekibimiz en kısa
+                                    sürede geri dönüş yapacaktır.
+                                </p>
+                                <a className="template-mail-link" href={`mailto:${contactEmail}`}>
+                                    <span aria-hidden="true">➤</span>
+                                    {contactEmail}
+                                    <span aria-hidden="true">→</span>
+                                </a>
+                            </div>
+                        </div>
+
                         <form className="template-contact-form" onSubmit={submitContactForm}>
-                            <div className="template-field">
-                                <label htmlFor="contact-name">Ad Soyad</label>
-                                <input
-                                    id="contact-name"
-                                    name="name"
-                                    type="text"
-                                    value={contactFields.name}
-                                    onChange={handleContactFieldChange}
-                                    autoComplete="name"
-                                    required
-                                />
+                            <div className="template-contact-form-fields">
+                                <div className="template-contact-row">
+                                    <div className="template-field">
+                                        <label htmlFor="contact-name">Ad Soyad</label>
+                                        <input
+                                            id="contact-name"
+                                            name="name"
+                                            type="text"
+                                            value={contactFields.name}
+                                            onChange={handleContactFieldChange}
+                                            autoComplete="name"
+                                            placeholder="Ayşe Demir"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="template-field">
+                                        <label htmlFor="contact-email">E-posta</label>
+                                        <input
+                                            id="contact-email"
+                                            name="email"
+                                            type="email"
+                                            value={contactFields.email}
+                                            onChange={handleContactFieldChange}
+                                            autoComplete="email"
+                                            placeholder="ayse.demir@example.com"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="template-field">
+                                    <label htmlFor="contact-subject">Konu</label>
+                                    <select
+                                        id="contact-subject"
+                                        name="subject"
+                                        value={contactFields.subject}
+                                        onChange={handleContactFieldChange}
+                                        required
+                                    >
+                                        <option value="" disabled>Bir konu seçin</option>
+                                        <option value="Soru">Soru</option>
+                                        <option value="Öneri">Öneri</option>
+                                        <option value="İş birliği">İş birliği</option>
+                                        <option value="Teknik destek">Teknik destek</option>
+                                        <option value="Diğer">Diğer</option>
+                                    </select>
+                                </div>
+
+                                <div className="template-field">
+                                    <label htmlFor="contact-message">Mesaj</label>
+                                    <textarea
+                                        id="contact-message"
+                                        name="message"
+                                        value={contactFields.message}
+                                        onChange={handleContactFieldChange}
+                                        placeholder="Size nasıl yardımcı olabiliriz?"
+                                        required
+                                    />
+                                </div>
                             </div>
 
-                            <div className="template-field">
-                                <label htmlFor="contact-email">E-posta</label>
-                                <input
-                                    id="contact-email"
-                                    name="email"
-                                    type="email"
-                                    value={contactFields.email}
-                                    onChange={handleContactFieldChange}
-                                    autoComplete="email"
-                                    required
-                                />
+                            <div className="template-contact-actions">
+                                <p>Bilgileriniz gizlilik standartlarımıza uygun olarak işlenmektedir.</p>
+                                <button className="template-send-button" type="submit" disabled={contactState.submitting}>
+                                    <span>{contactState.submitting ? "Gönderiliyor..." : "Mesaj Gönder"}</span>
+                                    <span aria-hidden="true">→</span>
+                                </button>
                             </div>
-
-                            <div className="template-field">
-                                <label htmlFor="contact-subject">Konu</label>
-                                <input
-                                    id="contact-subject"
-                                    name="subject"
-                                    type="text"
-                                    value={contactFields.subject}
-                                    onChange={handleContactFieldChange}
-                                    required
-                                />
-                            </div>
-
-                            <div className="template-field">
-                                <label htmlFor="contact-message">Mesaj</label>
-                                <textarea
-                                    id="contact-message"
-                                    name="message"
-                                    value={contactFields.message}
-                                    onChange={handleContactFieldChange}
-                                    required
-                                />
-                            </div>
-
-                            <button className="template-send-button" type="submit" disabled={contactState.submitting}>
-                                {contactState.submitting ? "Gönderiliyor..." : "Mesaj Gönder"}
-                            </button>
 
                             <div className="template-contact-feedback" aria-live="polite">
                                 {contactState.succeeded && (
@@ -434,36 +452,12 @@ function Home() {
                                 )}
                             </div>
                         </form>
-
-                        <div className="template-contact-info">
-                            <span>TeamTime</span>
-                            <h3>Doğrudan E-posta</h3>
-                            <p>
-                                TeamTime ile ilgili soru, öneri ve iş birliği mesajlarınızı
-                                doğrudan e-posta üzerinden de iletebilirsiniz.
-                            </p>
-                            <a className="template-mail-link" href={`mailto:${contactEmail}`}>
-                                {contactEmail}
-                            </a>
-                            <div className="template-contact-lines" aria-hidden="true">
-                                <i />
-                                <i />
-                                <i />
-                            </div>
-                        </div>
                     </div>
                 </div>
             </section>
 
             <footer className="template-footer">
                 <div className="template-container">
-                    <div className="template-footer-top">
-                        <Link className="template-footer-logo" to="/">
-                            <img src="/home/teamtime-symbol.png" alt="" aria-hidden="true" />
-                            <span>TeamTime</span>
-                        </Link>
-                    </div>
-
                     <div className="template-footer-grid">
                         <div>
                             <h3>Bağlantılar</h3>
@@ -490,7 +484,7 @@ function Home() {
                             </ul>
                         </div>
                         <div>
-                            <h3>İletişim</h3>
+                            <h3>İLETİŞİM</h3>
                             <ul>
                                 <li><a href={`mailto:${contactEmail}`}>{contactEmail}</a></li>
                                 <li>TeamTime destek ve iletişim</li>
