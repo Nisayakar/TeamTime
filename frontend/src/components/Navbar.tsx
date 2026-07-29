@@ -14,7 +14,8 @@ function Navbar() {
     return (
         <nav className={isLoggedIn ? "app-navbar app-navbar-auth" : "app-navbar app-navbar-public"}>
             <Link to={isLoggedIn ? "/dashboard" : "/"} className="brand">
-                <img className="brand-logo" src="/teamtime-logo.svg" alt="TeamTime" />
+                <img className="brand-symbol" src="/home/teamtime-symbol.png" alt="" aria-hidden="true" />
+                <span className="brand-wordmark">TeamTime</span>
             </Link>
 
             {
