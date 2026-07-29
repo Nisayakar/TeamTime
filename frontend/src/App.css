@@ -757,6 +757,105 @@ button:focus-visible {
     rgba(10, 12, 16, 0.9);
 }
 
+.register-card form {
+  display: grid;
+  gap: 14px;
+}
+
+.register-stepper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.register-step {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: rgba(248, 250, 252, 0.6);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.register-step.is-active {
+  border-color: rgba(242, 163, 180, 0.42);
+  background: var(--primary-soft);
+  color: #f8c7d1;
+}
+
+.register-step.is-complete {
+  border-color: rgba(16, 185, 129, 0.28);
+  background: var(--success-soft);
+  color: #86efac;
+}
+
+.register-live-message {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.verification-panel {
+  min-height: 420px;
+  align-content: center;
+}
+
+.verification-email {
+  padding: 12px 14px;
+  border: 1px solid rgba(242, 163, 180, 0.18);
+  border-radius: 14px;
+  background: rgba(242, 163, 180, 0.08);
+  color: rgba(248, 250, 252, 0.86);
+  font-size: 14px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.verification-code-field {
+  display: grid;
+  gap: 8px;
+}
+
+.verification-code-input {
+  min-height: 62px;
+  text-align: center;
+  color: #0f172a;
+  font-size: clamp(24px, 4vw, 34px);
+  font-weight: 800;
+  letter-spacing: 0.42em;
+  caret-color: var(--primary-dark);
+}
+
+.verification-code-input::placeholder {
+  color: rgba(15, 23, 42, 0.24);
+}
+
+.resend-panel {
+  display: grid;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.resend-panel p {
+  color: rgba(248, 250, 252, 0.68);
+  font-size: 13px;
+  text-align: center;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+  transform: none;
+}
+
 .auth-preview {
   display: flex;
   align-items: center;
