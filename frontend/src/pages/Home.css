@@ -1,7 +1,7 @@
 .template-home {
     --home-bg: #050711;
     --home-bg-soft: #0b1020;
-    --home-mist-bg: #15181e;
+    --home-mist-bg: #000000;
     --home-surface: #fbfbfd;
     --home-surface-muted: #f2f4f8;
     --home-surface-strong: #ffffff;
@@ -224,7 +224,7 @@ body:has(.template-home) .app-navbar {
     min-height: 100vh;
     overflow: hidden;
     padding: 166px 0 76px;
-    background: #f6f7fb;
+    background: #050607;
 }
 
 .video-hero-media,
@@ -239,17 +239,19 @@ body:has(.template-home) .app-navbar {
     -webkit-mask-image: linear-gradient(
         to bottom,
         #000 0%,
-        #000 76%,
-        rgba(0, 0, 0, 0.92) 82%,
-        rgba(0, 0, 0, 0.55) 91%,
+        #000 68%,
+        rgba(0, 0, 0, 0.96) 76%,
+        rgba(0, 0, 0, 0.68) 88%,
+        rgba(0, 0, 0, 0.24) 96%,
         transparent 100%
     );
     mask-image: linear-gradient(
         to bottom,
         #000 0%,
-        #000 76%,
-        rgba(0, 0, 0, 0.92) 82%,
-        rgba(0, 0, 0, 0.55) 91%,
+        #000 68%,
+        rgba(0, 0, 0, 0.96) 76%,
+        rgba(0, 0, 0, 0.68) 88%,
+        rgba(0, 0, 0, 0.24) 96%,
         transparent 100%
     );
 }
@@ -278,10 +280,10 @@ body:has(.template-home) .app-navbar {
         background: linear-gradient(
             to bottom,
             transparent 0%,
-            transparent 72%,
-            rgba(246, 247, 251, 0.18) 82%,
-            rgba(246, 247, 251, 0.72) 93%,
-            #f6f7fb 100%
+            transparent 66%,
+            rgba(5, 6, 7, 0.18) 76%,
+            rgba(5, 6, 7, 0.72) 91%,
+            #050607 100%
         );
         pointer-events: none;
     }
@@ -422,7 +424,20 @@ body:has(.template-home) .app-navbar {
     overflow: hidden;
     margin-top: 0;
     padding: 24px 0 36px;
-    background: var(--home-mist-bg);
+    background: #000000;
+}
+
+.template-we-do::before {
+    position: absolute;
+    inset: -120px 0 auto;
+    z-index: 0;
+    height: 240px;
+    content: "";
+    background:
+        linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.9) 58%, #000000 100%),
+        radial-gradient(ellipse at 50% 44%, rgba(255, 255, 255, 0.045), transparent 68%);
+    filter: blur(22px);
+    pointer-events: none;
 }
 
 .template-feature-shell {
