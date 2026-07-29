@@ -1065,6 +1065,116 @@ button:focus-visible {
   border-color: rgba(242, 163, 180, 0.38);
 }
 
+.login-reference-page {
+  grid-template-columns: minmax(0, 1fr) minmax(440px, 0.92fr);
+  background: #050711;
+}
+
+.login-reference-page .login-star-page-video,
+.login-reference-page .login-star-page-overlay {
+  display: none;
+}
+
+.login-reference-page::before {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  content: "";
+  background: #050711;
+  pointer-events: none;
+}
+
+.login-reference-page::after {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  content: "";
+  background:
+    radial-gradient(ellipse at 12% 16%, rgba(255, 255, 255, 0.06), transparent 34%),
+    linear-gradient(135deg, #1a1a1a 0%, #242424 42%, #333333 100%);
+  clip-path: polygon(0 0, 70% 0, 30% 100%, 0 100%);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.login-reference-page .login-design-visual,
+.login-reference-page .login-design-form-panel {
+  z-index: 2;
+}
+
+.login-reference-page .login-design-visual {
+  min-height: calc(100vh - 72px);
+  padding: clamp(48px, 7vw, 110px);
+}
+
+.login-reference-page .login-design-visual .eyebrow {
+  color: #f2a3b4;
+}
+
+.login-reference-page .login-design-visual h1 {
+  max-width: 660px;
+  font-size: clamp(42px, 5vw, 64px);
+}
+
+.login-reference-page .login-design-visual p {
+  max-width: 480px;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.login-reference-page .login-design-form-panel {
+  justify-content: center;
+  padding: clamp(32px, 4vw, 64px);
+}
+
+.login-reference-page .login-design-card {
+  width: min(100%, 440px);
+  gap: 16px;
+}
+
+.login-reference-page .login-design-card .field input {
+  min-height: 58px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: #ffffff;
+}
+
+.login-reference-page .login-design-card .field input::placeholder {
+  color: rgba(255, 255, 255, 0.24);
+}
+
+.login-reference-page .login-design-card .field input:focus {
+  border-color: #5b4fd8;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 20px rgba(91, 79, 216, 0.1);
+}
+
+.login-reference-page .login-design-submit {
+  background: #c5c0ff;
+  box-shadow: 0 18px 36px rgba(197, 192, 255, 0.2);
+  color: #130067;
+}
+
+.login-reference-page .login-design-submit:hover {
+  filter: brightness(1.08);
+}
+
+.login-reference-page .login-design-divider {
+  margin-top: 12px;
+  padding-top: 18px;
+}
+
+.login-reference-page .login-design-divider::before {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.login-reference-page .login-design-divider span {
+  background: #050711;
+}
+
+.login-reference-page .login-design-register {
+  padding-top: 6px;
+}
+
 @media (max-width: 991px) {
   .login-designed-page {
     min-height: auto;

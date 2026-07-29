@@ -62,7 +62,7 @@ function Login() {
     }
 
     return (
-        <div className="auth-page login-designed-page">
+        <div className="auth-page login-designed-page login-reference-page">
             <video
                 className="login-star-page-video"
                 src="/media/yıldız.mp4"

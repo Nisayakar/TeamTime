@@ -40,6 +40,38 @@ public class GlobalExceptionHandler {
                 .body(createResponse(HttpStatus.UNAUTHORIZED, exception.getMessage()));
     }
 
+    @ExceptionHandler(VerificationCodeException.class)
+    public ResponseEntity<Map<String, Object>> handleVerificationCodeException(VerificationCodeException exception) {
+        return ResponseEntity.badRequest()
+                .body(createResponse(HttpStatus.BAD_REQUEST, exception.getMessage()));
+    }
+
+    @ExceptionHandler(TooManyVerificationAttemptsException.class)
+    public ResponseEntity<Map<String, Object>> handleTooManyVerificationAttemptsException(
+            TooManyVerificationAttemptsException exception
+    ) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(createResponse(HttpStatus.TOO_MANY_REQUESTS, exception.getMessage()));
+    }
+
+    @ExceptionHandler(ResendCooldownException.class)
+    public ResponseEntity<Map<String, Object>> handleResendCooldownException(ResendCooldownException exception) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(createResponse(HttpStatus.TOO_MANY_REQUESTS, exception.getMessage()));
+    }
+
+    @ExceptionHandler(MailConfigurationException.class)
+    public ResponseEntity<Map<String, Object>> handleMailConfigurationException(MailConfigurationException exception) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(createResponse(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage()));
+    }
+
+    @ExceptionHandler(EmailDeliveryException.class)
+    public ResponseEntity<Map<String, Object>> handleEmailDeliveryException(EmailDeliveryException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(createResponse(HttpStatus.BAD_GATEWAY, exception.getMessage()));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException exception) {
         return ResponseEntity.badRequest()

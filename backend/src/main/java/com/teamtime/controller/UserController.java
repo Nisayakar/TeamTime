@@ -6,10 +6,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.teamtime.dto.LoginRequest;
 import com.teamtime.dto.LoginResponse;
 import com.teamtime.dto.ProfileResponse;
+import com.teamtime.dto.RegisterCodeRequest;
 import com.teamtime.dto.RegisterRequest;
+import com.teamtime.dto.ResendRegistrationCodeRequest;
 import com.teamtime.dto.UpdatePasswordRequest;
 import com.teamtime.dto.UpdateProfileRequest;
 import com.teamtime.dto.UserSearchResponse;
+import com.teamtime.dto.VerifyRegistrationRequest;
 import com.teamtime.service.UserService;
 
 import org.springframework.http.ResponseEntity;
@@ -40,6 +43,21 @@ public class UserController {
     public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest request) {
         
         return ResponseEntity.ok(userService.register(request));
+    }
+
+    @PostMapping("/auth/register/request-code")
+    public ResponseEntity<String> requestRegistrationCode(@Valid @RequestBody RegisterCodeRequest request) {
+        return ResponseEntity.ok(userService.requestRegistrationCode(request));
+    }
+
+    @PostMapping("/auth/register/verify")
+    public ResponseEntity<String> verifyRegistration(@Valid @RequestBody VerifyRegistrationRequest request) {
+        return ResponseEntity.ok(userService.verifyRegistration(request));
+    }
+
+    @PostMapping("/auth/register/resend-code")
+    public ResponseEntity<String> resendRegistrationCode(@Valid @RequestBody ResendRegistrationCodeRequest request) {
+        return ResponseEntity.ok(userService.resendRegistrationCode(request));
     }
 
     @PostMapping("/login")
