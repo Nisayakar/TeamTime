@@ -62,25 +62,30 @@ function Login() {
     }
 
     return (
-        <div className="auth-page">
-            <section className="auth-panel auth-visual">
+        <div className="auth-page login-designed-page">
+            <video
+                className="login-star-page-video"
+                src="/media/yıldız.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                aria-hidden="true"
+                tabIndex={-1}
+            />
+            <div className="login-star-page-overlay" aria-hidden="true" />
+
+            <section className="auth-panel auth-visual login-design-visual">
                 <span className="eyebrow">TeamTime Workspace</span>
                 <h1>Projelerini ve takımlarını tek merkezden yönet.</h1>
                 <p>Modern proje takibi, ekip yönetimi ve görev akışları için sade bir çalışma alanı.</p>
-
-                <div className="auth-preview">
-                    <div>
-                        <span className="mini-label">Aktif Proje</span>
-                        <strong>Frontend Sprint</strong>
-                    </div>
-                    <span className="badge badge-green">78% tamamlandı</span>
-                </div>
             </section>
 
-            <section className="auth-panel auth-form-panel">
-                <div className="form-card">
+            <section className="auth-panel auth-form-panel login-design-form-panel">
+                <form className="form-card login-design-card" onSubmit={(event) => { event.preventDefault(); handleLogin(); }}>
                     <span className="eyebrow">Giriş</span>
-                    <h2>Hesabına giriş yap</h2>
+                    <h2 id="login-title">Hesabına giriş yap</h2>
                     <p className="muted">Takım panona devam etmek için bilgilerini gir.</p>
 
                     {
@@ -91,26 +96,38 @@ function Login() {
                     }
 
                     <div className="field">
-                        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder=" " />
-                        <label>E-mail</label>
+                        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-posta Adresi" />
+                        <label>E-mail adresi</label>
                     </div>
 
                     <div className="field">
-                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder=" " />
+                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Şifre" />
                         <label>Şifre</label>
                     </div>
 
-                    <button className="button button-primary button-full" type="button" onClick={handleLogin}>
+                    <div className="login-design-options">
+                        <label>
+                            <input type="checkbox" />
+                            <span>Beni hatırla</span>
+                        </label>
+                        <a href="#login-title">Şifremi Unuttum</a>
+                    </div>
+
+                    <button className="button button-primary button-full login-design-submit" type="submit">
                         Giriş Yap
                     </button>
 
-                    <p className="auth-switch">Hesabın yok mu?</p>
-                    <Link to="/register">
-                        <button className="button button-secondary button-full">
+                    <div className="login-design-divider">
+                        <span>Veya</span>
+                    </div>
+
+                    <div className="login-design-register">
+                        <p className="auth-switch">Hesabın yok mu?</p>
+                        <Link className="button button-secondary button-full" to="/register">
                             Kayıt Ol
-                        </button>
-                    </Link>
-                </div>
+                        </Link>
+                    </div>
+                </form>
             </section>
         </div>
     );
