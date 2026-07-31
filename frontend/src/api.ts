@@ -74,7 +74,21 @@ export function clearAuth() {
     localStorage.removeItem(USER_STORAGE_KEY);
 }
 
-export function apiFetch(path: string, options: RequestInit = {}) {
+function isPublicAuthRequest(path: string) {
+    return path === "/login"
+        || path === "/register"
+        || path.startsWith("/auth/register/");
+}
+
+function redirectToLoginAfterUnauthorized() {
+    if (window.location.pathname === "/login") {
+        return;
+    }
+
+    window.location.assign("/login");
+}
+
+export async function apiFetch(path: string, options: RequestInit = {}) {
     const token = getToken();
     const headers = new Headers(options.headers);
 
@@ -86,8 +100,15 @@ export function apiFetch(path: string, options: RequestInit = {}) {
         headers.set("Authorization", `Bearer ${token}`);
     }
 
-    return fetch(`${API_BASE_URL}${path}`, {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
         ...options,
         headers
     });
+
+    if (response.status === 401 && !isPublicAuthRequest(path)) {
+        clearAuth();
+        redirectToLoginAfterUnauthorized();
+    }
+
+    return response;
 }

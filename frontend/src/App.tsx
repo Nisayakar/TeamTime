@@ -10,6 +10,8 @@ import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
 import Profile from './pages/Profile';
 import Navbar from './components/Navbar';
+import ProtectedRoute from './components/ProtectedRoute';
+import PublicOnlyRoute from './components/PublicOnlyRoute';
 import EditProject from './pages/EditProject';
 import ProjectDetails from "./pages/ProjectDetails";
 import Teams from "./pages/Teams";
@@ -22,17 +24,22 @@ function App() {
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/create-project" element={<CreateProject />} />
-        <Route path="/edit-project/:id" element={<EditProject />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/projects" element={<Projects />} />
-        <Route path="/teams" element={<Teams />} />
-        <Route path="/teams/:id" element={<TeamDetails />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/project/:id"  element={<ProjectDetails />}
-        />
+
+        <Route element={<PublicOnlyRoute />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+        </Route>
+
+        <Route element={<ProtectedRoute />}>
+          <Route path="/create-project" element={<CreateProject />} />
+          <Route path="/edit-project/:id" element={<EditProject />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/teams" element={<Teams />} />
+          <Route path="/teams/:id" element={<TeamDetails />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/project/:id" element={<ProjectDetails />} />
+        </Route>
       </Routes>
     </>
   )

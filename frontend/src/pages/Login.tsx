@@ -1,12 +1,20 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { apiFetch, saveAuth } from "../api";
+
+type RedirectLocationState = {
+    from?: {
+        pathname?: string;
+        search?: string;
+    };
+};
 
 function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
     const navigate = useNavigate();
+    const location = useLocation();
 
     async function handleLogin() {
         if (email.trim() === "") {
@@ -39,10 +47,22 @@ function Login() {
 
             saveAuth(data);
 
-            navigate("/dashboard");
-        } catch (error) {
+            navigate(getRedirectPath(), { replace: true });
+        } catch {
             setMessage("Sunucuya bağlanılamadı");
         }
+    }
+
+    function getRedirectPath() {
+        const state = location.state as RedirectLocationState | null;
+        const pathname = state?.from?.pathname;
+        const search = state?.from?.search ?? "";
+
+        if (!pathname || pathname === "/login" || pathname === "/register") {
+            return "/dashboard";
+        }
+
+        return `${pathname}${search}`;
     }
 
     async function readErrorMessage(response: Response) {
