@@ -1,6 +1,10 @@
-const API_BASE_URL = "http://localhost:8085/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
 const TOKEN_STORAGE_KEY = "token";
 const USER_STORAGE_KEY = "user";
+
+if (!API_BASE_URL) {
+    throw new Error("VITE_API_BASE_URL tanımlı değil. Lütfen frontend/.env dosyasını kontrol edin.");
+}
 
 type LoginUser = {
     id: number;
