@@ -24,6 +24,7 @@ import com.teamtime.dto.UpdateProfileRequest;
 import com.teamtime.dto.UserSearchResponse;
 import com.teamtime.exception.DuplicateEmailException;
 import com.teamtime.exception.InvalidCredentialsException;
+import com.teamtime.exception.ResourceNotFoundException;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -247,7 +248,7 @@ public class UserService {
 
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Kullanıcı bulunamadı"));
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı"));
     }
 
     private ProfileResponse toProfileResponse(User user) {

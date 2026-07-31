@@ -5,6 +5,8 @@ import com.teamtime.dto.TeamMemberResponse;
 import com.teamtime.entity.Team;
 import com.teamtime.entity.TeamMember;
 import com.teamtime.entity.User;
+import com.teamtime.exception.ConflictException;
+import com.teamtime.exception.ResourceNotFoundException;
 import com.teamtime.repository.TeamMemberRepository;
 import com.teamtime.repository.TeamRepository;
 import com.teamtime.repository.UserRepository;
@@ -29,13 +31,13 @@ public class TeamMemberService {
 
     public TeamMemberResponse addMember(Long teamId, AddTeamMemberRequest request) {
         Team team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new IllegalArgumentException("Takım bulunamadı."));
+                .orElseThrow(() -> new ResourceNotFoundException("Takım bulunamadı."));
 
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("Kullanıcı bulunamadı."));
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı."));
 
         if (teamMemberRepository.findByTeamIdAndUserId(teamId, request.getUserId()).isPresent()) {
-            throw new IllegalArgumentException("Bu kullanıcı zaten takımda.");
+            throw new ConflictException("Bu kullanıcı zaten takımda.");
         }
 
         TeamMember teamMember = new TeamMember();
@@ -51,7 +53,7 @@ public class TeamMemberService {
 
     public void removeMember(Long teamId, Long userId) {
         TeamMember teamMember = teamMemberRepository.findByTeamIdAndUserId(teamId, userId)
-                .orElseThrow(() -> new RuntimeException("Team member not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Team member not found"));
 
         teamMemberRepository.delete(teamMember);
     }

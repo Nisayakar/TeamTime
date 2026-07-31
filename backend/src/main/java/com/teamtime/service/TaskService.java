@@ -2,6 +2,7 @@ package com.teamtime.service;
 
 import com.teamtime.entity.Project;
 import com.teamtime.entity.Task;
+import com.teamtime.exception.ResourceNotFoundException;
 import com.teamtime.repository.ProjectRepository;
 import com.teamtime.repository.TaskRepository;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,7 @@ public class TaskService {
 
         Project project = projectRepository.findByIdAndUserId(projectId, userId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Proje bulunamadı veya bu proje için yetkiniz yok")
+                        new ResourceNotFoundException("Proje bulunamadı veya bu proje için yetkiniz yok")
                 );
 
 
@@ -71,7 +72,7 @@ public class TaskService {
 
         if(task.isEmpty()){
 
-            throw new IllegalArgumentException("Görev bulunamadı veya bu görev için yetkiniz yok");
+            throw new ResourceNotFoundException("Görev bulunamadı veya bu görev için yetkiniz yok");
 
         }
 
@@ -101,7 +102,7 @@ public class TaskService {
 
         if(task.isEmpty()){
 
-            throw new IllegalArgumentException("Görev bulunamadı veya bu görev için yetkiniz yok");
+            throw new ResourceNotFoundException("Görev bulunamadı veya bu görev için yetkiniz yok");
 
         }
 

@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import com.teamtime.dto.ProjectRequest;
 import com.teamtime.entity.Project;
 import com.teamtime.entity.User;
+import com.teamtime.exception.ResourceNotFoundException;
 import com.teamtime.repository.ProjectRepository;
 import com.teamtime.repository.TaskRepository;
 import com.teamtime.repository.UserRepository;
@@ -26,7 +27,7 @@ public class ProjectService {
 
     public String createProject(ProjectRequest request, Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Kullanıcı bulunamadı"));
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı"));
 
         Project project = new Project();
 
@@ -96,7 +97,7 @@ public class ProjectService {
 
     private Project findProjectForUser(Long id, Long userId) {
         return projectRepository.findByIdAndUserId(id, userId)
-                .orElseThrow(() -> new IllegalArgumentException("Proje bulunamadı veya bu proje için yetkiniz yok"));
+                .orElseThrow(() -> new ResourceNotFoundException("Proje bulunamadı veya bu proje için yetkiniz yok"));
     }
 
 }

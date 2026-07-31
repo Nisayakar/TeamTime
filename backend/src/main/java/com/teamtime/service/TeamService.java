@@ -1,6 +1,7 @@
 package com.teamtime.service;
 
 import com.teamtime.entity.Team;
+import com.teamtime.exception.ResourceNotFoundException;
 import com.teamtime.repository.TeamMemberRepository;
 import com.teamtime.repository.TeamRepository;
 import jakarta.transaction.Transactional;
@@ -30,7 +31,7 @@ public class TeamService {
 
     public Team updateTeam(Long id, Team team) {
         Team existingTeam = teamRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Team not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Team not found"));
 
         existingTeam.setName(team.getName());
         existingTeam.setDescription(team.getDescription());
@@ -42,7 +43,7 @@ public class TeamService {
     @Transactional
     public void deleteTeam(Long id) {
         Team existingTeam = teamRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Team not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Team not found"));
 
         teamMemberRepository.deleteByTeamId(id);
         teamRepository.delete(existingTeam);

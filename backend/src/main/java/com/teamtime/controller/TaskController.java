@@ -28,20 +28,10 @@ public class TaskController {
             @PathVariable Long projectId,
             Authentication authentication) {
 
-        try {
+        Long userId = (Long) authentication.getPrincipal();
+        Task createdTask = taskService.createTask(task, projectId, userId);
 
-            Long userId = (Long) authentication.getPrincipal();
-            Task createdTask = taskService.createTask(task, projectId, userId);
-
-            return ResponseEntity.ok(createdTask);
-
-        } catch (RuntimeException e) {
-
-            return ResponseEntity
-                    .badRequest()
-                    .body(e.getMessage());
-
-        }
+        return ResponseEntity.ok(createdTask);
 
     }
 
