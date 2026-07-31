@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiFetch } from "../api";
+import { apiFetch, getStoredUser } from "../api";
+import type { TeamRole } from "../types/team";
 
 type Team = {
     id: number;
@@ -9,8 +10,18 @@ type Team = {
     createdDate?: string;
 }
 
+type TeamMember = {
+    userId: number;
+    role: TeamRole;
+}
+
+type StoredUser = {
+    id: number;
+}
+
 function Teams() {
     const [teams, setTeams] = useState<Team[]>([]);
+    const [rolesByTeamId, setRolesByTeamId] = useState<Record<number, TeamRole | undefined>>({});
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [editingTeamId, setEditingTeamId] = useState<number | null>(null);
@@ -22,12 +33,59 @@ function Teams() {
         getTeams();
     }, []);
 
-    function getTeams() {
-        apiFetch("/teams")
-            .then(response => response.json())
-            .then(data => {
-                setTeams(Array.isArray(data) ? data : []);
-            });
+    async function getTeams() {
+        const response = await apiFetch("/teams");
+        const data: unknown = await response.json();
+        const loadedTeams = Array.isArray(data) ? data as Team[] : [];
+
+        setTeams(loadedTeams);
+        await loadCurrentUserRoles(loadedTeams);
+    }
+
+    function getCurrentUserId() {
+        const storedUser: unknown = getStoredUser();
+
+        if (
+            storedUser &&
+            typeof storedUser === "object" &&
+            "id" in storedUser &&
+            typeof (storedUser as StoredUser).id === "number"
+        ) {
+            return (storedUser as StoredUser).id;
+        }
+
+        return null;
+    }
+
+    async function loadCurrentUserRoles(loadedTeams: Team[]) {
+        const currentUserId = getCurrentUserId();
+
+        if (currentUserId === null) {
+            setRolesByTeamId({});
+            return;
+        }
+
+        const roleEntries = await Promise.all(
+            loadedTeams.map(async team => {
+                try {
+                    const response = await apiFetch(`/teams/${team.id}/members`);
+
+                    if (!response.ok) {
+                        return [team.id, undefined] as const;
+                    }
+
+                    const data: unknown = await response.json();
+                    const members = Array.isArray(data) ? data as TeamMember[] : [];
+                    const currentMember = members.find(member => member.userId === currentUserId);
+
+                    return [team.id, currentMember?.role] as const;
+                } catch {
+                    return [team.id, undefined] as const;
+                }
+            })
+        );
+
+        setRolesByTeamId(Object.fromEntries(roleEntries));
     }
 
     async function readErrorMessage(response: Response) {
@@ -36,8 +94,8 @@ function Teams() {
         if (contentType.includes("application/json")) {
             const data = await response.json();
 
-            if (data.errors) {
-                return Object.values(data.errors).join("\n");
+            if (data.fieldErrors) {
+                return Object.values(data.fieldErrors).join("\n");
             }
 
             if (data.message) {
@@ -91,7 +149,8 @@ function Teams() {
             setTeams([...teams, createdTeam]);
             setName("");
             setDescription("");
-        } catch (error) {
+            await loadCurrentUserRoles([...teams, createdTeam]);
+        } catch {
             alert("Sunucuya bağlanılamadı");
         }
     }
@@ -108,34 +167,43 @@ function Teams() {
         setEditDescription("");
     }
 
-    function updateTeam(team: Team) {
-        apiFetch(`/teams/${team.id}`, {
+    async function updateTeam(team: Team) {
+        const response = await apiFetch(`/teams/${team.id}`, {
             method: "PUT",
             body: JSON.stringify({
                 name: editName,
                 description: editDescription,
                 createdDate: team.createdDate
             })
-        })
-            .then(response => response.json())
-            .then(updatedTeam => {
-                setTeams(
-                    teams.map(currentTeam =>
-                        currentTeam.id === updatedTeam.id ? updatedTeam : currentTeam
-                    )
-                );
+        });
 
-                cancelEdit();
-            });
+        if (!response.ok) {
+            alert(await readErrorMessage(response));
+            return;
+        }
+
+        const updatedTeam: Team = await response.json();
+
+        setTeams(
+            teams.map(currentTeam =>
+                currentTeam.id === updatedTeam.id ? updatedTeam : currentTeam
+            )
+        );
+
+        cancelEdit();
     }
 
-    function deleteTeam(id: number) {
-        apiFetch(`/teams/${id}`, {
+    async function deleteTeam(id: number) {
+        const response = await apiFetch(`/teams/${id}`, {
             method: "DELETE"
-        })
-            .then(() => {
-                setTeams(teams.filter(team => team.id !== id));
-            });
+        });
+
+        if (!response.ok) {
+            alert(await readErrorMessage(response));
+            return;
+        }
+
+        setTeams(teams.filter(team => team.id !== id));
     }
 
     return (
@@ -227,13 +295,21 @@ function Teams() {
                                                         Üyeleri Gör
                                                     </button>
 
-                                                    <button className="button button-secondary" onClick={() => startEdit(team)}>
-                                                        Düzenle
-                                                    </button>
+                                                    {
+                                                        (rolesByTeamId[team.id] === "OWNER" || rolesByTeamId[team.id] === "ADMIN") && (
+                                                            <button className="button button-secondary" onClick={() => startEdit(team)}>
+                                                                Düzenle
+                                                            </button>
+                                                        )
+                                                    }
 
-                                                    <button className="button button-danger" onClick={() => deleteTeam(team.id)}>
-                                                        Sil
-                                                    </button>
+                                                    {
+                                                        rolesByTeamId[team.id] === "OWNER" && (
+                                                            <button className="button button-danger" onClick={() => deleteTeam(team.id)}>
+                                                                Sil
+                                                            </button>
+                                                        )
+                                                    }
                                                 </div>
                                             </>
                                         )

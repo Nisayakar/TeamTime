@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { apiFetch } from "../api";
+import { apiFetch, getStoredUser } from "../api";
+import { getTeamRoleLabel, type TeamRole } from "../types/team";
 
 type Team = {
     id: number;
@@ -15,7 +16,7 @@ type TeamMember = {
     userName: string;
     teamId: number;
     teamName: string;
-    role: string;
+    role: TeamRole;
     joinedDate: string;
 }
 
@@ -23,6 +24,10 @@ type UserSearchResult = {
     id: number;
     name: string;
     surname: string;
+}
+
+type StoredUser = {
+    id: number;
 }
 
 function TeamDetails() {
@@ -33,7 +38,7 @@ function TeamDetails() {
     const [userSearch, setUserSearch] = useState("");
     const [userResults, setUserResults] = useState<UserSearchResult[]>([]);
     const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
-    const [role, setRole] = useState("MEMBER");
+    const [role, setRole] = useState<TeamRole>("MEMBER");
     const [message, setMessage] = useState("");
 
     useEffect(() => {
@@ -79,20 +84,58 @@ function TeamDetails() {
         }, 3000);
     }
 
-    async function readErrorMessage(response: Response) {
+    function getCurrentUserId() {
+        const storedUser: unknown = getStoredUser();
+
+        if (
+            storedUser &&
+            typeof storedUser === "object" &&
+            "id" in storedUser &&
+            typeof (storedUser as StoredUser).id === "number"
+        ) {
+            return (storedUser as StoredUser).id;
+        }
+
+        return null;
+    }
+
+    const currentUserId = getCurrentUserId();
+    const currentMember = currentUserId === null
+        ? undefined
+        : members.find(member => member.userId === currentUserId);
+    const currentUserRole = currentMember?.role;
+    const canManageMembers = currentUserRole === "OWNER" || currentUserRole === "ADMIN";
+    const roleOptions: TeamRole[] = currentUserRole === "OWNER" ? ["MEMBER", "ADMIN"] : ["MEMBER"];
+
+    async function readErrorMessage(response: Response, fallbackMessage = "İşlem tamamlanamadı") {
         const contentType = response.headers.get("Content-Type") || "";
 
         if (contentType.includes("application/json")) {
             const data = await response.json();
 
-            if (data.errors) {
-                return Object.values(data.errors).join("\n");
+            if (data.fieldErrors) {
+                return Object.values(data.fieldErrors).join("\n");
             }
 
-            return data.message || "Üye eklenemedi";
+            return data.message || fallbackMessage;
         }
 
-        return await response.text();
+        const message = await response.text();
+
+        if (message) {
+            return message;
+        }
+
+        switch (response.status) {
+            case 403:
+                return "Bu işlem için yetkiniz yok";
+            case 404:
+                return "İstenen kaynak bulunamadı";
+            case 409:
+                return "Bu işlem mevcut kayıtlarla çakışıyor";
+            default:
+                return fallbackMessage;
+        }
     }
 
     function getFullName(user: UserSearchResult) {
@@ -144,21 +187,28 @@ function TeamDetails() {
     function addMember(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
+        if (!canManageMembers) {
+            showMessage("Bu işlem için yetkiniz yok");
+            return;
+        }
+
         if (!selectedUser) {
             showMessage("Lütfen bir kullanıcı seçin");
             return;
         }
 
+        const roleToSubmit: TeamRole = currentUserRole === "OWNER" ? role : "MEMBER";
+
         apiFetch(`/teams/${id}/members`, {
             method: "POST",
             body: JSON.stringify({
                 userId: selectedUser.id,
-                role
+                role: roleToSubmit
             })
         })
             .then(response => {
                 if (!response.ok) {
-                    return readErrorMessage(response)
+                    return readErrorMessage(response, "Üye eklenemedi")
                         .then(errorMessage => {
                             throw new Error(errorMessage);
                         });
@@ -177,6 +227,32 @@ function TeamDetails() {
             .catch(error => {
                 showMessage(error.message || "Üye eklenemedi");
             });
+    }
+
+    function canRemoveMember(member: TeamMember) {
+        if (currentUserRole === "OWNER") {
+            return member.role !== "OWNER";
+        }
+
+        if (currentUserRole === "ADMIN") {
+            return member.role === "MEMBER";
+        }
+
+        return false;
+    }
+
+    async function removeMember(member: TeamMember) {
+        const response = await apiFetch(`/teams/${id}/members/${member.userId}`, {
+            method: "DELETE"
+        });
+
+        if (!response.ok) {
+            showMessage(await readErrorMessage(response, "Üye çıkarılamadı"));
+            return;
+        }
+
+        setMembers(members.filter(currentMember => currentMember.id !== member.id));
+        showMessage("Üye takımdan çıkarıldı");
     }
 
     return (
@@ -200,64 +276,73 @@ function TeamDetails() {
             </section>
 
             <section className="content-grid two-columns">
-                <div className="panel">
-                    <div className="section-heading">
-                        <span className="eyebrow">Üyelik</span>
-                        <h2>Yeni Üye Ekle</h2>
-                    </div>
+                {
+                    canManageMembers && (
+                        <div className="panel">
+                            <div className="section-heading">
+                                <span className="eyebrow">Üyelik</span>
+                                <h2>Yeni Üye Ekle</h2>
+                            </div>
 
-                    <form className="stacked-form" onSubmit={addMember}>
-                        <div className="autocomplete-field">
-                            <label>Kullanıcı Ara</label>
-                            <input
-                                type="text"
-                                value={userSearch}
-                                onChange={event => handleUserSearchChange(event.target.value)}
-                                autoComplete="off"
-                                required
-                            />
+                            <form className="stacked-form" onSubmit={addMember}>
+                                <div className="autocomplete-field">
+                                    <label>Kullanıcı Ara</label>
+                                    <input
+                                        type="text"
+                                        value={userSearch}
+                                        onChange={event => handleUserSearchChange(event.target.value)}
+                                        autoComplete="off"
+                                        required
+                                    />
 
-                            {
-                                userResults.length > 0 && (
-                                    <div className="autocomplete-list">
-                                        {
-                                            userResults.map(user => (
-                                                <button
-                                                    className="autocomplete-option"
-                                                    key={user.id}
-                                                    type="button"
-                                                    onClick={() => selectUser(user)}
-                                                >
-                                                    {getFullName(user)}
-                                                </button>
-                                            ))
-                                        }
-                                    </div>
-                                )
-                            }
+                                    {
+                                        userResults.length > 0 && (
+                                            <div className="autocomplete-list">
+                                                {
+                                                    userResults.map(user => (
+                                                        <button
+                                                            className="autocomplete-option"
+                                                            key={user.id}
+                                                            type="button"
+                                                            onClick={() => selectUser(user)}
+                                                        >
+                                                            {getFullName(user)}
+                                                        </button>
+                                                    ))
+                                                }
+                                            </div>
+                                        )
+                                    }
 
-                            {
-                                selectedUser && (
-                                    <p className="selected-user">
-                                        {getFullName(selectedUser)}
-                                    </p>
-                                )
-                            }
+                                    {
+                                        selectedUser && (
+                                            <p className="selected-user">
+                                                {getFullName(selectedUser)}
+                                            </p>
+                                        )
+                                    }
+                                </div>
+
+                                <label>Rol</label>
+                                <select
+                                    value={currentUserRole === "OWNER" ? role : "MEMBER"}
+                                    onChange={event => setRole(event.target.value as TeamRole)}
+                                    required
+                                >
+                                    {
+                                        roleOptions.map(roleOption => (
+                                            <option value={roleOption} key={roleOption}>
+                                                {getTeamRoleLabel(roleOption)}
+                                            </option>
+                                        ))
+                                    }
+                                </select>
+
+                                <button className="button button-primary button-full" type="submit">Üye Ekle</button>
+                            </form>
                         </div>
-
-                        <label>Rol</label>
-                        <select
-                            value={role}
-                            onChange={event => setRole(event.target.value)}
-                            required
-                        >
-                            <option value="MEMBER">Üye</option>
-                            <option value="ADMIN">Yönetici</option>
-                        </select>
-
-                        <button className="button button-primary button-full" type="submit">Üye Ekle</button>
-                    </form>
-                </div>
+                    )
+                }
 
                 <div className="panel">
                     <div className="section-heading">
@@ -275,10 +360,21 @@ function TeamDetails() {
 
                                     <div>
                                         <h3>{member.userName}</h3>
-                                        <p>Kullanıcı Id: {member.userId}</p>
+                                        <p>
+                                            Kullanıcı Id: {member.userId}
+                                            {member.userId === currentUserId ? " · Siz" : ""}
+                                        </p>
                                     </div>
 
-                                    <span className="badge badge-blue">{member.role}</span>
+                                    <span className="badge badge-blue">{getTeamRoleLabel(member.role)}</span>
+
+                                    {
+                                        canRemoveMember(member) && (
+                                            <button className="button button-danger" onClick={() => removeMember(member)}>
+                                                Çıkar
+                                            </button>
+                                        )
+                                    }
                                 </div>
                             ))
                         )
