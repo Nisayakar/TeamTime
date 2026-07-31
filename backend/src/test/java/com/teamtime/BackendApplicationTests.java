@@ -10,6 +10,7 @@ import org.springframework.test.context.TestPropertySource;
 		"spring.datasource.driver-class-name=org.h2.Driver",
 		"spring.jpa.hibernate.ddl-auto=create-drop",
 		"spring.jpa.show-sql=false",
+		"jwt.secret=test-jwt-secret-with-at-least-32-characters",
 		"verification.code.secret=test-secret",
 		"spring.mail.username=noreply@teamtime.test"
 })

@@ -21,6 +21,7 @@ public class VerificationCodeHashService {
 
     public VerificationCodeHashService(@Value("${verification.code.secret:}") String secret) {
         this.secret = secret;
+        ensureSecretConfigured();
     }
 
     public String hash(String normalizedEmail, String code) {
