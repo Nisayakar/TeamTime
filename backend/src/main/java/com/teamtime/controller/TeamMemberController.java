@@ -4,6 +4,7 @@ import com.teamtime.dto.AddTeamMemberRequest;
 import com.teamtime.dto.TeamMemberResponse;
 import com.teamtime.service.TeamMemberService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,24 +31,33 @@ public class TeamMemberController {
 
     @PostMapping("/teams/{teamId}/members")
     public ResponseEntity<TeamMemberResponse> addMember(@PathVariable Long teamId,
-            @Valid @RequestBody AddTeamMemberRequest request) {
-        TeamMemberResponse teamMember = teamMemberService.addMember(teamId, request);
+            @Valid @RequestBody AddTeamMemberRequest request,
+            Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        TeamMemberResponse teamMember = teamMemberService.addMember(teamId, request, userId);
         return ResponseEntity.ok(teamMember);
     }
 
     @DeleteMapping("/teams/{teamId}/members/{userId}")
-    public ResponseEntity<Void> removeMember(@PathVariable Long teamId, @PathVariable Long userId) {
-        teamMemberService.removeMember(teamId, userId);
+    public ResponseEntity<Void> removeMember(
+            @PathVariable Long teamId,
+            @PathVariable Long userId,
+            Authentication authentication
+    ) {
+        Long currentUserId = (Long) authentication.getPrincipal();
+        teamMemberService.removeMember(teamId, userId, currentUserId);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/teams/{teamId}/members")
-    public ResponseEntity<List<TeamMemberResponse>> getTeamMembers(@PathVariable Long teamId) {
-        return ResponseEntity.ok(teamMemberService.getTeamMembers(teamId));
+    public ResponseEntity<List<TeamMemberResponse>> getTeamMembers(@PathVariable Long teamId, Authentication authentication) {
+        Long currentUserId = (Long) authentication.getPrincipal();
+        return ResponseEntity.ok(teamMemberService.getTeamMembers(teamId, currentUserId));
     }
 
     @GetMapping("/users/{userId}/teams")
-    public ResponseEntity<List<TeamMemberResponse>> getUserTeams(@PathVariable Long userId) {
-        return ResponseEntity.ok(teamMemberService.getUserTeams(userId));
+    public ResponseEntity<List<TeamMemberResponse>> getUserTeams(@PathVariable Long userId, Authentication authentication) {
+        Long currentUserId = (Long) authentication.getPrincipal();
+        return ResponseEntity.ok(teamMemberService.getUserTeams(userId, currentUserId));
     }
 }

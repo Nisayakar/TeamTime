@@ -3,6 +3,7 @@ package com.teamtime.controller;
 import com.teamtime.entity.Team;
 import com.teamtime.service.TeamService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,25 +28,29 @@ public class TeamController {
     }
 
     @PostMapping
-    public ResponseEntity<Team> createTeam(@RequestBody Team team) {
-        Team createdTeam = teamService.createTeam(team);
+    public ResponseEntity<Team> createTeam(@RequestBody Team team, Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        Team createdTeam = teamService.createTeam(team, userId);
         return ResponseEntity.ok(createdTeam);
     }
 
     @GetMapping
-    public ResponseEntity<List<Team>> getAllTeams() {
-        return ResponseEntity.ok(teamService.getAllTeams());
+    public ResponseEntity<List<Team>> getAllTeams(Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        return ResponseEntity.ok(teamService.getTeamsForUser(userId));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Team> updateTeam(@PathVariable Long id, @RequestBody Team team) {
-        Team updatedTeam = teamService.updateTeam(id, team);
+    public ResponseEntity<Team> updateTeam(@PathVariable Long id, @RequestBody Team team, Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        Team updatedTeam = teamService.updateTeam(id, team, userId);
         return ResponseEntity.ok(updatedTeam);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTeam(@PathVariable Long id) {
-        teamService.deleteTeam(id);
+    public ResponseEntity<Void> deleteTeam(@PathVariable Long id, Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        teamService.deleteTeam(id, userId);
         return ResponseEntity.noContent().build();
     }
 }
