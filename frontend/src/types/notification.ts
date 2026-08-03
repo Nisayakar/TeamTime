@@ -16,3 +16,12 @@ export type NotificationItem = {
     relatedEntityId: number | null;
     relatedEntityType: NotificationRelatedEntityType | null;
 };
+
+export type NotificationPage = {
+    content: NotificationItem[];
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+    last: boolean;
+};

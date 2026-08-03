@@ -1,5 +1,6 @@
 package com.teamtime.controller;
 
+import com.teamtime.dto.NotificationPageResponse;
 import com.teamtime.dto.NotificationResponse;
 import com.teamtime.service.NotificationService;
 import org.springframework.http.ResponseEntity;
@@ -9,9 +10,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -26,9 +27,13 @@ public class NotificationController {
     }
 
     @GetMapping
-    public ResponseEntity<List<NotificationResponse>> getNotifications(Authentication authentication) {
+    public ResponseEntity<NotificationPageResponse> getNotifications(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Authentication authentication
+    ) {
         Long currentUserId = (Long) authentication.getPrincipal();
-        return ResponseEntity.ok(notificationService.getCurrentUserNotifications(currentUserId));
+        return ResponseEntity.ok(notificationService.getCurrentUserNotifications(currentUserId, page, size));
     }
 
     @GetMapping("/unread-count")

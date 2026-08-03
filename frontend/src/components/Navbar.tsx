@@ -2,11 +2,13 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { clearAuth, isAuthenticated } from "../api";
 import { apiFetch } from "../api";
-import type { NotificationItem } from "../types/notification";
+import type { NotificationItem, NotificationPage } from "../types/notification";
 
 type UnreadCountResponse = {
     unreadCount: number;
 };
+
+const NOTIFICATION_PAGE_SIZE = 20;
 
 function Navbar() {
     const location = useLocation();
@@ -17,6 +19,10 @@ function Navbar() {
     const [notifications, setNotifications] = useState<NotificationItem[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isNotificationsLoading, setIsNotificationsLoading] = useState(false);
+    const [isLoadingMoreNotifications, setIsLoadingMoreNotifications] = useState(false);
+    const [hasLoadedNotifications, setHasLoadedNotifications] = useState(false);
+    const [notificationPage, setNotificationPage] = useState(0);
+    const [isLastNotificationPage, setIsLastNotificationPage] = useState(true);
     const [notificationError, setNotificationError] = useState("");
 
     function logout() {
@@ -30,6 +36,10 @@ function Navbar() {
         setNotifications([]);
         setUnreadCount(0);
         setIsNotificationsLoading(false);
+        setIsLoadingMoreNotifications(false);
+        setHasLoadedNotifications(false);
+        setNotificationPage(0);
+        setIsLastNotificationPage(true);
         setNotificationError("");
     }
 
@@ -94,24 +104,47 @@ function Navbar() {
         const nextOpen = !isNotificationsOpen;
         setIsNotificationsOpen(nextOpen);
 
-        if (nextOpen) {
-            await loadNotifications();
+        if (nextOpen && !hasLoadedNotifications) {
+            await loadNotificationsPage(0, false);
         }
     }
 
-    async function loadNotifications() {
-        setIsNotificationsLoading(true);
+    async function loadNotificationsPage(pageToLoad: number, append: boolean) {
+        if (append) {
+            setIsLoadingMoreNotifications(true);
+        } else {
+            setIsNotificationsLoading(true);
+        }
+
         setNotificationError("");
 
         try {
-            const response = await apiFetch("/notifications");
-            const data = await parseJsonResponse<NotificationItem[]>(response);
-            setNotifications(data);
+            const response = await apiFetch(`/notifications?page=${pageToLoad}&size=${NOTIFICATION_PAGE_SIZE}`);
+            const data = await parseJsonResponse<NotificationPage>(response);
+
+            setNotifications(currentNotifications =>
+                append ? appendUniqueNotifications(currentNotifications, data.content) : data.content
+            );
+            setNotificationPage(data.page);
+            setIsLastNotificationPage(data.last);
+            setHasLoadedNotifications(true);
         } catch (error) {
             setNotificationError(getSafeErrorMessage(error, "Bildirimler alınamadı."));
         } finally {
-            setIsNotificationsLoading(false);
+            if (append) {
+                setIsLoadingMoreNotifications(false);
+            } else {
+                setIsNotificationsLoading(false);
+            }
         }
+    }
+
+    async function loadMoreNotifications() {
+        if (isLoadingMoreNotifications || isLastNotificationPage) {
+            return;
+        }
+
+        await loadNotificationsPage(notificationPage + 1, true);
     }
 
     async function markNotificationAsRead(notification: NotificationItem) {
@@ -259,6 +292,18 @@ function Navbar() {
                                                                 </button>
                                                             ))
                                                         }
+                                                        {
+                                                            !isLastNotificationPage && (
+                                                                <button
+                                                                    type="button"
+                                                                    className="notification-load-more"
+                                                                    onClick={loadMoreNotifications}
+                                                                    disabled={isLoadingMoreNotifications}
+                                                                >
+                                                                    {isLoadingMoreNotifications ? "Yükleniyor..." : "Daha Fazla Göster"}
+                                                                </button>
+                                                            )
+                                                        }
                                                     </div>
                                                 )
                                             }
@@ -280,6 +325,20 @@ function Navbar() {
             }
         </nav>
     );
+}
+
+function appendUniqueNotifications(currentNotifications: NotificationItem[], nextNotifications: NotificationItem[]) {
+    const seenIds = new Set(currentNotifications.map(notification => notification.id));
+    const uniqueNextNotifications = nextNotifications.filter(notification => {
+        if (seenIds.has(notification.id)) {
+            return false;
+        }
+
+        seenIds.add(notification.id);
+        return true;
+    });
+
+    return [...currentNotifications, ...uniqueNextNotifications];
 }
 
 async function parseJsonResponse<T>(response: Response): Promise<T> {

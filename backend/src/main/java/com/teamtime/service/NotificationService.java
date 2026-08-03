@@ -1,5 +1,6 @@
 package com.teamtime.service;
 
+import com.teamtime.dto.NotificationPageResponse;
 import com.teamtime.dto.NotificationResponse;
 import com.teamtime.entity.Notification;
 import com.teamtime.entity.NotificationType;
@@ -11,6 +12,8 @@ import com.teamtime.repository.NotificationRepository;
 import com.teamtime.repository.TeamMemberRepository;
 import com.teamtime.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,6 +24,7 @@ public class NotificationService {
     private static final String TEAM_ENTITY = "TEAM";
     private static final String PROJECT_ENTITY = "PROJECT";
     private static final String TASK_ENTITY = "TASK";
+    private static final int MAX_PAGE_SIZE = 50;
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
@@ -108,13 +112,26 @@ public class NotificationService {
                         TASK_ENTITY));
     }
 
-    public List<NotificationResponse> getCurrentUserNotifications(Long currentUserId) {
+    public NotificationPageResponse getCurrentUserNotifications(Long currentUserId, int page, int size) {
         requireUser(currentUserId);
+        validatePageRequest(page, size);
 
-        return notificationRepository.findByRecipientIdOrderByCreatedAtDesc(currentUserId)
+        Page<Notification> notifications = notificationRepository.findByRecipientIdOrderByCreatedAtDesc(
+                currentUserId,
+                PageRequest.of(page, size));
+
+        List<NotificationResponse> content = notifications.getContent()
                 .stream()
                 .map(this::convertToResponse)
                 .toList();
+
+        return new NotificationPageResponse(
+                content,
+                notifications.getNumber(),
+                notifications.getSize(),
+                notifications.getTotalElements(),
+                notifications.getTotalPages(),
+                notifications.isLast());
     }
 
     public long getUnreadCount(Long currentUserId) {
@@ -144,6 +161,16 @@ public class NotificationService {
     private User requireUser(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı"));
+    }
+
+    private void validatePageRequest(int page, int size) {
+        if (page < 0) {
+            throw new IllegalArgumentException("Page must be zero or greater.");
+        }
+
+        if (size < 1 || size > MAX_PAGE_SIZE) {
+            throw new IllegalArgumentException("Size must be between 1 and 50.");
+        }
     }
 
     private NotificationResponse convertToResponse(Notification notification) {
