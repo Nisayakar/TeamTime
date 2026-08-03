@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiFetch, getStoredUser } from "../api";
 import { useToast } from "../context/toast";
@@ -42,11 +42,6 @@ function TeamDetails() {
     const [userResults, setUserResults] = useState<UserSearchResult[]>([]);
     const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
     const [role, setRole] = useState<TeamRole>("MEMBER");
-
-    useEffect(() => {
-        getTeam();
-        getMembers();
-    }, [id]);
 
     useEffect(() => {
         const query = userSearch.trim();
@@ -116,7 +111,7 @@ function TeamDetails() {
         setUserResults([]);
     }
 
-    function getTeam() {
+    const getTeam = useCallback(() => {
         apiFetch("/teams")
             .then(response => response.json())
             .then(data => {
@@ -128,9 +123,9 @@ function TeamDetails() {
             .catch(() => {
                 setTeam(null);
             });
-    }
+    }, [id]);
 
-    function getMembers() {
+    const getMembers = useCallback(() => {
         apiFetch(`/teams/${id}/members`)
             .then(response => {
                 if (!response.ok) {
@@ -145,7 +140,12 @@ function TeamDetails() {
             .catch(() => {
                 setMembers([]);
             });
-    }
+    }, [id]);
+
+    useEffect(() => {
+        getTeam();
+        getMembers();
+    }, [getMembers, getTeam]);
 
     function addMember(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();

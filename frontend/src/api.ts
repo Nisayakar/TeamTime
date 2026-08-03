@@ -1,6 +1,9 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
 const TOKEN_STORAGE_KEY = "token";
 const USER_STORAGE_KEY = "user";
+let unauthorizedRedirectHandler = () => {
+    window.location.assign("/login");
+};
 
 if (!API_BASE_URL) {
     throw new Error("VITE_API_BASE_URL tanımlı değil. Lütfen frontend/.env dosyasını kontrol edin.");
@@ -89,7 +92,17 @@ function redirectToLoginAfterUnauthorized() {
         return;
     }
 
-    window.location.assign("/login");
+    unauthorizedRedirectHandler();
+}
+
+export function setUnauthorizedRedirectHandlerForTests(handler: () => void) {
+    unauthorizedRedirectHandler = handler;
+}
+
+export function resetUnauthorizedRedirectHandlerForTests() {
+    unauthorizedRedirectHandler = () => {
+        window.location.assign("/login");
+    };
 }
 
 export async function apiFetch(path: string, options: RequestInit = {}) {

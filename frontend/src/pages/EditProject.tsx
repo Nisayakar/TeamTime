@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch, getStoredUser } from "../api";
 import { useToast } from "../context/toast";
@@ -24,15 +24,11 @@ function EditProject() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
-    useEffect(() => {
-        loadProject();
-    }, [id]);
-
     const canUpdateProject = project
         ? !project.teamProject || canManageTeamProjects(currentTeamRole)
         : false;
 
-    function getCurrentUserId() {
+    const getCurrentUserId = useCallback(() => {
         const storedUser: unknown = getStoredUser();
 
         if (
@@ -45,9 +41,29 @@ function EditProject() {
         }
 
         return null;
-    }
+    }, []);
 
-    async function loadProject() {
+    const loadTeamRole = useCallback(async (teamId: number) => {
+        const currentUserId = getCurrentUserId();
+
+        if (currentUserId === null) {
+            setCurrentTeamRole(undefined);
+            return;
+        }
+
+        const response = await apiFetch(`/teams/${teamId}/members`);
+
+        if (!response.ok) {
+            setCurrentTeamRole(undefined);
+            return;
+        }
+
+        const data: unknown = await response.json();
+        const members: TeamMember[] = Array.isArray(data) ? data : [];
+        setCurrentTeamRole(members.find(member => member.userId === currentUserId)?.role);
+    }, [getCurrentUserId]);
+
+    const loadProject = useCallback(async () => {
         if (!id) {
             setLoading(false);
             return;
@@ -81,27 +97,11 @@ function EditProject() {
         } finally {
             setLoading(false);
         }
-    }
+    }, [id, loadTeamRole, showToast]);
 
-    async function loadTeamRole(teamId: number) {
-        const currentUserId = getCurrentUserId();
-
-        if (currentUserId === null) {
-            setCurrentTeamRole(undefined);
-            return;
-        }
-
-        const response = await apiFetch(`/teams/${teamId}/members`);
-
-        if (!response.ok) {
-            setCurrentTeamRole(undefined);
-            return;
-        }
-
-        const data: unknown = await response.json();
-        const members: TeamMember[] = Array.isArray(data) ? data : [];
-        setCurrentTeamRole(members.find(member => member.userId === currentUserId)?.role);
-    }
+    useEffect(() => {
+        loadProject();
+    }, [loadProject]);
 
     async function updateProject(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
