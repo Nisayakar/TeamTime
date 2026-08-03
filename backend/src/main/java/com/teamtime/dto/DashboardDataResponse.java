@@ -6,6 +6,7 @@ public class DashboardDataResponse {
     private long taskCount;
     private long completedTaskCount;
     private long inProgressTaskCount;
+    private long teamCount;
 
     public DashboardDataResponse() {
     }
@@ -15,6 +16,15 @@ public class DashboardDataResponse {
         this.taskCount = taskCount;
         this.completedTaskCount = completedTaskCount;
         this.inProgressTaskCount = inProgressTaskCount;
+    }
+
+    public DashboardDataResponse(long projectCount, long taskCount, long completedTaskCount, long inProgressTaskCount,
+            long teamCount) {
+        this.projectCount = projectCount;
+        this.taskCount = taskCount;
+        this.completedTaskCount = completedTaskCount;
+        this.inProgressTaskCount = inProgressTaskCount;
+        this.teamCount = teamCount;
     }
 
     public long getProjectCount() {
@@ -47,5 +57,13 @@ public class DashboardDataResponse {
 
     public void setInProgressTaskCount(long inProgressTaskCount) {
         this.inProgressTaskCount = inProgressTaskCount;
+    }
+
+    public long getTeamCount() {
+        return teamCount;
+    }
+
+    public void setTeamCount(long teamCount) {
+        this.teamCount = teamCount;
     }
 }

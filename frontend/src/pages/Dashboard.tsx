@@ -8,6 +8,7 @@ function Dashboard() {
         taskCount: number;
         completedTaskCount: number;
         inProgressTaskCount: number;
+        teamCount: number;
     }
 
     type RecentTask = {
@@ -22,7 +23,14 @@ function Dashboard() {
         description: string;
     }
 
-    const [user, setUser] = useState<any>(null);
+    type StoredUser = {
+        id: number;
+        name: string;
+        surname: string;
+        email: string;
+    }
+
+    const [user, setUser] = useState<StoredUser | null>(null);
     const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
     const [recentTasks, setRecentTasks] = useState<RecentTask[]>([]);
     const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
@@ -34,7 +42,7 @@ function Dashboard() {
 
     useEffect(() => {
         apiFetch("/dashboard")
-            .then(response => response.json())
+            .then(response => response.json() as Promise<DashboardData>)
             .then(data => {
                 setDashboardData(data);
             });
@@ -106,6 +114,12 @@ function Dashboard() {
                     <span className="card-icon warning">IP</span>
                     <p>Devam Eden Görev</p>
                     <strong>{dashboardData?.inProgressTaskCount ?? 0}</strong>
+                </div>
+
+                <div className="stat-card">
+                    <span className="card-icon">TM</span>
+                    <p>👥 Takımlarım</p>
+                    <strong>{dashboardData?.teamCount ?? 0}</strong>
                 </div>
             </section>
 

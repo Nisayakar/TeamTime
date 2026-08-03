@@ -1,51 +1,73 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { apiFetch } from "../api";
+import { useEffect, useMemo, useState } from "react";
+import { apiFetch, getStoredUser } from "../api";
+import type { ProjectRequest } from "../types/project";
+import { canManageTeamProjects, getTeamRoleLabel, type Team, type TeamMember, type TeamRole } from "../types/team";
 
+type StoredUser = {
+    id: number;
+}
+
+type ProjectMode = "personal" | "team";
+
+type ManageableTeam = Team & {
+    role: TeamRole;
+}
 
 function CreateProject() {
     const [projectName, setProjectName] = useState("");
     const [projectDescription, setProjectDescription] = useState("");
-    const [teamName, setTeamName] = useState("");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
-    const { id } = useParams();
+    const [projectMode, setProjectMode] = useState<ProjectMode>("personal");
+    const [selectedTeamId, setSelectedTeamId] = useState("");
+    const [teams, setTeams] = useState<ManageableTeam[]>([]);
+    const [loadingTeams, setLoadingTeams] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
+        loadManageableTeams();
+    }, []);
 
-        if (id) {
-
-            apiFetch(`/projects/${id}`)
-                .then(response => response.json())
-                .then(data => {
-
-                    setProjectName(data.projectName);
-                    setProjectDescription(data.description);
-                    setTeamName(data.teamName);
-                    setStartDate(data.startDate);
-                    setEndDate(data.endDate);
-
-                })
-
+    const selectedTeamIdNumber = useMemo(() => {
+        if (selectedTeamId === "") {
+            return null;
         }
 
-    }, [])
+        return Number(selectedTeamId);
+    }, [selectedTeamId]);
 
-    async function readErrorMessage(response: Response) {
+    function getCurrentUserId() {
+        const storedUser: unknown = getStoredUser();
+
+        if (
+            storedUser &&
+            typeof storedUser === "object" &&
+            "id" in storedUser &&
+            typeof (storedUser as StoredUser).id === "number"
+        ) {
+            return (storedUser as StoredUser).id;
+        }
+
+        return null;
+    }
+
+    async function readErrorMessage(response: Response, fallbackMessage = "Proje oluşturulamadı") {
         const contentType = response.headers.get("Content-Type") || "";
 
         if (contentType.includes("application/json")) {
-            const data = await response.json();
+            const data: unknown = await response.json();
 
-            if (data.errors) {
-                return Object.values(data.errors).join("\n");
+            if (data && typeof data === "object") {
+                if ("fieldErrors" in data && data.fieldErrors && typeof data.fieldErrors === "object") {
+                    return Object.values(data.fieldErrors).join("\n");
+                }
+
+                if ("message" in data && typeof data.message === "string") {
+                    return data.message;
+                }
             }
 
-            if (data.message) {
-                return data.message;
-            }
-
-            return "Proje oluşturulamadı";
+            return fallbackMessage;
         }
 
         const message = await response.text();
@@ -63,23 +85,88 @@ function CreateProject() {
                 return "İstenen kaynak bulunamadı";
             case 409:
                 return "Bu işlem mevcut kayıtlarla çakışıyor";
-            case 500:
-                return "Sunucuda beklenmeyen bir hata oluştu";
             default:
-                return "Proje oluşturulamadı";
+                return fallbackMessage;
         }
     }
 
-    async function projeOlustur(e: any) {
-        e.preventDefault();
+    async function loadManageableTeams() {
+        const currentUserId = getCurrentUserId();
 
-        const project = {
-            projectName: projectName,
+        if (currentUserId === null) {
+            setTeams([]);
+            setLoadingTeams(false);
+            return;
+        }
+
+        try {
+            const teamsResponse = await apiFetch("/teams");
+
+            if (!teamsResponse.ok) {
+                throw new Error(await readErrorMessage(teamsResponse, "Takımlar yüklenemedi"));
+            }
+
+            const teamsData: unknown = await teamsResponse.json();
+            const userTeams: Team[] = Array.isArray(teamsData) ? teamsData : [];
+
+            const teamsWithRoles: Array<ManageableTeam | null> = await Promise.all(
+                userTeams.map(async team => {
+                    const membersResponse = await apiFetch(`/teams/${team.id}/members`);
+
+                    if (!membersResponse.ok) {
+                        return null;
+                    }
+
+                    const membersData: unknown = await membersResponse.json();
+                    const members: TeamMember[] = Array.isArray(membersData) ? membersData : [];
+                    const currentMembership = members.find(member => member.userId === currentUserId);
+
+                    if (!canManageTeamProjects(currentMembership?.role)) {
+                        return null;
+                    }
+
+                    return {
+                        ...team,
+                        role: currentMembership.role
+                    };
+                })
+            );
+
+            const manageableTeams: ManageableTeam[] = teamsWithRoles.filter((team): team is ManageableTeam => team !== null);
+            setTeams(manageableTeams);
+
+            if (manageableTeams.length > 0) {
+                setSelectedTeamId(String(manageableTeams[0].id));
+            }
+        } catch (error) {
+            alert(error instanceof Error ? error.message : "Takımlar yüklenemedi");
+            setTeams([]);
+        } finally {
+            setLoadingTeams(false);
+        }
+    }
+
+    async function createProject(event: React.FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+
+        if (submitting) {
+            return;
+        }
+
+        if (projectMode === "team" && selectedTeamIdNumber === null) {
+            alert("Lütfen proje için bir takım seçin");
+            return;
+        }
+
+        const project: ProjectRequest = {
+            projectName,
             description: projectDescription,
-            teamName: teamName,
-            startDate: startDate,
-            endDate: endDate
+            startDate,
+            endDate,
+            teamId: projectMode === "team" ? selectedTeamIdNumber : null
         };
+
+        setSubmitting(true);
 
         try {
             const response = await apiFetch("/projects", {
@@ -94,8 +181,10 @@ function CreateProject() {
 
             const data = await response.text();
             alert(data);
-        } catch (error) {
+        } catch {
             alert("Sunucuya bağlanılamadı");
+        } finally {
+            setSubmitting(false);
         }
     }
 
@@ -109,15 +198,47 @@ function CreateProject() {
                 </div>
             </section>
 
-            <form className="form-card" onSubmit={projeOlustur}>
+            <form className="form-card" onSubmit={createProject}>
                 <label>Proje Adı</label>
-                <input type="text" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
+                <input type="text" value={projectName} onChange={(e) => setProjectName(e.target.value)} required />
 
                 <label>Proje Açıklaması</label>
                 <input type="text" value={projectDescription} onChange={(e) => setProjectDescription(e.target.value)} />
 
-                <label>Takım Adı</label>
-                <input type="text" value={teamName} onChange={(e) => setTeamName(e.target.value)} />
+                <label>Proje Türü</label>
+                <select value={projectMode} onChange={(e) => setProjectMode(e.target.value as ProjectMode)}>
+                    <option value="personal">Kişisel Proje</option>
+                    <option value="team">Takım Projesi</option>
+                </select>
+
+                {
+                    projectMode === "team" && (
+                        <>
+                            <label>Takım</label>
+                            {
+                                loadingTeams ? (
+                                    <p className="empty-state">Takımlar yükleniyor...</p>
+                                ) : teams.length === 0 ? (
+                                    <p className="empty-state">Proje oluşturabileceğiniz yönetilebilir takım bulunmuyor.</p>
+                                ) : (
+                                    <select
+                                        value={selectedTeamId}
+                                        onChange={(e) => setSelectedTeamId(e.target.value)}
+                                        required
+                                    >
+                                        {
+                                            teams.map(team => (
+                                                <option value={team.id} key={team.id}>
+                                                    {team.name} - {getTeamRoleLabel(team.role)}
+                                                </option>
+                                            ))
+                                        }
+                                    </select>
+                                )
+                            }
+                        </>
+                    )
+                }
 
                 <div className="form-grid two-columns">
                     <div>
@@ -131,7 +252,13 @@ function CreateProject() {
                     </div>
                 </div>
 
-                <button className="button button-primary button-full" type="submit">Proje Oluştur</button>
+                <button
+                    className="button button-primary button-full"
+                    type="submit"
+                    disabled={submitting || (projectMode === "team" && (loadingTeams || teams.length === 0))}
+                >
+                    {submitting ? "Oluşturuluyor..." : "Proje Oluştur"}
+                </button>
             </form>
         </main>
     );

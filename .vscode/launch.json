@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Backend: Spring Boot Local",
+            "request": "launch",
+            "mainClass": "com.teamtime.BackendApplication",
+            "projectName": "backend",
+            "cwd": "${workspaceFolder}/backend",
+            "envFile": "${workspaceFolder}/backend/.env"
+        }
+    ]
+}

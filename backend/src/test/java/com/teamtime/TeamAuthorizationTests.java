@@ -100,6 +100,19 @@ class TeamAuthorizationTests {
     }
 
     @Test
+    void dashboardCountsDistinctTeamsForAuthenticatedUser() throws Exception {
+        createTeam(owner, "Owner Team");
+        Long sharedTeamId = createTeam(outsider, "Shared Team");
+        createTeam(outsider, "Outsider Team");
+        addMember(outsider, sharedTeamId, owner.getId(), TeamRole.MEMBER);
+
+        mockMvc.perform(get("/api/dashboard")
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.teamCount").value(2));
+    }
+
+    @Test
     void nonMemberCannotViewTeamMembers() throws Exception {
         Long teamId = createTeam(owner, "Private Team");
 
