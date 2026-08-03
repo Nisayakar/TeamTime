@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import ConfirmModal from "../components/ConfirmModal";
 import { apiFetch, getStoredUser } from "../api";
 import { useToast } from "../context/toast";
 import type { Project } from "../types/project";
@@ -39,6 +40,8 @@ function ProjectDetails() {
     const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("ALL");
     const [dueDateFilter, setDueDateFilter] = useState<DueDateFilter>("ALL");
     const [sortOption, setSortOption] = useState<SortOption>("NEWEST");
+    const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+    const [deletingTask, setDeletingTask] = useState(false);
 
     const canMutateTasks = project
         ? !project.teamProject || canManageTeamProjects(currentTeamRole)
@@ -243,30 +246,46 @@ function ProjectDetails() {
         }
     }
 
-    async function deleteTask(taskId: number) {
+    async function confirmDeleteTask() {
         if (!canMutateTasks) {
             showToast({ type: "warning", message: "Bu işlem için yetkiniz yok" });
             return;
         }
 
-        const response = await apiFetch(`/tasks/${taskId}`, {
-            method: "DELETE"
-        });
-
-        if (!response.ok) {
-            showToast({
-                type: "error",
-                message: await parseApiError(response, "Görev silinemedi")
-            });
+        if (!taskToDelete || deletingTask) {
             return;
         }
 
-        const data = await response.text();
-        showToast({
-            type: "success",
-            message: data || "Görev başarıyla silindi."
-        });
-        getTasks();
+        setDeletingTask(true);
+
+        try {
+            const response = await apiFetch(`/tasks/${taskToDelete.id}`, {
+                method: "DELETE"
+            });
+
+            if (!response.ok) {
+                showToast({
+                    type: "error",
+                    message: await parseApiError(response, "Görev silinemedi")
+                });
+                return;
+            }
+
+            const data = await response.text();
+            showToast({
+                type: "success",
+                message: data || "Görev başarıyla silindi."
+            });
+            setTaskToDelete(null);
+            getTasks();
+        } catch (error) {
+            showToast({
+                type: "error",
+                message: getErrorMessage(error, "Görev silinemedi")
+            });
+        } finally {
+            setDeletingTask(false);
+        }
     }
 
     function editTask(task: Task) {
@@ -590,7 +609,7 @@ function ProjectDetails() {
                                                     Düzenle
                                                 </button>
 
-                                                <button className="button button-danger" onClick={() => deleteTask(task.id)}>
+                                                <button className="button button-danger" onClick={() => setTaskToDelete(task)}>
                                                     Sil
                                                 </button>
                                             </div>
@@ -602,6 +621,16 @@ function ProjectDetails() {
                     }
                 </div>
             </section>
+            <ConfirmModal
+                open={taskToDelete !== null}
+                title="Görevi sil"
+                message={`"${taskToDelete?.title ?? "Bu görev"}" adlı görev kalıcı olarak silinecek. Devam etmek istiyor musunuz?`}
+                confirmLabel={deletingTask ? "Siliniyor" : "Sil"}
+                variant="danger"
+                loading={deletingTask}
+                onConfirm={confirmDeleteTask}
+                onCancel={() => setTaskToDelete(null)}
+            />
         </main>
     );
 }

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ConfirmModal from "../components/ConfirmModal";
 import { apiFetch, getStoredUser } from "../api";
 import { useToast } from "../context/toast";
 import type { TeamRole } from "../types/team";
-import { parseApiError } from "../utils/apiError";
+import { getErrorMessage, parseApiError } from "../utils/apiError";
 import { navigateForInitialLoadError } from "../utils/routeErrors";
 
 type Team = {
@@ -31,6 +32,8 @@ function Teams() {
     const [editingTeamId, setEditingTeamId] = useState<number | null>(null);
     const [editName, setEditName] = useState("");
     const [editDescription, setEditDescription] = useState("");
+    const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
+    const [deletingTeam, setDeletingTeam] = useState(false);
     const navigate = useNavigate();
 
     const getCurrentUserId = useCallback(() => {
@@ -197,24 +200,40 @@ function Teams() {
         });
     }
 
-    async function deleteTeam(id: number) {
-        const response = await apiFetch(`/teams/${id}`, {
-            method: "DELETE"
-        });
-
-        if (!response.ok) {
-            showToast({
-                type: "error",
-                message: await parseApiError(response, "Takım silinemedi")
-            });
+    async function confirmDeleteTeam() {
+        if (!teamToDelete || deletingTeam) {
             return;
         }
 
-        setTeams(teams.filter(team => team.id !== id));
-        showToast({
-            type: "success",
-            message: "Takım başarıyla silindi."
-        });
+        setDeletingTeam(true);
+
+        try {
+            const response = await apiFetch(`/teams/${teamToDelete.id}`, {
+                method: "DELETE"
+            });
+
+            if (!response.ok) {
+                showToast({
+                    type: "error",
+                    message: await parseApiError(response, "Takım silinemedi")
+                });
+                return;
+            }
+
+            setTeams(currentTeams => currentTeams.filter(team => team.id !== teamToDelete.id));
+            showToast({
+                type: "success",
+                message: "Takım başarıyla silindi."
+            });
+            setTeamToDelete(null);
+        } catch (error) {
+            showToast({
+                type: "error",
+                message: getErrorMessage(error, "Takım silinemedi")
+            });
+        } finally {
+            setDeletingTeam(false);
+        }
     }
 
     return (
@@ -316,7 +335,7 @@ function Teams() {
 
                                                     {
                                                         rolesByTeamId[team.id] === "OWNER" && (
-                                                            <button className="button button-danger" onClick={() => deleteTeam(team.id)}>
+                                                            <button className="button button-danger" onClick={() => setTeamToDelete(team)}>
                                                                 Sil
                                                             </button>
                                                         )
@@ -331,6 +350,16 @@ function Teams() {
                     </section>
                 )
             }
+            <ConfirmModal
+                open={teamToDelete !== null}
+                title="Takımı sil"
+                message={`"${teamToDelete?.name ?? "Bu takım"}" adlı takımı silmek istediğinizden emin misiniz? Bu takım bağlı projelere sahipse silinemeyebilir.`}
+                confirmLabel={deletingTeam ? "Siliniyor" : "Sil"}
+                variant="danger"
+                loading={deletingTeam}
+                onConfirm={confirmDeleteTeam}
+                onCancel={() => setTeamToDelete(null)}
+            />
         </main>
     );
 }

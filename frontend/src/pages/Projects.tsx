@@ -1,6 +1,7 @@
 import ProjectCard from "../components/ProjectCard";
 import { Link, useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
+import ConfirmModal from "../components/ConfirmModal";
 import { apiFetch, getStoredUser } from "../api";
 import { useToast } from "../context/toast";
 import type { Project } from "../types/project";
@@ -17,6 +18,8 @@ function Projects() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [teamRoles, setTeamRoles] = useState<Record<number, TeamRole | undefined>>({});
     const [loading, setLoading] = useState(true);
+    const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+    const [deletingProject, setDeletingProject] = useState(false);
     const navigate = useNavigate();
 
     const getCurrentUserId = useCallback(() => {
@@ -115,25 +118,41 @@ function Projects() {
         return canManageTeamProjects(teamRoles[project.teamId]);
     }
 
-    async function deleteProject(id: number) {
-        const response = await apiFetch(`/projects/${id}`, {
-            method: "DELETE"
-        });
-
-        if (!response.ok) {
-            showToast({
-                type: "error",
-                message: await parseApiError(response, "Proje silinemedi")
-            });
+    async function confirmDeleteProject() {
+        if (!projectToDelete || deletingProject) {
             return;
         }
 
-        const data = await response.text();
-        showToast({
-            type: "success",
-            message: data || "Proje başarıyla silindi."
-        });
-        setProjects(projects.filter(project => project.id !== id));
+        setDeletingProject(true);
+
+        try {
+            const response = await apiFetch(`/projects/${projectToDelete.id}`, {
+                method: "DELETE"
+            });
+
+            if (!response.ok) {
+                showToast({
+                    type: "error",
+                    message: await parseApiError(response, "Proje silinemedi")
+                });
+                return;
+            }
+
+            const data = await response.text();
+            showToast({
+                type: "success",
+                message: data || "Proje başarıyla silindi."
+            });
+            setProjects(currentProjects => currentProjects.filter(project => project.id !== projectToDelete.id));
+            setProjectToDelete(null);
+        } catch (error) {
+            showToast({
+                type: "error",
+                message: getErrorMessage(error, "Proje silinemedi")
+            });
+        } finally {
+            setDeletingProject(false);
+        }
     }
 
     return (
@@ -195,7 +214,7 @@ function Projects() {
 
                                                     <button
                                                         className="button button-danger"
-                                                        onClick={() => deleteProject(project.id)}
+                                                        onClick={() => setProjectToDelete(project)}
                                                     >
                                                         Sil
                                                     </button>
@@ -209,6 +228,16 @@ function Projects() {
                     </section>
                 )
             }
+            <ConfirmModal
+                open={projectToDelete !== null}
+                title="Projeyi sil"
+                message={`"${projectToDelete?.projectName ?? "Bu proje"}" adlı projeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+                confirmLabel={deletingProject ? "Siliniyor" : "Sil"}
+                variant="danger"
+                loading={deletingProject}
+                onConfirm={confirmDeleteProject}
+                onCancel={() => setProjectToDelete(null)}
+            />
         </main>
     );
 }

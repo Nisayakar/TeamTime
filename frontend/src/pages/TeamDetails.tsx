@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import ConfirmModal from "../components/ConfirmModal";
 import { apiFetch, getStoredUser } from "../api";
 import { useToast } from "../context/toast";
 import { getTeamRoleLabel, type TeamRole } from "../types/team";
@@ -44,6 +45,8 @@ function TeamDetails() {
     const [userResults, setUserResults] = useState<UserSearchResult[]>([]);
     const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
     const [role, setRole] = useState<TeamRole>("MEMBER");
+    const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null);
+    const [removingMember, setRemovingMember] = useState(false);
 
     useEffect(() => {
         const query = userSearch.trim();
@@ -236,21 +239,40 @@ function TeamDetails() {
         return false;
     }
 
-    async function removeMember(member: TeamMember) {
-        const response = await apiFetch(`/teams/${id}/members/${member.userId}`, {
-            method: "DELETE"
-        });
-
-        if (!response.ok) {
-            showToast({
-                type: "error",
-                message: await parseApiError(response, "Üye çıkarılamadı")
-            });
+    async function confirmRemoveMember() {
+        if (!memberToRemove || removingMember) {
             return;
         }
 
-        setMembers(members.filter(currentMember => currentMember.id !== member.id));
-        showToast({ type: "success", message: "Üye takımdan çıkarıldı." });
+        setRemovingMember(true);
+
+        try {
+            const response = await apiFetch(`/teams/${id}/members/${memberToRemove.userId}`, {
+                method: "DELETE"
+            });
+
+            if (!response.ok) {
+                showToast({
+                    type: "error",
+                    message: await parseApiError(response, "Üye çıkarılamadı")
+                });
+                return;
+            }
+
+            setMembers(currentMembers => currentMembers.filter(currentMember => currentMember.id !== memberToRemove.id));
+            showToast({
+                type: "success",
+                message: "Üye takımdan çıkarıldı."
+            });
+            setMemberToRemove(null);
+        } catch (error) {
+            showToast({
+                type: "error",
+                message: getErrorMessage(error, "Üye çıkarılamadı")
+            });
+        } finally {
+            setRemovingMember(false);
+        }
     }
 
     return (
@@ -361,7 +383,7 @@ function TeamDetails() {
 
                                     {
                                         canRemoveMember(member) && (
-                                            <button className="button button-danger" onClick={() => removeMember(member)}>
+                                            <button className="button button-danger" onClick={() => setMemberToRemove(member)}>
                                                 Çıkar
                                             </button>
                                         )
@@ -372,6 +394,16 @@ function TeamDetails() {
                     }
                 </div>
             </section>
+            <ConfirmModal
+                open={memberToRemove !== null}
+                title="Üyeyi çıkar"
+                message={`${memberToRemove?.userName ?? "Bu kullanıcı"} (${memberToRemove ? getTeamRoleLabel(memberToRemove.role) : "Üye"}) takımdan çıkarılacak. Devam etmek istiyor musunuz?`}
+                confirmLabel={removingMember ? "Çıkarılıyor" : "Çıkar"}
+                variant="danger"
+                loading={removingMember}
+                onConfirm={confirmRemoveMember}
+                onCancel={() => setMemberToRemove(null)}
+            />
         </main>
     );
 }
