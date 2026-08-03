@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, clearAuth, getStoredUser } from "../api";
+import type { Task } from "../types/task";
 
 function Dashboard() {
     type DashboardData = {
@@ -9,12 +10,6 @@ function Dashboard() {
         completedTaskCount: number;
         inProgressTaskCount: number;
         teamCount: number;
-    }
-
-    type RecentTask = {
-        id: number;
-        title: string;
-        status: string;
     }
 
     type RecentProject = {
@@ -32,7 +27,7 @@ function Dashboard() {
 
     const [user, setUser] = useState<StoredUser | null>(null);
     const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-    const [recentTasks, setRecentTasks] = useState<RecentTask[]>([]);
+    const [recentTasks, setRecentTasks] = useState<Task[]>([]);
     const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
     const navigate = useNavigate();
 

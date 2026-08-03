@@ -695,6 +695,13 @@ body:has(.login-designed-page) .app-navbar-public {
   gap: 12px;
 }
 
+.task-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .member-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;

@@ -1,7 +1,9 @@
 package com.teamtime.controller;
 
-import com.teamtime.entity.Task;
+import com.teamtime.dto.TaskRequest;
+import com.teamtime.dto.TaskResponse;
 import com.teamtime.service.TaskService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,20 +25,20 @@ public class TaskController {
     }
 
     @PostMapping("/{projectId}")
-    public ResponseEntity<?> createTask(
-            @RequestBody Task task,
+    public ResponseEntity<TaskResponse> createTask(
+            @Valid @RequestBody TaskRequest task,
             @PathVariable Long projectId,
             Authentication authentication) {
 
         Long userId = (Long) authentication.getPrincipal();
-        Task createdTask = taskService.createTask(task, projectId, userId);
+        TaskResponse createdTask = taskService.createTask(task, projectId, userId);
 
         return ResponseEntity.ok(createdTask);
 
     }
 
     @GetMapping("/project/{projectId}")
-    public List<Task> getTasksByProject(
+    public List<TaskResponse> getTasksByProject(
             @PathVariable Long projectId,
             Authentication authentication) {
 
@@ -46,7 +48,7 @@ public class TaskController {
     }
 
     @GetMapping("/recent")
-    public List<Task> getRecentTasks(Authentication authentication) {
+    public List<TaskResponse> getRecentTasks(Authentication authentication) {
 
         Long userId = (Long) authentication.getPrincipal();
         return taskService.getRecentTasks(userId);
@@ -54,15 +56,13 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public String updateTask(
+    public TaskResponse updateTask(
             @PathVariable Long id,
-            @RequestBody Task task,
+            @Valid @RequestBody TaskRequest task,
             Authentication authentication) {
 
         Long userId = (Long) authentication.getPrincipal();
-        taskService.updateTask(id, task, userId);
-
-        return "Görev başarıyla güncellendi";
+        return taskService.updateTask(id, task, userId);
 
     }
 

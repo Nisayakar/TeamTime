@@ -2,17 +2,11 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { apiFetch, getStoredUser } from "../api";
 import type { Project } from "../types/project";
+import type { Task, TaskPriority, TaskStatus } from "../types/task";
 import { canManageTeamProjects, type TeamMember, type TeamRole } from "../types/team";
 
 type StoredUser = {
     id: number;
-}
-
-type Task = {
-    id: number;
-    title: string;
-    description: string;
-    status: string;
 }
 
 function ProjectDetails() {
@@ -22,9 +16,12 @@ function ProjectDetails() {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
-    const [status, setStatus] = useState("BEKLIYOR");
+    const [status, setStatus] = useState<TaskStatus>("BEKLIYOR");
+    const [priority, setPriority] = useState<TaskPriority>("MEDIUM");
+    const [dueDate, setDueDate] = useState("");
     const [editId, setEditId] = useState<number | null>(null);
     const [message, setMessage] = useState("");
+    const [savingTask, setSavingTask] = useState(false);
     const [currentTeamRole, setCurrentTeamRole] = useState<TeamRole | undefined>();
     const [loadingProject, setLoadingProject] = useState(true);
     const [loadingTasks, setLoadingTasks] = useState(true);
@@ -168,11 +165,15 @@ function ProjectDetails() {
         const task = {
             title,
             description,
-            status
+            status,
+            priority,
+            dueDate: dueDate || null
         };
 
         const url = editId ? `/tasks/${editId}` : `/tasks/${id}`;
         const method = editId ? "PUT" : "POST";
+
+        setSavingTask(true);
 
         try {
             const response = await apiFetch(url, {
@@ -184,12 +185,14 @@ function ProjectDetails() {
                 throw new Error(await readErrorMessage(response, "Görev kaydedilemedi"));
             }
 
-            const data = await response.text();
-            showMessage(data);
+            await response.text();
+            showMessage(editId ? "Görev başarıyla güncellendi" : "Görev başarıyla oluşturuldu");
             clearForm();
             getTasks();
         } catch (error) {
             showMessage(error instanceof Error ? error.message : "Görev kaydedilemedi");
+        } finally {
+            setSavingTask(false);
         }
     }
 
@@ -220,18 +223,22 @@ function ProjectDetails() {
 
         setEditId(task.id);
         setTitle(task.title);
-        setDescription(task.description);
+        setDescription(task.description || "");
         setStatus(task.status);
+        setPriority(task.priority);
+        setDueDate(task.dueDate || "");
     }
 
     function clearForm() {
         setTitle("");
         setDescription("");
         setStatus("BEKLIYOR");
+        setPriority("MEDIUM");
+        setDueDate("");
         setEditId(null);
     }
 
-    function getStatusClass(taskStatus: string) {
+    function getStatusClass(taskStatus: TaskStatus) {
         if (taskStatus === "TAMAMLANDI") {
             return "badge badge-green";
         }
@@ -241,6 +248,62 @@ function ProjectDetails() {
         }
 
         return "badge badge-warning";
+    }
+
+    function getStatusLabel(taskStatus: TaskStatus) {
+        if (taskStatus === "TAMAMLANDI") {
+            return "Tamamlandı";
+        }
+
+        if (taskStatus === "DEVAM_EDIYOR") {
+            return "Devam Ediyor";
+        }
+
+        return "Bekliyor";
+    }
+
+    function getPriorityLabel(taskPriority: TaskPriority) {
+        if (taskPriority === "LOW") {
+            return "Düşük";
+        }
+
+        if (taskPriority === "HIGH") {
+            return "Yüksek";
+        }
+
+        if (taskPriority === "URGENT") {
+            return "Acil";
+        }
+
+        return "Orta";
+    }
+
+    function getPriorityClass(taskPriority: TaskPriority) {
+        if (taskPriority === "LOW") {
+            return "badge badge-green";
+        }
+
+        if (taskPriority === "HIGH") {
+            return "badge badge-purple";
+        }
+
+        if (taskPriority === "URGENT") {
+            return "badge badge-warning";
+        }
+
+        return "badge badge-blue";
+    }
+
+    function formatDate(value: string | null) {
+        if (!value) {
+            return "Belirlenmedi";
+        }
+
+        return new Intl.DateTimeFormat("tr-TR", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        }).format(new Date(value));
     }
 
     function getProjectScopeLabel() {
@@ -297,19 +360,37 @@ function ProjectDetails() {
                                 <label>Durum</label>
                                 <select
                                     value={status}
-                                    onChange={(e) => setStatus(e.target.value)}
+                                    onChange={(e) => setStatus(e.target.value as TaskStatus)}
                                 >
                                     <option value="BEKLIYOR">Bekliyor</option>
                                     <option value="DEVAM_EDIYOR">Devam Ediyor</option>
                                     <option value="TAMAMLANDI">Tamamlandı</option>
                                 </select>
 
+                                <label>Öncelik</label>
+                                <select
+                                    value={priority}
+                                    onChange={(e) => setPriority(e.target.value as TaskPriority)}
+                                >
+                                    <option value="LOW">Düşük</option>
+                                    <option value="MEDIUM">Orta</option>
+                                    <option value="HIGH">Yüksek</option>
+                                    <option value="URGENT">Acil</option>
+                                </select>
+
+                                <label>Son Tarih</label>
+                                <input
+                                    type="date"
+                                    value={dueDate}
+                                    onChange={(e) => setDueDate(e.target.value)}
+                                />
+
                                 <div className="button-row">
-                                    <button className="button button-primary" onClick={saveTask}>
-                                        {editId ? "Güncelle" : "Görev Ekle"}
+                                    <button className="button button-primary" onClick={saveTask} disabled={savingTask}>
+                                        {savingTask ? "Kaydediliyor..." : editId ? "Güncelle" : "Görev Ekle"}
                                     </button>
 
-                                    <button className="button button-secondary" onClick={clearForm}>
+                                    <button className="button button-secondary" onClick={clearForm} disabled={savingTask}>
                                         Temizle
                                     </button>
                                 </div>
@@ -346,8 +427,22 @@ function ProjectDetails() {
                                     </div>
 
                                     <span className={getStatusClass(task.status)}>
-                                        {task.status}
+                                        {getStatusLabel(task.status)}
                                     </span>
+
+                                    <div className="task-meta-row">
+                                        <span className={getPriorityClass(task.priority)}>
+                                            {getPriorityLabel(task.priority)}
+                                        </span>
+                                        <span className={task.overdue ? "badge badge-warning" : "badge badge-blue"}>
+                                            Son Tarih: {formatDate(task.dueDate)}
+                                        </span>
+                                        {
+                                            task.overdue && (
+                                                <span className="badge badge-warning">Gecikmiş</span>
+                                            )
+                                        }
+                                    </div>
 
                                     {
                                         canMutateTasks && (

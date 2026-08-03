@@ -1,57 +1,45 @@
-package com.teamtime.entity;
+package com.teamtime.dto;
 
-import jakarta.persistence.*;
+import com.teamtime.entity.TaskPriority;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "tasks")
-public class Task {
+public class TaskResponse {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String title;
-
     private String description;
-
     private String status;
-
-    @Enumerated(EnumType.STRING)
-    private TaskPriority priority = TaskPriority.MEDIUM;
-
+    private TaskPriority priority;
     private LocalDate dueDate;
-
     private LocalDateTime createdAt;
-
     private LocalDateTime completedAt;
+    private boolean overdue;
 
-    @ManyToOne
-    @JoinColumn(name = "project_id")
-    private Project project;
-
-    public Task() {
+    public TaskResponse() {
     }
 
-    public Task(Long id, String title, String description, String status, Project project) {
+    public TaskResponse(
+            Long id,
+            String title,
+            String description,
+            String status,
+            TaskPriority priority,
+            LocalDate dueDate,
+            LocalDateTime createdAt,
+            LocalDateTime completedAt,
+            boolean overdue
+    ) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.status = status;
-        this.project = project;
-    }
-
-    @PrePersist
-    void assignDefaults() {
-        if (priority == null) {
-            priority = TaskPriority.MEDIUM;
-        }
-
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
+        this.priority = priority;
+        this.dueDate = dueDate;
+        this.createdAt = createdAt;
+        this.completedAt = completedAt;
+        this.overdue = overdue;
     }
 
     public Long getId() {
@@ -87,10 +75,6 @@ public class Task {
     }
 
     public TaskPriority getPriority() {
-        if (priority == null) {
-            return TaskPriority.MEDIUM;
-        }
-
         return priority;
     }
 
@@ -122,11 +106,11 @@ public class Task {
         this.completedAt = completedAt;
     }
 
-    public Project getProject() {
-        return project;
+    public boolean isOverdue() {
+        return overdue;
     }
 
-    public void setProject(Project project) {
-        this.project = project;
+    public void setOverdue(boolean overdue) {
+        this.overdue = overdue;
     }
 }

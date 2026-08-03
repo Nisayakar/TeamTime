@@ -1,9 +1,12 @@
 package com.teamtime.service;
 
+import com.teamtime.dto.TaskRequest;
+import com.teamtime.dto.TaskResponse;
 import com.teamtime.entity.Project;
 import com.teamtime.entity.Task;
 import com.teamtime.entity.TeamMember;
 import com.teamtime.entity.TeamRole;
+import com.teamtime.entity.TaskPriority;
 import com.teamtime.exception.ResourceNotFoundException;
 import com.teamtime.repository.ProjectRepository;
 import com.teamtime.repository.TaskRepository;
@@ -12,6 +15,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,7 +45,7 @@ public class TaskService {
 
 
     @Transactional
-    public Task createTask(Task task, Long projectId, Long userId) {
+    public TaskResponse createTask(TaskRequest request, Long projectId, Long userId) {
 
 
         Project project = projectRepository.findById(projectId)
@@ -50,8 +55,16 @@ public class TaskService {
 
         requireTaskMutationAccess(project, userId);
 
-        task.setProject(project);
+        validateNewTaskDueDate(request.getDueDate());
 
+        Task task = new Task();
+        task.setTitle(request.getTitle().trim());
+        task.setDescription(request.getDescription());
+        task.setStatus(normalizeStatus(request.getStatus()));
+        task.setPriority(normalizePriority(request.getPriority()));
+        task.setDueDate(request.getDueDate());
+        task.setProject(project);
+        updateCompletedAt(task);
 
         Task savedTask = taskRepository.save(task);
 
@@ -63,13 +76,13 @@ public class TaskService {
                     userId);
         }
 
-        return savedTask;
+        return convertToResponse(savedTask);
 
     }
 
 
 
-    public List<Task> getTasksByProject(Long projectId, Long userId) {
+    public List<TaskResponse> getTasksByProject(Long projectId, Long userId) {
 
 
         Project project = projectRepository.findById(projectId)
@@ -79,20 +92,27 @@ public class TaskService {
 
         requireTaskViewAccess(project, userId);
 
-        return taskRepository.findByProjectId(projectId);
+        return taskRepository.findByProjectId(projectId)
+                .stream()
+                .map(this::convertToResponse)
+                .toList();
 
     }
 
-    public List<Task> getRecentTasks(Long userId) {
+    public List<TaskResponse> getRecentTasks(Long userId) {
 
 
-        return taskRepository.findAccessibleTasksOrderByIdDesc(userId);
+        return taskRepository.findAccessibleTasksOrderByIdDesc(userId)
+                .stream()
+                .map(this::convertToResponse)
+                .toList();
 
     }
 
 
 
-    public Task updateTask(Long id, Task updatedTask, Long userId) {
+    @Transactional
+    public TaskResponse updateTask(Long id, TaskRequest updatedTask, Long userId) {
 
 
         Optional<Task> task =
@@ -113,15 +133,21 @@ public class TaskService {
         requireTaskMutationAccess(existingTask.getProject(), userId);
 
 
-        existingTask.setTitle(updatedTask.getTitle());
+        existingTask.setTitle(updatedTask.getTitle().trim());
 
         existingTask.setDescription(updatedTask.getDescription());
 
-        existingTask.setStatus(updatedTask.getStatus());
+        existingTask.setStatus(normalizeStatus(updatedTask.getStatus()));
+
+        existingTask.setPriority(normalizePriority(updatedTask.getPriority()));
+
+        existingTask.setDueDate(updatedTask.getDueDate());
+
+        updateCompletedAt(existingTask);
 
 
 
-        return taskRepository.save(existingTask);
+        return convertToResponse(taskRepository.save(existingTask));
 
     }
 
@@ -181,5 +207,61 @@ public class TaskService {
         return TeamRole.from(membership.getRole());
     }
 
+    private String normalizeStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return "BEKLIYOR";
+        }
+
+        if (!status.equals("BEKLIYOR") && !status.equals("DEVAM_EDIYOR") && !status.equals("TAMAMLANDI")) {
+            throw new IllegalArgumentException("Geçersiz görev durumu");
+        }
+
+        return status;
+    }
+
+    private TaskPriority normalizePriority(TaskPriority priority) {
+        if (priority == null) {
+            return TaskPriority.MEDIUM;
+        }
+
+        return priority;
+    }
+
+    private void validateNewTaskDueDate(LocalDate dueDate) {
+        if (dueDate != null && dueDate.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Son tarih bugün veya gelecek bir tarih olmalıdır");
+        }
+    }
+
+    private void updateCompletedAt(Task task) {
+        if ("TAMAMLANDI".equals(task.getStatus())) {
+            if (task.getCompletedAt() == null) {
+                task.setCompletedAt(LocalDateTime.now());
+            }
+
+            return;
+        }
+
+        task.setCompletedAt(null);
+    }
+
+    private TaskResponse convertToResponse(Task task) {
+        return new TaskResponse(
+                task.getId(),
+                task.getTitle(),
+                task.getDescription(),
+                task.getStatus(),
+                task.getPriority(),
+                task.getDueDate(),
+                task.getCreatedAt(),
+                task.getCompletedAt(),
+                isOverdue(task));
+    }
+
+    private boolean isOverdue(Task task) {
+        return task.getDueDate() != null
+                && task.getDueDate().isBefore(LocalDate.now())
+                && !"TAMAMLANDI".equals(task.getStatus());
+    }
 
 }
