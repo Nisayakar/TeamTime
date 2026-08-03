@@ -23,6 +23,15 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     boolean existsByTeam_Id(Long teamId);
 
     @Query("""
+            select count(distinct project.id)
+            from Project project
+            left join TeamMember membership on membership.team = project.team and membership.user.id = :userId
+            where (project.team is null and project.user.id = :userId)
+               or membership.id is not null
+            """)
+    long countAccessibleProjects(@Param("userId") Long userId);
+
+    @Query("""
             select distinct project
             from Project project
             left join fetch project.team team

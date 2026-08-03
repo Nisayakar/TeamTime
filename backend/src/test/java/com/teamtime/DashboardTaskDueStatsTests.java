@@ -136,6 +136,60 @@ class DashboardTaskDueStatsTests {
     }
 
     @Test
+    void dashboardProjectCountIncludesPersonalAndAllJoinedTeamProjects() throws Exception {
+        Team ownerTeam = saveTeam("Owner Project Count Team");
+        addTeamMember(ownerTeam, owner, TeamRole.OWNER);
+        Project ownerTeamProject = saveProject("Owner Team Project", owner, ownerTeam);
+
+        Team adminTeam = saveTeam("Admin Project Count Team");
+        addTeamMember(adminTeam, outsider, TeamRole.OWNER);
+        addTeamMember(adminTeam, owner, TeamRole.ADMIN);
+        Project adminTeamProject = saveProject("Admin Team Project", outsider, adminTeam);
+
+        Team memberTeam = saveTeam("Member Project Count Team");
+        addTeamMember(memberTeam, outsider, TeamRole.OWNER);
+        addTeamMember(memberTeam, owner, TeamRole.MEMBER);
+        Project memberTeamProject = saveProject("Member Team Project", outsider, memberTeam);
+
+        Team inaccessibleTeam = saveTeam("Inaccessible Project Count Team");
+        addTeamMember(inaccessibleTeam, outsider, TeamRole.OWNER);
+        saveProject("Inaccessible Team Project", outsider, inaccessibleTeam);
+        saveProject("Other Personal Project", outsider, null);
+
+        mockMvc.perform(get("/api/dashboard")
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.projectCount").value(4));
+
+        mockMvc.perform(get("/api/projects")
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(4)))
+                .andExpect(jsonPath("$[?(@.id == %d)]".formatted(personalProject.getId()), hasSize(1)))
+                .andExpect(jsonPath("$[?(@.id == %d)]".formatted(ownerTeamProject.getId()), hasSize(1)))
+                .andExpect(jsonPath("$[?(@.id == %d)]".formatted(adminTeamProject.getId()), hasSize(1)))
+                .andExpect(jsonPath("$[?(@.id == %d)]".formatted(memberTeamProject.getId()), hasSize(1)));
+    }
+
+    @Test
+    void dashboardProjectCountDoesNotDuplicateProjectsWhenMembershipRowsDuplicate() throws Exception {
+        Team team = saveTeam("Duplicate Membership Team");
+        addTeamMember(team, owner, TeamRole.MEMBER);
+        addTeamMember(team, owner, TeamRole.ADMIN);
+        saveProject("Duplicate Safe Team Project", outsider, team);
+
+        mockMvc.perform(get("/api/dashboard")
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.projectCount").value(2));
+
+        mockMvc.perform(get("/api/projects")
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)));
+    }
+
+    @Test
     void upcomingEndpointOrdersByDueDatePriorityAndCreatedAt() throws Exception {
         LocalDate today = LocalDate.now();
         saveTask("Tomorrow Low", personalProject, "BEKLIYOR", TaskPriority.LOW, today.plusDays(1), 1);

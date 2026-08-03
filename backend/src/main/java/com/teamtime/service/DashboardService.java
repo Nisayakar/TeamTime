@@ -27,7 +27,7 @@ public class DashboardService {
 
     public DashboardDataResponse getDashboardData(Long userId) {
 
-        long projectCount = projectRepository.countByUserId(userId);
+        long projectCount = projectRepository.countAccessibleProjects(userId);
         long taskCount = taskRepository.countAccessibleTasks(userId);
         long completedTaskCount = taskRepository.countAccessibleTasksByStatus(userId, "TAMAMLANDI");
         long inProgressTaskCount = taskRepository.countAccessibleTasksByStatus(userId, "DEVAM_EDIYOR");
