@@ -11,6 +11,7 @@ import com.teamtime.exception.ResourceNotFoundException;
 import com.teamtime.repository.TeamMemberRepository;
 import com.teamtime.repository.TeamRepository;
 import com.teamtime.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -22,14 +23,17 @@ public class TeamMemberService {
     private final TeamMemberRepository teamMemberRepository;
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public TeamMemberService(TeamMemberRepository teamMemberRepository, TeamRepository teamRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository, NotificationService notificationService) {
         this.teamMemberRepository = teamMemberRepository;
         this.teamRepository = teamRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
+    @Transactional
     public TeamMemberResponse addMember(Long teamId, AddTeamMemberRequest request, Long currentUserId) {
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new ResourceNotFoundException("Takım bulunamadı."));
@@ -64,10 +68,12 @@ public class TeamMemberService {
         teamMember.setJoinedDate(LocalDateTime.now());
 
         TeamMember savedTeamMember = teamMemberRepository.save(teamMember);
+        notificationService.notifyTeamMemberAdded(user, team, requestedRole.name());
 
         return convertToResponse(savedTeamMember);
     }
 
+    @Transactional
     public void removeMember(Long teamId, Long userId, Long currentUserId) {
         TeamMember currentMembership = requireMembership(teamId, currentUserId);
         TeamRole currentRole = TeamRole.from(currentMembership.getRole());
@@ -88,6 +94,7 @@ public class TeamMemberService {
             throw new org.springframework.security.access.AccessDeniedException("ADMIN başka bir ADMIN üyeyi çıkaramaz");
         }
 
+        notificationService.notifyTeamMemberRemoved(teamMember.getUser(), teamMember.getTeam());
         teamMemberRepository.delete(teamMember);
     }
 

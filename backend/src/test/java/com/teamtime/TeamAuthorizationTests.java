@@ -26,6 +26,7 @@ import com.teamtime.entity.User;
 import com.teamtime.repository.TeamMemberRepository;
 import com.teamtime.repository.TeamRepository;
 import com.teamtime.repository.UserRepository;
+import com.teamtime.repository.NotificationRepository;
 import com.teamtime.security.JwtService;
 
 @SpringBootTest
@@ -61,6 +62,9 @@ class TeamAuthorizationTests {
     @Autowired
     private TeamMemberRepository teamMemberRepository;
 
+    @Autowired
+    private NotificationRepository notificationRepository;
+
     private User owner;
     private User admin;
     private User member;
@@ -68,6 +72,7 @@ class TeamAuthorizationTests {
 
     @BeforeEach
     void setUp() {
+        notificationRepository.deleteAll();
         teamMemberRepository.deleteAll();
         teamRepository.deleteAll();
         userRepository.deleteAll();

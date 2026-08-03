@@ -8,6 +8,7 @@ import com.teamtime.exception.ResourceNotFoundException;
 import com.teamtime.repository.ProjectRepository;
 import com.teamtime.repository.TaskRepository;
 import com.teamtime.repository.TeamMemberRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -21,20 +22,24 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
     private final TeamMemberRepository teamMemberRepository;
+    private final NotificationService notificationService;
 
 
 
     public TaskService(TaskRepository taskRepository,
                        ProjectRepository projectRepository,
-                       TeamMemberRepository teamMemberRepository) {
+                       TeamMemberRepository teamMemberRepository,
+                       NotificationService notificationService) {
 
         this.taskRepository = taskRepository;
         this.projectRepository = projectRepository;
         this.teamMemberRepository = teamMemberRepository;
+        this.notificationService = notificationService;
 
     }
 
 
+    @Transactional
     public Task createTask(Task task, Long projectId, Long userId) {
 
 
@@ -48,7 +53,17 @@ public class TaskService {
         task.setProject(project);
 
 
-        return taskRepository.save(task);
+        Task savedTask = taskRepository.save(task);
+
+        if (project.getTeam() != null) {
+            notificationService.notifyTeamTaskCreated(
+                    project.getTeam(),
+                    savedTask.getId(),
+                    savedTask.getTitle(),
+                    userId);
+        }
+
+        return savedTask;
 
     }
 

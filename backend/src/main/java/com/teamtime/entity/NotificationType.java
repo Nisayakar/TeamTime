@@ -1,0 +1,8 @@
+package com.teamtime.entity;
+
+public enum NotificationType {
+    TEAM_MEMBER_ADDED,
+    TEAM_MEMBER_REMOVED,
+    TEAM_PROJECT_CREATED,
+    TEAM_TASK_CREATED
+}

@@ -20,6 +20,7 @@ import com.teamtime.repository.TaskRepository;
 import com.teamtime.repository.TeamMemberRepository;
 import com.teamtime.repository.TeamRepository;
 import com.teamtime.repository.UserRepository;
+import com.teamtime.repository.NotificationRepository;
 import com.teamtime.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -70,6 +71,9 @@ class ProjectTeamAuthorizationTests {
     @Autowired
     private TaskRepository taskRepository;
 
+    @Autowired
+    private NotificationRepository notificationRepository;
+
     private User owner;
     private User admin;
     private User member;
@@ -77,6 +81,7 @@ class ProjectTeamAuthorizationTests {
 
     @BeforeEach
     void setUp() {
+        notificationRepository.deleteAll();
         taskRepository.deleteAll();
         projectRepository.deleteAll();
         teamMemberRepository.deleteAll();

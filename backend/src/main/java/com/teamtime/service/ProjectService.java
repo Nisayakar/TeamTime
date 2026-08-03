@@ -27,14 +27,16 @@ public class ProjectService {
     private final UserRepository userRepository;
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
+    private final NotificationService notificationService;
 
     public ProjectService(ProjectRepository projectRepository, TaskRepository taskRepository, UserRepository userRepository,
-            TeamRepository teamRepository, TeamMemberRepository teamMemberRepository) {
+            TeamRepository teamRepository, TeamMemberRepository teamMemberRepository, NotificationService notificationService) {
         this.projectRepository = projectRepository;
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
         this.teamRepository = teamRepository;
         this.teamMemberRepository = teamMemberRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -59,7 +61,15 @@ public class ProjectService {
             project.setTeam(null);
         }
 
-        projectRepository.save(project);
+        Project savedProject = projectRepository.save(project);
+
+        if (savedProject.getTeam() != null) {
+            notificationService.notifyTeamProjectCreated(
+                    savedProject.getTeam(),
+                    savedProject.getId(),
+                    savedProject.getProjectName(),
+                    userId);
+        }
 
         return "Proje başarıyla oluşturuldu";
 
