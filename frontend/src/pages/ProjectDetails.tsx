@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch, getStoredUser } from "../api";
 import { useToast } from "../context/toast";
@@ -6,6 +6,7 @@ import type { Project } from "../types/project";
 import type { Task, TaskPriority, TaskStatus } from "../types/task";
 import { canManageTeamProjects, type TeamMember, type TeamRole } from "../types/team";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
+import { navigateForInitialLoadError } from "../utils/routeErrors";
 
 type StoredUser = {
     id: number;
@@ -18,6 +19,7 @@ type SortOption = "NEWEST" | "OLDEST" | "DUE_DATE_ASC" | "PRIORITY_DESC" | "PRIO
 
 function ProjectDetails() {
     const { id } = useParams();
+    const navigate = useNavigate();
     const { showToast } = useToast();
 
     const [project, setProject] = useState<Project | null>(null);
@@ -133,6 +135,10 @@ function ProjectDetails() {
             const response = await apiFetch(`/projects/${id}`);
 
             if (!response.ok) {
+                if (navigateForInitialLoadError(response.status, navigate)) {
+                    return;
+                }
+
                 throw new Error(await parseApiError(response, "Proje yüklenemedi"));
             }
 
@@ -151,7 +157,7 @@ function ProjectDetails() {
         } finally {
             setLoadingProject(false);
         }
-    }, [id, loadTeamRole, showToast]);
+    }, [id, loadTeamRole, navigate, showToast]);
 
     const getTasks = useCallback(async () => {
         if (!id) {

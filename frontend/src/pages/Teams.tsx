@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, getStoredUser } from "../api";
 import { useToast } from "../context/toast";
 import type { TeamRole } from "../types/team";
 import { parseApiError } from "../utils/apiError";
+import { navigateForInitialLoadError } from "../utils/routeErrors";
 
 type Team = {
     id: number;
@@ -32,20 +33,7 @@ function Teams() {
     const [editDescription, setEditDescription] = useState("");
     const navigate = useNavigate();
 
-    useEffect(() => {
-        getTeams();
-    }, []);
-
-    async function getTeams() {
-        const response = await apiFetch("/teams");
-        const data: unknown = await response.json();
-        const loadedTeams = Array.isArray(data) ? data as Team[] : [];
-
-        setTeams(loadedTeams);
-        await loadCurrentUserRoles(loadedTeams);
-    }
-
-    function getCurrentUserId() {
+    const getCurrentUserId = useCallback(() => {
         const storedUser: unknown = getStoredUser();
 
         if (
@@ -58,9 +46,9 @@ function Teams() {
         }
 
         return null;
-    }
+    }, []);
 
-    async function loadCurrentUserRoles(loadedTeams: Team[]) {
+    const loadCurrentUserRoles = useCallback(async (loadedTeams: Team[]) => {
         const currentUserId = getCurrentUserId();
 
         if (currentUserId === null) {
@@ -89,7 +77,42 @@ function Teams() {
         );
 
         setRolesByTeamId(Object.fromEntries(roleEntries));
-    }
+    }, [getCurrentUserId]);
+
+    const getTeams = useCallback(async () => {
+        try {
+            const response = await apiFetch("/teams");
+
+            if (!response.ok) {
+                if (navigateForInitialLoadError(response.status, navigate)) {
+                    return;
+                }
+
+                showToast({
+                    type: "error",
+                    message: await parseApiError(response, "Takımlar yüklenemedi")
+                });
+                return;
+            }
+
+            const data: unknown = await response.json();
+            const loadedTeams = Array.isArray(data) ? data as Team[] : [];
+
+            setTeams(loadedTeams);
+            await loadCurrentUserRoles(loadedTeams);
+        } catch {
+            showToast({
+                type: "error",
+                message: "Sunucuya bağlanılamadı"
+            });
+            setTeams([]);
+            setRolesByTeamId({});
+        }
+    }, [loadCurrentUserRoles, navigate, showToast]);
+
+    useEffect(() => {
+        getTeams();
+    }, [getTeams]);
 
     async function createTeam(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();

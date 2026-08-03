@@ -16,6 +16,8 @@ import EditProject from './pages/EditProject';
 import ProjectDetails from "./pages/ProjectDetails";
 import Teams from "./pages/Teams";
 import TeamDetails from "./pages/TeamDetails";
+import Forbidden from "./pages/Forbidden";
+import NotFound from "./pages/NotFound";
 
 
 function App() {
@@ -39,7 +41,11 @@ function App() {
           <Route path="/teams/:id" element={<TeamDetails />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/project/:id" element={<ProjectDetails />} />
+          <Route path="/forbidden" element={<Forbidden />} />
         </Route>
+
+        <Route path="/not-found" element={<NotFound />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   )

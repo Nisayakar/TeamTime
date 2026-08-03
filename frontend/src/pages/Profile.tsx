@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiFetch, updateStoredUser } from "../api";
 import { useToast } from "../context/toast";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
+import { navigateForInitialLoadError } from "../utils/routeErrors";
 
 type ProfileUser = {
     id: number;
@@ -12,6 +14,7 @@ type ProfileUser = {
 
 function Profile() {
     const { showToast } = useToast();
+    const navigate = useNavigate();
     const [user, setUser] = useState<ProfileUser | null>(null);
     const [name, setName] = useState("");
     const [surname, setSurname] = useState("");
@@ -20,22 +23,34 @@ function Profile() {
     const [newPassword, setNewPassword] = useState("");
 
     useEffect(() => {
-        apiFetch("/profile")
-            .then(response => response.json())
-            .then(data => {
+        async function loadProfile() {
+            try {
+                const response = await apiFetch("/profile");
+
+                if (!response.ok) {
+                    if (navigateForInitialLoadError(response.status, navigate)) {
+                        return;
+                    }
+
+                    throw new Error(await parseApiError(response, "Profil bilgileri alınamadı"));
+                }
+
+                const data: ProfileUser = await response.json();
                 setUser(data);
                 setName(data.name || "");
                 setSurname(data.surname || "");
                 setEmail(data.email || "");
                 updateStoredUser(data);
-            })
-            .catch(() => {
+            } catch (error) {
                 showToast({
                     type: "error",
-                    message: "Profil bilgileri alınamadı"
+                    message: getErrorMessage(error, "Profil bilgileri alınamadı")
                 });
-            });
-    }, [showToast]);
+            }
+        }
+
+        loadProfile();
+    }, [navigate, showToast]);
 
     async function updateProfile() {
         try {

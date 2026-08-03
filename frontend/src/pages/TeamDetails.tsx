@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch, getStoredUser } from "../api";
 import { useToast } from "../context/toast";
 import { getTeamRoleLabel, type TeamRole } from "../types/team";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
+import { navigateForInitialLoadError } from "../utils/routeErrors";
 
 type Team = {
     id: number;
@@ -34,6 +35,7 @@ type StoredUser = {
 
 function TeamDetails() {
     const { id } = useParams();
+    const navigate = useNavigate();
     const { showToast } = useToast();
 
     const [team, setTeam] = useState<Team | null>(null);
@@ -113,34 +115,61 @@ function TeamDetails() {
 
     const getTeam = useCallback(() => {
         apiFetch("/teams")
-            .then(response => response.json())
-            .then(data => {
-                const teams = Array.isArray(data) ? data : [];
-                const selectedTeam = teams.find((currentTeam: Team) => currentTeam.id === Number(id));
-
-                setTeam(selectedTeam ?? null);
-            })
-            .catch(() => {
-                setTeam(null);
-            });
-    }, [id]);
-
-    const getMembers = useCallback(() => {
-        apiFetch(`/teams/${id}/members`)
             .then(response => {
                 if (!response.ok) {
+                    if (navigateForInitialLoadError(response.status, navigate)) {
+                        return null;
+                    }
+
                     throw new Error();
                 }
 
                 return response.json();
             })
             .then(data => {
+                if (data === null) {
+                    return;
+                }
+
+                const teams = Array.isArray(data) ? data : [];
+                const selectedTeam = teams.find((currentTeam: Team) => currentTeam.id === Number(id));
+
+                if (!selectedTeam) {
+                    navigate("/not-found", { replace: true });
+                    return;
+                }
+
+                setTeam(selectedTeam ?? null);
+            })
+            .catch(() => {
+                setTeam(null);
+            });
+    }, [id, navigate]);
+
+    const getMembers = useCallback(() => {
+        apiFetch(`/teams/${id}/members`)
+            .then(response => {
+                if (!response.ok) {
+                    if (navigateForInitialLoadError(response.status, navigate)) {
+                        return null;
+                    }
+
+                    throw new Error();
+                }
+
+                return response.json();
+            })
+            .then(data => {
+                if (data === null) {
+                    return;
+                }
+
                 setMembers(Array.isArray(data) ? data : []);
             })
             .catch(() => {
                 setMembers([]);
             });
-    }, [id]);
+    }, [id, navigate]);
 
     useEffect(() => {
         getTeam();

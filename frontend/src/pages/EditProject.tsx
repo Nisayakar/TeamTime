@@ -5,6 +5,7 @@ import { useToast } from "../context/toast";
 import type { Project, ProjectRequest } from "../types/project";
 import { canManageTeamProjects, type TeamMember, type TeamRole } from "../types/team";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
+import { navigateForInitialLoadError } from "../utils/routeErrors";
 
 type StoredUser = {
     id: number;
@@ -75,6 +76,10 @@ function EditProject() {
             const response = await apiFetch(`/projects/${id}`);
 
             if (!response.ok) {
+                if (navigateForInitialLoadError(response.status, navigate)) {
+                    return;
+                }
+
                 throw new Error(await parseApiError(response, "Proje yüklenemedi"));
             }
 
@@ -97,7 +102,7 @@ function EditProject() {
         } finally {
             setLoading(false);
         }
-    }, [id, loadTeamRole, showToast]);
+    }, [id, loadTeamRole, navigate, showToast]);
 
     useEffect(() => {
         loadProject();

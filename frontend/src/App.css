@@ -914,6 +914,32 @@ button:focus-visible {
   flex-wrap: wrap;
 }
 
+.status-page-shell {
+  display: grid;
+  min-height: calc(100vh - 84px);
+  place-items: center;
+  padding-block: 72px;
+}
+
+.status-card {
+  width: min(680px, 100%);
+  padding: clamp(26px, 5vw, 48px);
+  text-align: center;
+}
+
+.status-card p {
+  max-width: 520px;
+  margin: 12px auto 0;
+}
+
+.status-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
 .form-card,
 .stacked-form {
   display: grid;
