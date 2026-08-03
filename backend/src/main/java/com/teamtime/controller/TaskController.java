@@ -55,6 +55,14 @@ public class TaskController {
 
     }
 
+    @GetMapping("/upcoming")
+    public List<TaskResponse> getUpcomingTasks(Authentication authentication) {
+
+        Long userId = (Long) authentication.getPrincipal();
+        return taskService.getUpcomingTasks(userId);
+
+    }
+
     @PutMapping("/{id}")
     public TaskResponse updateTask(
             @PathVariable Long id,

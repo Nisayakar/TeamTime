@@ -690,6 +690,18 @@ body:has(.login-designed-page) .app-navbar-public {
   gap: 14px;
 }
 
+.list-card-button {
+  width: 100%;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.list-card-button:focus-visible {
+  outline: 3px solid rgba(242, 163, 180, 0.45);
+  outline-offset: 3px;
+}
+
 .task-card {
   display: grid;
   gap: 12px;

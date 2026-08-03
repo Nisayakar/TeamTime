@@ -7,6 +7,9 @@ public class DashboardDataResponse {
     private long completedTaskCount;
     private long inProgressTaskCount;
     private long teamCount;
+    private long overdueTaskCount;
+    private long dueTodayTaskCount;
+    private long upcomingTaskCount;
 
     public DashboardDataResponse() {
     }
@@ -25,6 +28,18 @@ public class DashboardDataResponse {
         this.completedTaskCount = completedTaskCount;
         this.inProgressTaskCount = inProgressTaskCount;
         this.teamCount = teamCount;
+    }
+
+    public DashboardDataResponse(long projectCount, long taskCount, long completedTaskCount, long inProgressTaskCount,
+            long teamCount, long overdueTaskCount, long dueTodayTaskCount, long upcomingTaskCount) {
+        this.projectCount = projectCount;
+        this.taskCount = taskCount;
+        this.completedTaskCount = completedTaskCount;
+        this.inProgressTaskCount = inProgressTaskCount;
+        this.teamCount = teamCount;
+        this.overdueTaskCount = overdueTaskCount;
+        this.dueTodayTaskCount = dueTodayTaskCount;
+        this.upcomingTaskCount = upcomingTaskCount;
     }
 
     public long getProjectCount() {
@@ -65,5 +80,29 @@ public class DashboardDataResponse {
 
     public void setTeamCount(long teamCount) {
         this.teamCount = teamCount;
+    }
+
+    public long getOverdueTaskCount() {
+        return overdueTaskCount;
+    }
+
+    public void setOverdueTaskCount(long overdueTaskCount) {
+        this.overdueTaskCount = overdueTaskCount;
+    }
+
+    public long getDueTodayTaskCount() {
+        return dueTodayTaskCount;
+    }
+
+    public void setDueTodayTaskCount(long dueTodayTaskCount) {
+        this.dueTodayTaskCount = dueTodayTaskCount;
+    }
+
+    public long getUpcomingTaskCount() {
+        return upcomingTaskCount;
+    }
+
+    public void setUpcomingTaskCount(long upcomingTaskCount) {
+        this.upcomingTaskCount = upcomingTaskCount;
     }
 }

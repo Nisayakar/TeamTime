@@ -19,4 +19,6 @@ export type Task = {
     createdAt: string;
     completedAt: string | null;
     overdue: boolean;
+    projectId: number | null;
+    projectName: string | null;
 };

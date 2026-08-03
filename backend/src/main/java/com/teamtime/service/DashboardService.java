@@ -6,6 +6,8 @@ import com.teamtime.repository.TaskRepository;
 import com.teamtime.repository.TeamMemberRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+
 @Service
 public class DashboardService {
 
@@ -26,12 +28,24 @@ public class DashboardService {
     public DashboardDataResponse getDashboardData(Long userId) {
 
         long projectCount = projectRepository.countByUserId(userId);
-        long taskCount = taskRepository.countByProjectUserId(userId);
-        long completedTaskCount = taskRepository.countByProjectUserIdAndStatus(userId, "TAMAMLANDI");
-        long inProgressTaskCount = taskRepository.countByProjectUserIdAndStatus(userId, "DEVAM_EDIYOR");
+        long taskCount = taskRepository.countAccessibleTasks(userId);
+        long completedTaskCount = taskRepository.countAccessibleTasksByStatus(userId, "TAMAMLANDI");
+        long inProgressTaskCount = taskRepository.countAccessibleTasksByStatus(userId, "DEVAM_EDIYOR");
         long teamCount = teamMemberRepository.countDistinctTeamsForUser(userId);
+        LocalDate today = LocalDate.now();
+        long overdueTaskCount = taskRepository.countAccessibleOverdueTasks(userId, today);
+        long dueTodayTaskCount = taskRepository.countAccessibleDueTodayTasks(userId, today);
+        long upcomingTaskCount = taskRepository.countAccessibleUpcomingTasks(userId, today);
 
-        return new DashboardDataResponse(projectCount, taskCount, completedTaskCount, inProgressTaskCount, teamCount);
+        return new DashboardDataResponse(
+                projectCount,
+                taskCount,
+                completedTaskCount,
+                inProgressTaskCount,
+                teamCount,
+                overdueTaskCount,
+                dueTodayTaskCount,
+                upcomingTaskCount);
 
     }
 

@@ -16,6 +16,8 @@ public class TaskResponse {
     private LocalDateTime createdAt;
     private LocalDateTime completedAt;
     private boolean overdue;
+    private Long projectId;
+    private String projectName;
 
     public TaskResponse() {
     }
@@ -40,6 +42,24 @@ public class TaskResponse {
         this.createdAt = createdAt;
         this.completedAt = completedAt;
         this.overdue = overdue;
+    }
+
+    public TaskResponse(
+            Long id,
+            String title,
+            String description,
+            String status,
+            TaskPriority priority,
+            LocalDate dueDate,
+            LocalDateTime createdAt,
+            LocalDateTime completedAt,
+            boolean overdue,
+            Long projectId,
+            String projectName
+    ) {
+        this(id, title, description, status, priority, dueDate, createdAt, completedAt, overdue);
+        this.projectId = projectId;
+        this.projectName = projectName;
     }
 
     public Long getId() {
@@ -112,5 +132,21 @@ public class TaskResponse {
 
     public void setOverdue(boolean overdue) {
         this.overdue = overdue;
+    }
+
+    public Long getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(Long projectId) {
+        this.projectId = projectId;
+    }
+
+    public String getProjectName() {
+        return projectName;
+    }
+
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
     }
 }

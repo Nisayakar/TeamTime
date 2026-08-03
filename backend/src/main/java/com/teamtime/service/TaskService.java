@@ -12,6 +12,7 @@ import com.teamtime.repository.ProjectRepository;
 import com.teamtime.repository.TaskRepository;
 import com.teamtime.repository.TeamMemberRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -107,6 +108,13 @@ public class TaskService {
                 .map(this::convertToResponse)
                 .toList();
 
+    }
+
+    public List<TaskResponse> getUpcomingTasks(Long userId) {
+        return taskRepository.findUpcomingAccessibleTasks(userId, LocalDate.now(), PageRequest.of(0, 5))
+                .stream()
+                .map(this::convertToResponse)
+                .toList();
     }
 
 
@@ -255,7 +263,9 @@ public class TaskService {
                 task.getDueDate(),
                 task.getCreatedAt(),
                 task.getCompletedAt(),
-                isOverdue(task));
+                isOverdue(task),
+                task.getProject() != null ? task.getProject().getId() : null,
+                task.getProject() != null ? task.getProject().getProjectName() : null);
     }
 
     private boolean isOverdue(Task task) {
