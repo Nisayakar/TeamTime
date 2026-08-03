@@ -119,11 +119,7 @@ function Login() {
                     </div>
 
                     <div className="login-design-options">
-                        <label>
-                            <input type="checkbox" />
-                            <span>Beni hatırla</span>
-                        </label>
-                        <a href="#login-title">Şifremi Unuttum</a>
+                        <Link to="/forgot-password">Şifremi Unuttum</Link>
                     </div>
 
                     <button className="button button-primary button-full login-design-submit" type="submit">

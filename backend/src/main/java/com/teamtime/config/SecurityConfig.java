@@ -49,7 +49,7 @@ public class SecurityConfig {
                                 writeSecurityError(response, HttpStatus.FORBIDDEN, "Access denied.", request.getRequestURI())))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
-                        .requestMatchers("/api/login", "/api/register", "/api/auth/register/**").permitAll()
+                        .requestMatchers("/api/login", "/api/register", "/api/auth/register/**", "/api/auth/password/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

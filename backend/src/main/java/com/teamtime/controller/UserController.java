@@ -5,13 +5,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.teamtime.dto.LoginRequest;
 import com.teamtime.dto.LoginResponse;
+import com.teamtime.dto.PasswordResetCodeRequest;
 import com.teamtime.dto.ProfileResponse;
 import com.teamtime.dto.RegisterCodeRequest;
 import com.teamtime.dto.RegisterRequest;
 import com.teamtime.dto.ResendRegistrationCodeRequest;
+import com.teamtime.dto.ResetPasswordRequest;
 import com.teamtime.dto.UpdatePasswordRequest;
 import com.teamtime.dto.UpdateProfileRequest;
 import com.teamtime.dto.UserSearchResponse;
+import com.teamtime.dto.VerifyPasswordResetCodeRequest;
 import com.teamtime.dto.VerifyRegistrationRequest;
 import com.teamtime.service.UserService;
 
@@ -58,6 +61,26 @@ public class UserController {
     @PostMapping("/auth/register/resend-code")
     public ResponseEntity<String> resendRegistrationCode(@Valid @RequestBody ResendRegistrationCodeRequest request) {
         return ResponseEntity.ok(userService.resendRegistrationCode(request));
+    }
+
+    @PostMapping("/auth/password/request-code")
+    public ResponseEntity<String> requestPasswordResetCode(@Valid @RequestBody PasswordResetCodeRequest request) {
+        return ResponseEntity.ok(userService.requestPasswordResetCode(request));
+    }
+
+    @PostMapping("/auth/password/verify-code")
+    public ResponseEntity<String> verifyPasswordResetCode(@Valid @RequestBody VerifyPasswordResetCodeRequest request) {
+        return ResponseEntity.ok(userService.verifyPasswordResetCode(request));
+    }
+
+    @PostMapping("/auth/password/reset")
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        return ResponseEntity.ok(userService.resetPassword(request));
+    }
+
+    @PostMapping("/auth/password/resend-code")
+    public ResponseEntity<String> resendPasswordResetCode(@Valid @RequestBody PasswordResetCodeRequest request) {
+        return ResponseEntity.ok(userService.resendPasswordResetCode(request));
     }
 
     @PostMapping("/login")

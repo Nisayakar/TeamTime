@@ -93,4 +93,20 @@ describe("Login page", () => {
 
         expect(await screen.findAllByText("E-posta veya şifre hatalı")).toHaveLength(2);
     });
+
+    it("opens forgot-password page from the login link", async () => {
+        const user = userEvent.setup();
+
+        renderWithProviders(
+            <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/forgot-password" element={<h1>Şifreni sıfırla</h1>} />
+            </Routes>,
+            { routerProps: { initialEntries: ["/login"] } }
+        );
+
+        await user.click(screen.getByRole("link", { name: "Şifremi Unuttum" }));
+
+        expect(screen.getByRole("heading", { name: "Şifreni sıfırla" })).toBeInTheDocument();
+    });
 });

@@ -1353,7 +1353,7 @@ button:focus-visible {
 .login-design-options {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 16px;
   margin-top: 4px;
 }
@@ -1573,6 +1573,37 @@ button:focus-visible {
 
 .login-reference-page .login-design-register {
   padding-top: 6px;
+}
+
+.forgot-password-card {
+  width: min(100%, 480px);
+}
+
+.forgot-password-form {
+  display: grid;
+  gap: 16px;
+}
+
+.forgot-password-form .button-secondary {
+  min-height: 52px;
+  border-color: rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  color: #ffffff;
+}
+
+.forgot-password-form .verification-email {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
+}
+
+.forgot-password-form .resend-panel {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.forgot-password-form .resend-panel p {
+  color: rgba(255, 255, 255, 0.72);
 }
 
 @media (max-width: 991px) {

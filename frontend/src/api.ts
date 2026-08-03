@@ -84,7 +84,8 @@ export function clearAuth() {
 function isPublicAuthRequest(path: string) {
     return path === "/login"
         || path === "/register"
-        || path.startsWith("/auth/register/");
+        || path.startsWith("/auth/register/")
+        || path.startsWith("/auth/password/");
 }
 
 function redirectToLoginAfterUnauthorized() {

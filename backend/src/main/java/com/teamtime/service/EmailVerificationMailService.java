@@ -50,4 +50,32 @@ public class EmailVerificationMailService {
             throw new EmailDeliveryException("Doğrulama e-postası gönderilemedi", exception);
         }
     }
+
+    public void sendPasswordResetCode(String to, String code) {
+        if (senderEmail == null || senderEmail.isBlank()) {
+            throw new MailConfigurationException("E-posta gönderici hesabı yapılandırılmamış");
+        }
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(senderEmail);
+        message.setTo(to);
+        message.setSubject("TeamTime şifre sıfırlama kodu");
+        message.setText("""
+                Merhaba,
+
+                TeamTime hesabınız için şifre sıfırlama kodunuz:
+
+                %s
+
+                Bu kod 10 dakika boyunca geçerlidir.
+
+                Bu işlemi siz başlatmadıysanız hesabınızın güvenliği için bu e-postayı yok sayın.
+                """.formatted(code));
+
+        try {
+            mailSender.send(message);
+        } catch (MailException exception) {
+            throw new EmailDeliveryException("Şifre sıfırlama e-postası gönderilemedi", exception);
+        }
+    }
 }

@@ -6,14 +6,19 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.teamtime.dto.RegisterCodeRequest;
 import com.teamtime.dto.RegisterRequest;
+import com.teamtime.dto.PasswordResetCodeRequest;
 import com.teamtime.dto.ResendRegistrationCodeRequest;
+import com.teamtime.dto.ResetPasswordRequest;
 import com.teamtime.dto.VerifyRegistrationRequest;
+import com.teamtime.dto.VerifyPasswordResetCodeRequest;
 import com.teamtime.entity.PendingRegistration;
+import com.teamtime.entity.PasswordResetRequest;
 import com.teamtime.entity.User;
 import com.teamtime.exception.ResendCooldownException;
 import com.teamtime.exception.TooManyVerificationAttemptsException;
 import com.teamtime.exception.VerificationCodeException;
 import com.teamtime.repository.PendingRegistrationRepository;
+import com.teamtime.repository.PasswordResetRequestRepository;
 import com.teamtime.repository.UserRepository;
 import com.teamtime.security.JwtService;
 import com.teamtime.dto.LoginRequest;
@@ -41,6 +46,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PendingRegistrationRepository pendingRegistrationRepository;
+    private final PasswordResetRequestRepository passwordResetRequestRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final VerificationCodeGenerator verificationCodeGenerator;
@@ -50,6 +56,7 @@ public class UserService {
     public UserService(
             UserRepository userRepository,
             PendingRegistrationRepository pendingRegistrationRepository,
+            PasswordResetRequestRepository passwordResetRequestRepository,
             JwtService jwtService,
             PasswordEncoder passwordEncoder,
             VerificationCodeGenerator verificationCodeGenerator,
@@ -58,6 +65,7 @@ public class UserService {
     ) {
         this.userRepository = userRepository;
         this.pendingRegistrationRepository = pendingRegistrationRepository;
+        this.passwordResetRequestRepository = passwordResetRequestRepository;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
         this.verificationCodeGenerator = verificationCodeGenerator;
@@ -170,6 +178,114 @@ public class UserService {
         return "Doğrulama kodu e-posta adresinize gönderildi";
     }
 
+    @Transactional
+    public String requestPasswordResetCode(PasswordResetCodeRequest request) {
+        String email = normalizeEmail(request.getEmail());
+        Optional<User> user = userRepository.findByEmailIgnoreCase(email);
+
+        if (user.isEmpty()) {
+            return neutralPasswordResetMessage();
+        }
+
+        String code = verificationCodeGenerator.generateSixDigitCode();
+        PasswordResetRequest resetRequest = passwordResetRequestRepository
+                .findByEmail(email)
+                .orElseGet(PasswordResetRequest::new);
+
+        resetRequest.setEmail(email);
+        updatePasswordResetCode(resetRequest, code);
+
+        passwordResetRequestRepository.save(resetRequest);
+        emailVerificationMailService.sendPasswordResetCode(email, code);
+
+        return neutralPasswordResetMessage();
+    }
+
+    @Transactional(noRollbackFor = VerificationCodeException.class)
+    public String verifyPasswordResetCode(VerifyPasswordResetCodeRequest request) {
+        String email = normalizeEmail(request.getEmail());
+        PasswordResetRequest resetRequest = findPasswordResetRequest(email);
+        Instant now = Instant.now();
+
+        if (resetRequest.getFailedAttempts() >= MAX_FAILED_ATTEMPTS) {
+            throw new TooManyVerificationAttemptsException("Çok fazla hatalı doğrulama denemesi yapıldı");
+        }
+
+        if (resetRequest.getExpiresAt().isBefore(now)) {
+            throw new VerificationCodeException("Doğrulama kodunun süresi doldu");
+        }
+
+        if (!verificationCodeHashService.matches(email, request.getCode(), resetRequest.getVerificationCodeHash())) {
+            resetRequest.setFailedAttempts(resetRequest.getFailedAttempts() + 1);
+            passwordResetRequestRepository.save(resetRequest);
+            throw new VerificationCodeException("Doğrulama kodu geçersiz");
+        }
+
+        resetRequest.setVerified(true);
+        passwordResetRequestRepository.save(resetRequest);
+
+        return "Doğrulama kodu onaylandı";
+    }
+
+    @Transactional
+    public String resetPassword(ResetPasswordRequest request) {
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new IllegalArgumentException("Şifreler uyuşmuyor");
+        }
+
+        String email = normalizeEmail(request.getEmail());
+        PasswordResetRequest resetRequest = findPasswordResetRequest(email);
+        Instant now = Instant.now();
+
+        if (!resetRequest.isVerified()) {
+            throw new VerificationCodeException("Şifre sıfırlama kodu doğrulanmalı");
+        }
+
+        if (resetRequest.getExpiresAt().isBefore(now)) {
+            throw new VerificationCodeException("Doğrulama kodunun süresi doldu");
+        }
+
+        User user = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new VerificationCodeException("Şifre sıfırlama isteği geçersiz"));
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+        passwordResetRequestRepository.delete(resetRequest);
+
+        return "Şifreniz başarıyla güncellendi";
+    }
+
+    @Transactional
+    public String resendPasswordResetCode(PasswordResetCodeRequest request) {
+        String email = normalizeEmail(request.getEmail());
+
+        if (!userRepository.existsByEmailIgnoreCase(email)) {
+            return neutralPasswordResetMessage();
+        }
+
+        PasswordResetRequest resetRequest = passwordResetRequestRepository
+                .findByEmail(email)
+                .orElse(null);
+
+        if (resetRequest == null) {
+            return requestPasswordResetCode(request);
+        }
+
+        Instant now = Instant.now();
+
+        if (resetRequest.getResendAvailableAt().isAfter(now)) {
+            throw new ResendCooldownException("Yeni doğrulama kodu istemek için lütfen bekleyin");
+        }
+
+        String code = verificationCodeGenerator.generateSixDigitCode();
+        updatePasswordResetCode(resetRequest, code);
+
+        passwordResetRequestRepository.save(resetRequest);
+        emailVerificationMailService.sendPasswordResetCode(email, code);
+
+        return neutralPasswordResetMessage();
+    }
+
     public LoginResponse login(LoginRequest request) {
 
         Optional<User> user = userRepository.findByEmailIgnoreCase(request.getEmail().trim());
@@ -265,6 +381,25 @@ public class UserService {
         pendingRegistration.setExpiresAt(now.plus(CODE_EXPIRATION_MINUTES, ChronoUnit.MINUTES));
         pendingRegistration.setFailedAttempts(0);
         pendingRegistration.setResendAvailableAt(now.plus(RESEND_COOLDOWN_SECONDS, ChronoUnit.SECONDS));
+    }
+
+    private void updatePasswordResetCode(PasswordResetRequest resetRequest, String code) {
+        Instant now = Instant.now();
+        resetRequest.setVerificationCodeHash(verificationCodeHashService.hash(resetRequest.getEmail(), code));
+        resetRequest.setExpiresAt(now.plus(CODE_EXPIRATION_MINUTES, ChronoUnit.MINUTES));
+        resetRequest.setFailedAttempts(0);
+        resetRequest.setResendAvailableAt(now.plus(RESEND_COOLDOWN_SECONDS, ChronoUnit.SECONDS));
+        resetRequest.setVerified(false);
+    }
+
+    private PasswordResetRequest findPasswordResetRequest(String email) {
+        return passwordResetRequestRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new VerificationCodeException("Doğrulama kodu geçersiz"));
+    }
+
+    private String neutralPasswordResetMessage() {
+        return "Eğer bu e-posta adresiyle kayıtlı bir hesap varsa şifre sıfırlama kodu gönderildi";
     }
 
     private String normalizeEmail(String email) {
