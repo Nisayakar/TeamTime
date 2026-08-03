@@ -137,6 +137,99 @@ describe("Navbar notifications", () => {
         expect(fetchMock.mock.calls.some(call => String(call[0]).includes("/notifications/1/read"))).toBe(true);
         expect(fetchMock.mock.calls.some(call => String(call[0]).includes("/notifications/read-all"))).toBe(true);
     });
+
+    it("never renders a negative unread count when reading with a zero badge count", async () => {
+        const user = userEvent.setup();
+        localStorage.setItem("token", "token");
+        const fetchMock = vi.fn<typeof fetch>()
+            .mockResolvedValueOnce(mockJsonResponse({ unreadCount: 0 }))
+            .mockResolvedValueOnce(mockJsonResponse(notificationPage([
+                notification(1, "Already counted elsewhere", false)
+            ])))
+            .mockResolvedValueOnce(mockJsonResponse(notification(1, "Already counted elsewhere", true)));
+        vi.stubGlobal("fetch", fetchMock);
+
+        renderWithRouter(<Navbar />);
+        await user.click(screen.getByRole("button", { name: "Bildirimler" }));
+        await user.click(await screen.findByRole("button", { name: /Already counted elsewhere/ }));
+
+        expect(screen.queryByText("-1")).not.toBeInTheDocument();
+    });
+
+    it("read-all marks notifications loaded across multiple pages", async () => {
+        const user = userEvent.setup();
+        localStorage.setItem("token", "token");
+        const fetchMock = vi.fn<typeof fetch>()
+            .mockResolvedValueOnce(mockJsonResponse({ unreadCount: 2 }))
+            .mockResolvedValueOnce(mockJsonResponse(notificationPage([notification(1, "First", false)], {
+                last: false,
+                totalElements: 2,
+                totalPages: 2
+            })))
+            .mockResolvedValueOnce(mockJsonResponse(notificationPage([notification(2, "Second", false)], {
+                page: 1,
+                last: true,
+                totalElements: 2,
+                totalPages: 2
+            })))
+            .mockResolvedValueOnce(new Response(null, { status: 204 }));
+        vi.stubGlobal("fetch", fetchMock);
+
+        renderWithRouter(<Navbar />);
+        await waitFor(() => expect(screen.getByRole("button", { name: /2 okunmamış bildirim/ })).toBeInTheDocument());
+        await user.click(screen.getByRole("button", { name: /2 okunmamış bildirim/ }));
+        await screen.findByText("First");
+        await user.click(screen.getByRole("button", { name: "Daha Fazla Göster" }));
+        await screen.findByText("Second");
+        await user.click(screen.getByRole("button", { name: "Tümünü okundu işaretle" }));
+        await user.click(screen.getByRole("button", { name: /Second/ }));
+
+        expect(fetchMock.mock.calls.some(call => String(call[0]).includes("/notifications/2/read"))).toBe(false);
+        expect(screen.queryByText("2")).not.toBeInTheDocument();
+    });
+
+    it("logout clears loaded notification and pagination state", async () => {
+        const user = userEvent.setup();
+        localStorage.setItem("token", "token");
+        const fetchMock = vi.fn<typeof fetch>()
+            .mockResolvedValueOnce(mockJsonResponse({ unreadCount: 0 }))
+            .mockResolvedValueOnce(mockJsonResponse(notificationPage([notification(1, "First")], {
+                last: false,
+                totalElements: 2,
+                totalPages: 2
+            })));
+        vi.stubGlobal("fetch", fetchMock);
+
+        renderWithRouter(<Navbar />);
+        await user.click(screen.getByRole("button", { name: "Bildirimler" }));
+        await screen.findByText("First");
+        await user.click(screen.getByRole("button", { name: "Çıkış Yap" }));
+
+        expect(screen.queryByText("First")).not.toBeInTheDocument();
+        expect(localStorage.getItem("token")).toBeNull();
+    });
+
+    it("failed load-more preserves already loaded notifications", async () => {
+        const user = userEvent.setup();
+        localStorage.setItem("token", "token");
+        const fetchMock = vi.fn<typeof fetch>()
+            .mockResolvedValueOnce(mockJsonResponse({ unreadCount: 0 }))
+            .mockResolvedValueOnce(mockJsonResponse(notificationPage([notification(1, "First")], {
+                last: false,
+                totalElements: 2,
+                totalPages: 2
+            })))
+            .mockResolvedValueOnce(mockJsonResponse({ message: "Bildirimler alınamadı." }, { status: 500 }));
+        vi.stubGlobal("fetch", fetchMock);
+
+        renderWithRouter(<Navbar />);
+        await user.click(screen.getByRole("button", { name: "Bildirimler" }));
+        await screen.findByText("First");
+        await user.click(screen.getByRole("button", { name: "Daha Fazla Göster" }));
+
+        expect(await screen.findByText("Bildirimler alınamadı.")).toBeInTheDocument();
+        expect(screen.getByText("First")).toBeInTheDocument();
+    });
 });
 
 function notificationPage(

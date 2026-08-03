@@ -301,6 +301,7 @@ function TeamDetails() {
                                 <div className="autocomplete-field">
                                     <label>Kullanıcı Ara</label>
                                     <input
+                                        aria-label="Kullanıcı Ara"
                                         type="text"
                                         value={userSearch}
                                         onChange={event => handleUserSearchChange(event.target.value)}
@@ -338,6 +339,7 @@ function TeamDetails() {
 
                                 <label>Rol</label>
                                 <select
+                                    aria-label="Rol"
                                     value={currentUserRole === "OWNER" ? role : "MEMBER"}
                                     onChange={event => setRole(event.target.value as TeamRole)}
                                     required

@@ -21,6 +21,8 @@ function Profile() {
     const [email, setEmail] = useState("");
     const [oldPassword, setOldPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
+    const [savingProfile, setSavingProfile] = useState(false);
+    const [savingPassword, setSavingPassword] = useState(false);
 
     useEffect(() => {
         async function loadProfile() {
@@ -53,6 +55,12 @@ function Profile() {
     }, [navigate, showToast]);
 
     async function updateProfile() {
+        if (savingProfile) {
+            return;
+        }
+
+        setSavingProfile(true);
+
         try {
             const response = await apiFetch("/profile", {
                 method: "PUT",
@@ -80,10 +88,18 @@ function Profile() {
                 type: "error",
                 message: getErrorMessage(error, "Profil güncellenemedi")
             });
+        } finally {
+            setSavingProfile(false);
         }
     }
 
     async function updatePassword() {
+        if (savingPassword) {
+            return;
+        }
+
+        setSavingPassword(true);
+
         try {
             const response = await apiFetch("/profile/password", {
                 method: "PUT",
@@ -110,6 +126,8 @@ function Profile() {
                 type: "error",
                 message: getErrorMessage(error, "Şifre güncellenemedi")
             });
+        } finally {
+            setSavingPassword(false);
         }
     }
 
@@ -137,6 +155,7 @@ function Profile() {
                     <div className="stacked-form">
                         <div className="field">
                             <input
+                                aria-label="Ad"
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
@@ -147,6 +166,7 @@ function Profile() {
 
                         <div className="field">
                             <input
+                                aria-label="Soyad"
                                 type="text"
                                 value={surname}
                                 onChange={(e) => setSurname(e.target.value)}
@@ -157,6 +177,7 @@ function Profile() {
 
                         <div className="field">
                             <input
+                                aria-label="E-mail"
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -165,8 +186,8 @@ function Profile() {
                             <label>E-mail</label>
                         </div>
 
-                        <button className="button button-primary" onClick={updateProfile}>
-                            Profil Bilgilerini Güncelle
+                        <button className="button button-primary" onClick={updateProfile} disabled={savingProfile}>
+                            {savingProfile ? "Güncelleniyor..." : "Profil Bilgilerini Güncelle"}
                         </button>
                     </div>
 
@@ -181,6 +202,7 @@ function Profile() {
                     <div className="stacked-form">
                         <div className="field">
                             <input
+                                aria-label="Eski Şifre"
                                 type="password"
                                 value={oldPassword}
                                 onChange={(e) => setOldPassword(e.target.value)}
@@ -191,6 +213,7 @@ function Profile() {
 
                         <div className="field">
                             <input
+                                aria-label="Yeni Şifre"
                                 type="password"
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
@@ -199,8 +222,8 @@ function Profile() {
                             <label>Yeni Şifre</label>
                         </div>
 
-                        <button className="button button-primary" onClick={updatePassword}>
-                            Şifreyi Güncelle
+                        <button className="button button-primary" onClick={updatePassword} disabled={savingPassword}>
+                            {savingPassword ? "Güncelleniyor..." : "Şifreyi Güncelle"}
                         </button>
                     </div>
                 </div>
