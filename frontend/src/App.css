@@ -702,6 +702,22 @@ body:has(.login-designed-page) .app-navbar-public {
   flex-wrap: wrap;
 }
 
+.task-filter-panel {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.04);
+}
+
+.task-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
 .member-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -2177,6 +2193,10 @@ button:focus-visible {
     display: flex;
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .task-filter-grid {
+    grid-template-columns: 1fr;
   }
 
   .tt-hero {
