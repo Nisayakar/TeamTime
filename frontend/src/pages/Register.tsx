@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { apiFetch } from "../api";
+import { useToast } from "../context/toast";
 
 type RegisterStep = "details" | "verification";
 type MessageType = "error" | "success" | "info";
@@ -10,6 +11,7 @@ type MessageType = "error" | "success" | "info";
 const RESEND_SECONDS = 60;
 
 function Register() {
+    const { showToast } = useToast();
 
     const [name, setName] = useState("");
     const [surname, setSurname] = useState("");
@@ -268,6 +270,13 @@ function Register() {
     function showMessage(nextMessage: string, nextMessageType: MessageType) {
         setMessage(nextMessage);
         setMessageType(nextMessageType);
+
+        if (nextMessage) {
+            showToast({
+                type: nextMessageType,
+                message: nextMessage
+            });
+        }
     }
 
     function formatCountdown(seconds: number) {

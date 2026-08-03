@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { apiFetch, saveAuth } from "../api";
+import { useToast } from "../context/toast";
+import { parseApiError } from "../utils/apiError";
 
 type RedirectLocationState = {
     from?: {
@@ -10,6 +12,7 @@ type RedirectLocationState = {
 };
 
 function Login() {
+    const { showToast } = useToast();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
@@ -19,11 +22,13 @@ function Login() {
     async function handleLogin() {
         if (email.trim() === "") {
             setMessage("Email boş bırakılamaz");
+            showToast({ type: "warning", message: "Email boş bırakılamaz" });
             return;
         }
 
         if (password.trim() === "") {
             setMessage("Şifre boş bırakılamaz");
+            showToast({ type: "warning", message: "Şifre boş bırakılamaz" });
             return;
         }
 
@@ -39,17 +44,21 @@ function Login() {
             });
 
             if (!response.ok) {
-                setMessage(await readErrorMessage(response));
+                const errorMessage = await parseApiError(response, "Giriş yapılamadı");
+                setMessage(errorMessage);
+                showToast({ type: "error", message: errorMessage });
                 return;
             }
 
             const data = await response.json();
 
             saveAuth(data);
+            showToast({ type: "success", message: "Giriş başarılı." });
 
             navigate(getRedirectPath(), { replace: true });
         } catch {
             setMessage("Sunucuya bağlanılamadı");
+            showToast({ type: "error", message: "Sunucuya bağlanılamadı" });
         }
     }
 
@@ -63,22 +72,6 @@ function Login() {
         }
 
         return `${pathname}${search}`;
-    }
-
-    async function readErrorMessage(response: Response) {
-        const contentType = response.headers.get("Content-Type") || "";
-
-        if (contentType.includes("application/json")) {
-            const data = await response.json();
-
-            if (data.errors) {
-                return Object.values(data.errors).join("\n");
-            }
-
-            return data.message || "Giriş yapılamadı";
-        }
-
-        return await response.text();
     }
 
     return (

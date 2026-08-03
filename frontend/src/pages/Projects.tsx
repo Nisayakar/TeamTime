@@ -1,25 +1,24 @@
 import ProjectCard from "../components/ProjectCard";
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch, getStoredUser } from "../api";
+import { useToast } from "../context/toast";
 import type { Project } from "../types/project";
 import { canManageTeamProjects, type TeamMember, type TeamRole } from "../types/team";
+import { getErrorMessage, parseApiError } from "../utils/apiError";
 
 type StoredUser = {
     id: number;
 }
 
 function Projects() {
+    const { showToast } = useToast();
     const [projects, setProjects] = useState<Project[]>([]);
     const [teamRoles, setTeamRoles] = useState<Record<number, TeamRole | undefined>>({});
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        loadProjects();
-    }, []);
-
-    function getCurrentUserId() {
+    const getCurrentUserId = useCallback(() => {
         const storedUser: unknown = getStoredUser();
 
         if (
@@ -32,51 +31,9 @@ function Projects() {
         }
 
         return null;
-    }
+    }, []);
 
-    async function readErrorMessage(response: Response, fallbackMessage = "İşlem tamamlanamadı") {
-        const contentType = response.headers.get("Content-Type") || "";
-
-        if (contentType.includes("application/json")) {
-            const data: unknown = await response.json();
-
-            if (data && typeof data === "object") {
-                if ("message" in data && typeof data.message === "string") {
-                    return data.message;
-                }
-            }
-
-            return fallbackMessage;
-        }
-
-        const message = await response.text();
-        return message || fallbackMessage;
-    }
-
-    async function loadProjects() {
-        setLoading(true);
-
-        try {
-            const response = await apiFetch("/projects");
-
-            if (!response.ok) {
-                throw new Error(await readErrorMessage(response, "Projeler yüklenemedi"));
-            }
-
-            const data: unknown = await response.json();
-            const accessibleProjects: Project[] = Array.isArray(data) ? data : [];
-            setProjects(accessibleProjects);
-            await loadTeamRoles(accessibleProjects);
-        } catch (error) {
-            alert(error instanceof Error ? error.message : "Projeler yüklenemedi");
-            setProjects([]);
-            setTeamRoles({});
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    async function loadTeamRoles(accessibleProjects: Project[]) {
+    const loadTeamRoles = useCallback(async (accessibleProjects: Project[]) => {
         const currentUserId = getCurrentUserId();
 
         if (currentUserId === null) {
@@ -109,7 +66,37 @@ function Projects() {
         );
 
         setTeamRoles(Object.fromEntries(roleEntries));
-    }
+    }, [getCurrentUserId]);
+
+    const loadProjects = useCallback(async () => {
+        setLoading(true);
+
+        try {
+            const response = await apiFetch("/projects");
+
+            if (!response.ok) {
+                throw new Error(await parseApiError(response, "Projeler yüklenemedi"));
+            }
+
+            const data: unknown = await response.json();
+            const accessibleProjects: Project[] = Array.isArray(data) ? data : [];
+            setProjects(accessibleProjects);
+            await loadTeamRoles(accessibleProjects);
+        } catch (error) {
+            showToast({
+                type: "error",
+                message: getErrorMessage(error, "Projeler yüklenemedi")
+            });
+            setProjects([]);
+            setTeamRoles({});
+        } finally {
+            setLoading(false);
+        }
+    }, [loadTeamRoles, showToast]);
+
+    useEffect(() => {
+        loadProjects();
+    }, [loadProjects]);
 
     function canManageProject(project: Project) {
         if (!project.teamProject) {
@@ -129,12 +116,18 @@ function Projects() {
         });
 
         if (!response.ok) {
-            alert(await readErrorMessage(response, "Proje silinemedi"));
+            showToast({
+                type: "error",
+                message: await parseApiError(response, "Proje silinemedi")
+            });
             return;
         }
 
         const data = await response.text();
-        alert(data);
+        showToast({
+            type: "success",
+            message: data || "Proje başarıyla silindi."
+        });
         setProjects(projects.filter(project => project.id !== id));
     }
 

@@ -702,6 +702,84 @@ body:has(.login-designed-page) .app-navbar-public {
   outline-offset: 3px;
 }
 
+.toast-container {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 1000;
+  display: grid;
+  width: min(380px, calc(100vw - 32px));
+  gap: 12px;
+  pointer-events: none;
+}
+
+.toast {
+  position: relative;
+  display: grid;
+  grid-template-columns: 5px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  overflow: hidden;
+  padding: 14px 14px 14px 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(10, 12, 16, 0.94);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(18px);
+  pointer-events: auto;
+}
+
+.toast strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 14px;
+}
+
+.toast p {
+  color: rgba(248, 250, 252, 0.78);
+  font-size: 14px;
+}
+
+.toast-marker {
+  width: 5px;
+  min-height: 100%;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.toast-success .toast-marker {
+  background: #22c55e;
+}
+
+.toast-warning .toast-marker {
+  background: var(--warning);
+}
+
+.toast-error .toast-marker {
+  background: var(--danger);
+}
+
+.toast-info .toast-marker {
+  background: #38bdf8;
+}
+
+.toast-close {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.08);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.toast-close:focus-visible {
+  outline: 3px solid rgba(242, 163, 180, 0.45);
+  outline-offset: 2px;
+}
+
 .task-card {
   display: grid;
   gap: 12px;

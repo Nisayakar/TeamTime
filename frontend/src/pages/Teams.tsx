@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, getStoredUser } from "../api";
+import { useToast } from "../context/toast";
 import type { TeamRole } from "../types/team";
+import { parseApiError } from "../utils/apiError";
 
 type Team = {
     id: number;
@@ -20,6 +22,7 @@ type StoredUser = {
 }
 
 function Teams() {
+    const { showToast } = useToast();
     const [teams, setTeams] = useState<Team[]>([]);
     const [rolesByTeamId, setRolesByTeamId] = useState<Record<number, TeamRole | undefined>>({});
     const [name, setName] = useState("");
@@ -88,45 +91,6 @@ function Teams() {
         setRolesByTeamId(Object.fromEntries(roleEntries));
     }
 
-    async function readErrorMessage(response: Response) {
-        const contentType = response.headers.get("Content-Type") || "";
-
-        if (contentType.includes("application/json")) {
-            const data = await response.json();
-
-            if (data.fieldErrors) {
-                return Object.values(data.fieldErrors).join("\n");
-            }
-
-            if (data.message) {
-                return data.message;
-            }
-
-            return "Takım oluşturulamadı";
-        }
-
-        const message = await response.text();
-
-        if (message) {
-            return message;
-        }
-
-        switch (response.status) {
-            case 401:
-                return "Bu işlem için giriş yapmalısınız";
-            case 403:
-                return "Bu işlem için yetkiniz yok";
-            case 404:
-                return "İstenen kaynak bulunamadı";
-            case 409:
-                return "Bu işlem mevcut kayıtlarla çakışıyor";
-            case 500:
-                return "Sunucuda beklenmeyen bir hata oluştu";
-            default:
-                return "Takım oluşturulamadı";
-        }
-    }
-
     async function createTeam(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
@@ -140,7 +104,10 @@ function Teams() {
             });
 
             if (!response.ok) {
-                alert(await readErrorMessage(response));
+                showToast({
+                    type: "error",
+                    message: await parseApiError(response, "Takım oluşturulamadı")
+                });
                 return;
             }
 
@@ -150,8 +117,15 @@ function Teams() {
             setName("");
             setDescription("");
             await loadCurrentUserRoles([...teams, createdTeam]);
+            showToast({
+                type: "success",
+                message: "Takım başarıyla oluşturuldu."
+            });
         } catch {
-            alert("Sunucuya bağlanılamadı");
+            showToast({
+                type: "error",
+                message: "Sunucuya bağlanılamadı"
+            });
         }
     }
 
@@ -178,7 +152,10 @@ function Teams() {
         });
 
         if (!response.ok) {
-            alert(await readErrorMessage(response));
+            showToast({
+                type: "error",
+                message: await parseApiError(response, "Takım güncellenemedi")
+            });
             return;
         }
 
@@ -191,6 +168,10 @@ function Teams() {
         );
 
         cancelEdit();
+        showToast({
+            type: "success",
+            message: "Takım başarıyla güncellendi."
+        });
     }
 
     async function deleteTeam(id: number) {
@@ -199,11 +180,18 @@ function Teams() {
         });
 
         if (!response.ok) {
-            alert(await readErrorMessage(response));
+            showToast({
+                type: "error",
+                message: await parseApiError(response, "Takım silinemedi")
+            });
             return;
         }
 
         setTeams(teams.filter(team => team.id !== id));
+        showToast({
+            type: "success",
+            message: "Takım başarıyla silindi."
+        });
     }
 
     return (

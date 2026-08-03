@@ -1,9 +1,11 @@
 import { useParams } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch, getStoredUser } from "../api";
+import { useToast } from "../context/toast";
 import type { Project } from "../types/project";
 import type { Task, TaskPriority, TaskStatus } from "../types/task";
 import { canManageTeamProjects, type TeamMember, type TeamRole } from "../types/team";
+import { getErrorMessage, parseApiError } from "../utils/apiError";
 
 type StoredUser = {
     id: number;
@@ -16,6 +18,7 @@ type SortOption = "NEWEST" | "OLDEST" | "DUE_DATE_ASC" | "PRIORITY_DESC" | "PRIO
 
 function ProjectDetails() {
     const { id } = useParams();
+    const { showToast } = useToast();
 
     const [project, setProject] = useState<Project | null>(null);
     const [tasks, setTasks] = useState<Task[]>([]);
@@ -25,7 +28,6 @@ function ProjectDetails() {
     const [priority, setPriority] = useState<TaskPriority>("MEDIUM");
     const [dueDate, setDueDate] = useState("");
     const [editId, setEditId] = useState<number | null>(null);
-    const [message, setMessage] = useState("");
     const [savingTask, setSavingTask] = useState(false);
     const [currentTeamRole, setCurrentTeamRole] = useState<TeamRole | undefined>();
     const [loadingProject, setLoadingProject] = useState(true);
@@ -99,33 +101,6 @@ function ProjectDetails() {
         return null;
     }, []);
 
-    const showMessage = useCallback((text: string) => {
-        setMessage(text);
-
-        setTimeout(() => {
-            setMessage("");
-        }, 3000);
-    }, []);
-
-    const readErrorMessage = useCallback(async (response: Response, fallbackMessage = "İşlem tamamlanamadı") => {
-        const contentType = response.headers.get("Content-Type") || "";
-
-        if (contentType.includes("application/json")) {
-            const data: unknown = await response.json();
-
-            if (data && typeof data === "object") {
-                if ("message" in data && typeof data.message === "string") {
-                    return data.message;
-                }
-            }
-
-            return fallbackMessage;
-        }
-
-        const message = await response.text();
-        return message || fallbackMessage;
-    }, []);
-
     const loadTeamRole = useCallback(async (teamId: number) => {
         const currentUserId = getCurrentUserId();
 
@@ -158,7 +133,7 @@ function ProjectDetails() {
             const response = await apiFetch(`/projects/${id}`);
 
             if (!response.ok) {
-                throw new Error(await readErrorMessage(response, "Proje yüklenemedi"));
+                throw new Error(await parseApiError(response, "Proje yüklenemedi"));
             }
 
             const data: Project = await response.json();
@@ -169,11 +144,14 @@ function ProjectDetails() {
             }
         } catch (error) {
             setProject(null);
-            showMessage(error instanceof Error ? error.message : "Proje yüklenemedi");
+            showToast({
+                type: "error",
+                message: getErrorMessage(error, "Proje yüklenemedi")
+            });
         } finally {
             setLoadingProject(false);
         }
-    }, [id, loadTeamRole, readErrorMessage, showMessage]);
+    }, [id, loadTeamRole, showToast]);
 
     const getTasks = useCallback(async () => {
         if (!id) {
@@ -187,18 +165,21 @@ function ProjectDetails() {
             const response = await apiFetch(`/tasks/project/${id}`);
 
             if (!response.ok) {
-                throw new Error(await readErrorMessage(response, "Görevler yüklenemedi"));
+                throw new Error(await parseApiError(response, "Görevler yüklenemedi"));
             }
 
             const data: unknown = await response.json();
             setTasks(Array.isArray(data) ? data : []);
         } catch (error) {
             setTasks([]);
-            showMessage(error instanceof Error ? error.message : "Görevler yüklenemedi");
+            showToast({
+                type: "error",
+                message: getErrorMessage(error, "Görevler yüklenemedi")
+            });
         } finally {
             setLoadingTasks(false);
         }
-    }, [id, readErrorMessage, showMessage]);
+    }, [id, showToast]);
 
     useEffect(() => {
         loadProject();
@@ -207,12 +188,12 @@ function ProjectDetails() {
 
     async function saveTask() {
         if (!canMutateTasks) {
-            showMessage("Bu işlem için yetkiniz yok");
+            showToast({ type: "warning", message: "Bu işlem için yetkiniz yok" });
             return;
         }
 
         if (title.trim() === "") {
-            showMessage("Görev başlığı boş olamaz");
+            showToast({ type: "warning", message: "Görev başlığı boş olamaz" });
             return;
         }
 
@@ -236,15 +217,21 @@ function ProjectDetails() {
             });
 
             if (!response.ok) {
-                throw new Error(await readErrorMessage(response, "Görev kaydedilemedi"));
+                throw new Error(await parseApiError(response, "Görev kaydedilemedi"));
             }
 
             await response.text();
-            showMessage(editId ? "Görev başarıyla güncellendi" : "Görev başarıyla oluşturuldu");
+            showToast({
+                type: "success",
+                message: editId ? "Görev başarıyla güncellendi." : "Görev başarıyla oluşturuldu."
+            });
             clearForm();
             getTasks();
         } catch (error) {
-            showMessage(error instanceof Error ? error.message : "Görev kaydedilemedi");
+            showToast({
+                type: "error",
+                message: getErrorMessage(error, "Görev kaydedilemedi")
+            });
         } finally {
             setSavingTask(false);
         }
@@ -252,7 +239,7 @@ function ProjectDetails() {
 
     async function deleteTask(taskId: number) {
         if (!canMutateTasks) {
-            showMessage("Bu işlem için yetkiniz yok");
+            showToast({ type: "warning", message: "Bu işlem için yetkiniz yok" });
             return;
         }
 
@@ -261,12 +248,18 @@ function ProjectDetails() {
         });
 
         if (!response.ok) {
-            showMessage(await readErrorMessage(response, "Görev silinemedi"));
+            showToast({
+                type: "error",
+                message: await parseApiError(response, "Görev silinemedi")
+            });
             return;
         }
 
         const data = await response.text();
-        showMessage(data);
+        showToast({
+            type: "success",
+            message: data || "Görev başarıyla silindi."
+        });
         getTasks();
     }
 
@@ -380,13 +373,6 @@ function ProjectDetails() {
 
     return (
         <main className="page-shell">
-            {
-                message &&
-                <div className="message-box">
-                    {message}
-                </div>
-            }
-
             <section className="page-header">
                 <div>
                     <span className="eyebrow">Proje</span>

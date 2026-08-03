@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch, updateStoredUser } from "../api";
+import { useToast } from "../context/toast";
+import { getErrorMessage, parseApiError } from "../utils/apiError";
 
 type ProfileUser = {
     id: number;
@@ -9,13 +11,13 @@ type ProfileUser = {
 }
 
 function Profile() {
+    const { showToast } = useToast();
     const [user, setUser] = useState<ProfileUser | null>(null);
     const [name, setName] = useState("");
     const [surname, setSurname] = useState("");
     const [email, setEmail] = useState("");
     const [oldPassword, setOldPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
-    const [message, setMessage] = useState("");
 
     useEffect(() => {
         apiFetch("/profile")
@@ -28,33 +30,12 @@ function Profile() {
                 updateStoredUser(data);
             })
             .catch(() => {
-                showMessage("Profil bilgileri alınamadı");
+                showToast({
+                    type: "error",
+                    message: "Profil bilgileri alınamadı"
+                });
             });
-    }, []);
-
-    function showMessage(text: string) {
-        setMessage(text);
-
-        setTimeout(() => {
-            setMessage("");
-        }, 3000);
-    }
-
-    async function readErrorMessage(response: Response) {
-        const contentType = response.headers.get("Content-Type") || "";
-
-        if (contentType.includes("application/json")) {
-            const data = await response.json();
-
-            if (data.errors) {
-                return Object.values(data.errors).join("\n");
-            }
-
-            return data.message || "İşlem tamamlanamadı";
-        }
-
-        return await response.text();
-    }
+    }, [showToast]);
 
     async function updateProfile() {
         try {
@@ -68,16 +49,22 @@ function Profile() {
             });
 
             if (!response.ok) {
-                throw new Error(await readErrorMessage(response));
+                throw new Error(await parseApiError(response, "Profil güncellenemedi"));
             }
 
             const updatedUser = await response.json();
 
             setUser(updatedUser);
             updateStoredUser(updatedUser);
-            showMessage("Profil bilgileri güncellendi");
-        } catch (error: any) {
-            showMessage(error.message || "Profil güncellenemedi");
+            showToast({
+                type: "success",
+                message: "Profil bilgileri güncellendi."
+            });
+        } catch (error) {
+            showToast({
+                type: "error",
+                message: getErrorMessage(error, "Profil güncellenemedi")
+            });
         }
     }
 
@@ -92,28 +79,27 @@ function Profile() {
             });
 
             if (!response.ok) {
-                throw new Error(await readErrorMessage(response));
+                throw new Error(await parseApiError(response, "Şifre güncellenemedi"));
             }
 
             const data = await response.text();
 
             setOldPassword("");
             setNewPassword("");
-            showMessage(data || "Şifre başarıyla güncellendi");
-        } catch (error: any) {
-            showMessage(error.message || "Şifre güncellenemedi");
+            showToast({
+                type: "success",
+                message: data || "Şifre başarıyla güncellendi."
+            });
+        } catch (error) {
+            showToast({
+                type: "error",
+                message: getErrorMessage(error, "Şifre güncellenemedi")
+            });
         }
     }
 
     return (
         <main className="page-shell">
-            {
-                message &&
-                <div className="message-box">
-                    {message}
-                </div>
-            }
-
             <section className="hero-card profile-cover">
                 <div className="profile-avatar">
                     {(user?.name || "T").slice(0, 1)}{(user?.surname || "T").slice(0, 1)}

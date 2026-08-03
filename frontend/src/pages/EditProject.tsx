@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch, getStoredUser } from "../api";
+import { useToast } from "../context/toast";
 import type { Project, ProjectRequest } from "../types/project";
 import { canManageTeamProjects, type TeamMember, type TeamRole } from "../types/team";
+import { getErrorMessage, parseApiError } from "../utils/apiError";
 
 type StoredUser = {
     id: number;
@@ -11,6 +13,7 @@ type StoredUser = {
 function EditProject() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { showToast } = useToast();
 
     const [project, setProject] = useState<Project | null>(null);
     const [projectName, setProjectName] = useState("");
@@ -44,43 +47,6 @@ function EditProject() {
         return null;
     }
 
-    async function readErrorMessage(response: Response, fallbackMessage = "Proje güncellenemedi") {
-        const contentType = response.headers.get("Content-Type") || "";
-
-        if (contentType.includes("application/json")) {
-            const data: unknown = await response.json();
-
-            if (data && typeof data === "object") {
-                if ("fieldErrors" in data && data.fieldErrors && typeof data.fieldErrors === "object") {
-                    return Object.values(data.fieldErrors).join("\n");
-                }
-
-                if ("message" in data && typeof data.message === "string") {
-                    return data.message;
-                }
-            }
-
-            return fallbackMessage;
-        }
-
-        const message = await response.text();
-
-        if (message) {
-            return message;
-        }
-
-        switch (response.status) {
-            case 403:
-                return "Bu işlem için yetkiniz yok";
-            case 404:
-                return "İstenen kaynak bulunamadı";
-            case 409:
-                return "Projenin takım bağlantısı güncelleme sırasında değiştirilemez";
-            default:
-                return fallbackMessage;
-        }
-    }
-
     async function loadProject() {
         if (!id) {
             setLoading(false);
@@ -93,7 +59,7 @@ function EditProject() {
             const response = await apiFetch(`/projects/${id}`);
 
             if (!response.ok) {
-                throw new Error(await readErrorMessage(response, "Proje yüklenemedi"));
+                throw new Error(await parseApiError(response, "Proje yüklenemedi"));
             }
 
             const data: Project = await response.json();
@@ -107,7 +73,10 @@ function EditProject() {
                 await loadTeamRole(data.teamId);
             }
         } catch (error) {
-            alert(error instanceof Error ? error.message : "Proje yüklenemedi");
+            showToast({
+                type: "error",
+                message: getErrorMessage(error, "Proje yüklenemedi")
+            });
             setProject(null);
         } finally {
             setLoading(false);
@@ -158,15 +127,24 @@ function EditProject() {
             });
 
             if (!response.ok) {
-                alert(await readErrorMessage(response));
+                showToast({
+                    type: "error",
+                    message: await parseApiError(response, "Proje güncellenemedi")
+                });
                 return;
             }
 
             const data = await response.text();
-            alert(data);
+            showToast({
+                type: "success",
+                message: data || "Proje başarıyla güncellendi."
+            });
             navigate("/projects");
         } catch {
-            alert("Sunucuya bağlanılamadı");
+            showToast({
+                type: "error",
+                message: "Sunucuya bağlanılamadı"
+            });
         } finally {
             setSubmitting(false);
         }

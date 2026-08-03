@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch, getStoredUser } from "../api";
+import { useToast } from "../context/toast";
 import type { ProjectRequest } from "../types/project";
 import { canManageTeamProjects, getTeamRoleLabel, type Team, type TeamMember, type TeamRole } from "../types/team";
+import { getErrorMessage, parseApiError } from "../utils/apiError";
 
 type StoredUser = {
     id: number;
@@ -14,6 +16,7 @@ type ManageableTeam = Team & {
 }
 
 function CreateProject() {
+    const { showToast } = useToast();
     const [projectName, setProjectName] = useState("");
     const [projectDescription, setProjectDescription] = useState("");
     const [startDate, setStartDate] = useState("");
@@ -24,10 +27,6 @@ function CreateProject() {
     const [loadingTeams, setLoadingTeams] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
-    useEffect(() => {
-        loadManageableTeams();
-    }, []);
-
     const selectedTeamIdNumber = useMemo(() => {
         if (selectedTeamId === "") {
             return null;
@@ -36,7 +35,7 @@ function CreateProject() {
         return Number(selectedTeamId);
     }, [selectedTeamId]);
 
-    function getCurrentUserId() {
+    const getCurrentUserId = useCallback(() => {
         const storedUser: unknown = getStoredUser();
 
         if (
@@ -49,48 +48,9 @@ function CreateProject() {
         }
 
         return null;
-    }
+    }, []);
 
-    async function readErrorMessage(response: Response, fallbackMessage = "Proje oluşturulamadı") {
-        const contentType = response.headers.get("Content-Type") || "";
-
-        if (contentType.includes("application/json")) {
-            const data: unknown = await response.json();
-
-            if (data && typeof data === "object") {
-                if ("fieldErrors" in data && data.fieldErrors && typeof data.fieldErrors === "object") {
-                    return Object.values(data.fieldErrors).join("\n");
-                }
-
-                if ("message" in data && typeof data.message === "string") {
-                    return data.message;
-                }
-            }
-
-            return fallbackMessage;
-        }
-
-        const message = await response.text();
-
-        if (message) {
-            return message;
-        }
-
-        switch (response.status) {
-            case 401:
-                return "Bu işlem için giriş yapmalısınız";
-            case 403:
-                return "Bu işlem için yetkiniz yok";
-            case 404:
-                return "İstenen kaynak bulunamadı";
-            case 409:
-                return "Bu işlem mevcut kayıtlarla çakışıyor";
-            default:
-                return fallbackMessage;
-        }
-    }
-
-    async function loadManageableTeams() {
+    const loadManageableTeams = useCallback(async () => {
         const currentUserId = getCurrentUserId();
 
         if (currentUserId === null) {
@@ -103,7 +63,7 @@ function CreateProject() {
             const teamsResponse = await apiFetch("/teams");
 
             if (!teamsResponse.ok) {
-                throw new Error(await readErrorMessage(teamsResponse, "Takımlar yüklenemedi"));
+                throw new Error(await parseApiError(teamsResponse, "Takımlar yüklenemedi"));
             }
 
             const teamsData: unknown = await teamsResponse.json();
@@ -139,12 +99,19 @@ function CreateProject() {
                 setSelectedTeamId(String(manageableTeams[0].id));
             }
         } catch (error) {
-            alert(error instanceof Error ? error.message : "Takımlar yüklenemedi");
+            showToast({
+                type: "error",
+                message: getErrorMessage(error, "Takımlar yüklenemedi")
+            });
             setTeams([]);
         } finally {
             setLoadingTeams(false);
         }
-    }
+    }, [getCurrentUserId, showToast]);
+
+    useEffect(() => {
+        loadManageableTeams();
+    }, [loadManageableTeams]);
 
     async function createProject(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -154,7 +121,10 @@ function CreateProject() {
         }
 
         if (projectMode === "team" && selectedTeamIdNumber === null) {
-            alert("Lütfen proje için bir takım seçin");
+            showToast({
+                type: "warning",
+                message: "Lütfen proje için bir takım seçin"
+            });
             return;
         }
 
@@ -175,14 +145,23 @@ function CreateProject() {
             });
 
             if (!response.ok) {
-                alert(await readErrorMessage(response));
+                showToast({
+                    type: "error",
+                    message: await parseApiError(response, "Proje oluşturulamadı")
+                });
                 return;
             }
 
             const data = await response.text();
-            alert(data);
+            showToast({
+                type: "success",
+                message: data || "Proje başarıyla oluşturuldu."
+            });
         } catch {
-            alert("Sunucuya bağlanılamadı");
+            showToast({
+                type: "error",
+                message: "Sunucuya bağlanılamadı"
+            });
         } finally {
             setSubmitting(false);
         }

@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiFetch, getStoredUser } from "../api";
+import { useToast } from "../context/toast";
 import { getTeamRoleLabel, type TeamRole } from "../types/team";
+import { getErrorMessage, parseApiError } from "../utils/apiError";
 
 type Team = {
     id: number;
@@ -32,6 +34,7 @@ type StoredUser = {
 
 function TeamDetails() {
     const { id } = useParams();
+    const { showToast } = useToast();
 
     const [team, setTeam] = useState<Team | null>(null);
     const [members, setMembers] = useState<TeamMember[]>([]);
@@ -39,7 +42,6 @@ function TeamDetails() {
     const [userResults, setUserResults] = useState<UserSearchResult[]>([]);
     const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
     const [role, setRole] = useState<TeamRole>("MEMBER");
-    const [message, setMessage] = useState("");
 
     useEffect(() => {
         getTeam();
@@ -76,14 +78,6 @@ function TeamDetails() {
         };
     }, [userSearch, selectedUser]);
 
-    function showMessage(text: string) {
-        setMessage(text);
-
-        setTimeout(() => {
-            setMessage("");
-        }, 3000);
-    }
-
     function getCurrentUserId() {
         const storedUser: unknown = getStoredUser();
 
@@ -106,37 +100,6 @@ function TeamDetails() {
     const currentUserRole = currentMember?.role;
     const canManageMembers = currentUserRole === "OWNER" || currentUserRole === "ADMIN";
     const roleOptions: TeamRole[] = currentUserRole === "OWNER" ? ["MEMBER", "ADMIN"] : ["MEMBER"];
-
-    async function readErrorMessage(response: Response, fallbackMessage = "İşlem tamamlanamadı") {
-        const contentType = response.headers.get("Content-Type") || "";
-
-        if (contentType.includes("application/json")) {
-            const data = await response.json();
-
-            if (data.fieldErrors) {
-                return Object.values(data.fieldErrors).join("\n");
-            }
-
-            return data.message || fallbackMessage;
-        }
-
-        const message = await response.text();
-
-        if (message) {
-            return message;
-        }
-
-        switch (response.status) {
-            case 403:
-                return "Bu işlem için yetkiniz yok";
-            case 404:
-                return "İstenen kaynak bulunamadı";
-            case 409:
-                return "Bu işlem mevcut kayıtlarla çakışıyor";
-            default:
-                return fallbackMessage;
-        }
-    }
 
     function getFullName(user: UserSearchResult) {
         return `${user.name} ${user.surname}`;
@@ -188,12 +151,12 @@ function TeamDetails() {
         event.preventDefault();
 
         if (!canManageMembers) {
-            showMessage("Bu işlem için yetkiniz yok");
+            showToast({ type: "warning", message: "Bu işlem için yetkiniz yok" });
             return;
         }
 
         if (!selectedUser) {
-            showMessage("Lütfen bir kullanıcı seçin");
+            showToast({ type: "warning", message: "Lütfen bir kullanıcı seçin" });
             return;
         }
 
@@ -208,7 +171,7 @@ function TeamDetails() {
         })
             .then(response => {
                 if (!response.ok) {
-                    return readErrorMessage(response, "Üye eklenemedi")
+                    return parseApiError(response, "Üye eklenemedi")
                         .then(errorMessage => {
                             throw new Error(errorMessage);
                         });
@@ -222,10 +185,13 @@ function TeamDetails() {
                 setUserSearch("");
                 setUserResults([]);
                 setRole("MEMBER");
-                showMessage("Üye takıma eklendi");
+                showToast({ type: "success", message: "Üye takıma eklendi." });
             })
             .catch(error => {
-                showMessage(error.message || "Üye eklenemedi");
+                showToast({
+                    type: "error",
+                    message: getErrorMessage(error, "Üye eklenemedi")
+                });
             });
     }
 
@@ -247,23 +213,19 @@ function TeamDetails() {
         });
 
         if (!response.ok) {
-            showMessage(await readErrorMessage(response, "Üye çıkarılamadı"));
+            showToast({
+                type: "error",
+                message: await parseApiError(response, "Üye çıkarılamadı")
+            });
             return;
         }
 
         setMembers(members.filter(currentMember => currentMember.id !== member.id));
-        showMessage("Üye takımdan çıkarıldı");
+        showToast({ type: "success", message: "Üye takımdan çıkarıldı." });
     }
 
     return (
         <main className="page-shell">
-            {
-                message &&
-                <div className="message-box">
-                    {message}
-                </div>
-            }
-
             <section className="hero-card team-profile">
                 <div className="profile-avatar">TM</div>
 
