@@ -2,10 +2,19 @@ package com.teamtime.dto;
 
 import java.time.LocalDate;
 
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class ProjectRequest {
 
+    @NotBlank(message = "Proje adı boş bırakılamaz")
+    @Size(max = 120, message = "Proje adı en fazla 120 karakter olabilir")
     private String projectName;
+
+    @Size(max = 1000, message = "Proje açıklaması en fazla 1000 karakter olabilir")
     private String description;
+
     private Long teamId;
     private LocalDate startDate;
     private LocalDate endDate;
@@ -14,8 +23,8 @@ public class ProjectRequest {
     }
 
     public ProjectRequest(String projectName, String description, Long teamId, LocalDate startDate, LocalDate endDate) {
-        this.projectName = projectName;
-        this.description = description;
+        setProjectName(projectName);
+        setDescription(description);
         this.teamId = teamId;
         this.startDate = startDate;
         this.endDate = endDate;
@@ -26,7 +35,7 @@ public class ProjectRequest {
     }
 
     public void setProjectName(String projectName) {
-        this.projectName = projectName;
+        this.projectName = trim(projectName);
     }
 
     public String getDescription() {
@@ -34,7 +43,7 @@ public class ProjectRequest {
     }
 
     public void setDescription(String description) {
-        this.description = description;
+        this.description = trimToNull(description);
     }
 
     public Long getTeamId() {
@@ -59,5 +68,28 @@ public class ProjectRequest {
 
     public void setEndDate(LocalDate endDate) {
         this.endDate = endDate;
+    }
+
+    @AssertTrue(message = "Bitiş tarihi başlangıç tarihinden önce olamaz")
+    public boolean isEndDateOnOrAfterStartDate() {
+        return startDate == null || endDate == null || !endDate.isBefore(startDate);
+    }
+
+    private String trim(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        return value.trim();
+    }
+
+    private String trimToNull(String value) {
+        String trimmed = trim(value);
+
+        if (trimmed == null || trimmed.isEmpty()) {
+            return null;
+        }
+
+        return trimmed;
     }
 }

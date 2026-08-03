@@ -13,8 +13,10 @@ public class Project {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, length = 120)
     private String projectName;
 
+    @Column(length = 1000)
     private String description;
 
     private LocalDate startDate;
@@ -22,7 +24,7 @@ public class Project {
     private LocalDate endDate;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     @JsonIgnore
     private User user;
 

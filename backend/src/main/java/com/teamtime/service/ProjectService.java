@@ -3,6 +3,7 @@ package com.teamtime.service;
 import org.springframework.stereotype.Service;
 
 import com.teamtime.dto.ProjectRequest;
+import com.teamtime.dto.ProjectResponse;
 import com.teamtime.entity.Project;
 import com.teamtime.entity.Team;
 import com.teamtime.entity.TeamMember;
@@ -17,11 +18,15 @@ import com.teamtime.repository.TeamRepository;
 import com.teamtime.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ProjectService {
+    private static final int RECENT_PROJECT_LIMIT = 5;
+
     private final ProjectRepository projectRepository;
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
@@ -117,18 +122,20 @@ public class ProjectService {
         return "Proje başarıyla silindi";
     }
 
-    public List<Project> getAllProjects(Long userId) {
-        return projectRepository.findAccessibleProjects(userId);
+    public List<ProjectResponse> getAllProjects(Long userId) {
+        return toResponseList(projectRepository.findAccessibleProjects(userId));
     }
 
-    public List<Project> getRecentProjects(Long userId) {
-        return projectRepository.findAccessibleProjects(userId);
+    public List<ProjectResponse> getRecentProjects(Long userId) {
+        return toResponseList(projectRepository.findRecentAccessibleProjects(userId, PageRequest.of(0, RECENT_PROJECT_LIMIT)));
     }
 
-    public Project getProject(Long id, Long userId) {
+    public ProjectResponse getProject(Long id, Long userId) {
 
-        return projectRepository.findAccessibleProjectById(id, userId)
+        Project project = projectRepository.findAccessibleProjectById(id, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Proje bulunamadı veya bu proje için yetkiniz yok"));
+
+        return toResponse(project);
 
     }
 
@@ -157,6 +164,24 @@ public class ProjectService {
                 .orElseThrow(() -> new AccessDeniedException("Bu takım için yetkiniz yok"));
 
         return TeamRole.from(membership.getRole());
+    }
+
+    public ProjectResponse toResponse(Project project) {
+        return new ProjectResponse(
+                project.getId(),
+                project.getProjectName(),
+                project.getDescription(),
+                project.getStartDate(),
+                project.getEndDate(),
+                project.getTeamId(),
+                project.getTeamName(),
+                project.isTeamProject());
+    }
+
+    private List<ProjectResponse> toResponseList(List<Project> projects) {
+        return projects.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
 }

@@ -1,7 +1,9 @@
 package com.teamtime.controller;
 
-import com.teamtime.entity.Team;
+import com.teamtime.dto.TeamRequest;
+import com.teamtime.dto.TeamResponse;
 import com.teamtime.service.TeamService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -28,22 +30,26 @@ public class TeamController {
     }
 
     @PostMapping
-    public ResponseEntity<Team> createTeam(@RequestBody Team team, Authentication authentication) {
+    public ResponseEntity<TeamResponse> createTeam(@Valid @RequestBody TeamRequest request, Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
-        Team createdTeam = teamService.createTeam(team, userId);
+        TeamResponse createdTeam = teamService.createTeam(request, userId);
         return ResponseEntity.ok(createdTeam);
     }
 
     @GetMapping
-    public ResponseEntity<List<Team>> getAllTeams(Authentication authentication) {
+    public ResponseEntity<List<TeamResponse>> getAllTeams(Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
         return ResponseEntity.ok(teamService.getTeamsForUser(userId));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Team> updateTeam(@PathVariable Long id, @RequestBody Team team, Authentication authentication) {
+    public ResponseEntity<TeamResponse> updateTeam(
+            @PathVariable Long id,
+            @Valid @RequestBody TeamRequest request,
+            Authentication authentication
+    ) {
         Long userId = (Long) authentication.getPrincipal();
-        Team updatedTeam = teamService.updateTeam(id, team, userId);
+        TeamResponse updatedTeam = teamService.updateTeam(id, request, userId);
         return ResponseEntity.ok(updatedTeam);
     }
 

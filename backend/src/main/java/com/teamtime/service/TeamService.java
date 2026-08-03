@@ -1,5 +1,7 @@
 package com.teamtime.service;
 
+import com.teamtime.dto.TeamRequest;
+import com.teamtime.dto.TeamResponse;
 import com.teamtime.entity.Team;
 import com.teamtime.entity.TeamMember;
 import com.teamtime.entity.TeamRole;
@@ -15,6 +17,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class TeamService {
@@ -37,9 +40,13 @@ public class TeamService {
     }
 
     @Transactional
-    public Team createTeam(Team team, Long creatorUserId) {
+    public TeamResponse createTeam(TeamRequest request, Long creatorUserId) {
         User creator = userRepository.findById(creatorUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı"));
+
+        Team team = new Team();
+        team.setName(request.getName());
+        team.setDescription(request.getDescription());
 
         if (team.getCreatedDate() == null) {
             team.setCreatedDate(java.time.LocalDateTime.now());
@@ -54,14 +61,17 @@ public class TeamService {
         ownerMembership.setJoinedDate(java.time.LocalDateTime.now());
         teamMemberRepository.save(ownerMembership);
 
-        return savedTeam;
+        return toResponse(savedTeam);
     }
 
-    public List<Team> getTeamsForUser(Long userId) {
-        return teamRepository.findDistinctByMemberUserId(userId);
+    public List<TeamResponse> getTeamsForUser(Long userId) {
+        return teamRepository.findDistinctByMemberUserId(userId)
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
-    public Team updateTeam(Long id, Team team, Long currentUserId) {
+    public TeamResponse updateTeam(Long id, TeamRequest request, Long currentUserId) {
         Team existingTeam = teamRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Team not found"));
         TeamMember currentMembership = requireMembership(id, currentUserId);
@@ -71,11 +81,10 @@ public class TeamService {
             throw new org.springframework.security.access.AccessDeniedException("Takımı güncelleme yetkiniz yok");
         }
 
-        existingTeam.setName(team.getName());
-        existingTeam.setDescription(team.getDescription());
-        existingTeam.setCreatedDate(team.getCreatedDate());
+        existingTeam.setName(request.getName());
+        existingTeam.setDescription(request.getDescription());
 
-        return teamRepository.save(existingTeam);
+        return toResponse(teamRepository.save(existingTeam));
     }
 
     @Transactional
@@ -99,5 +108,13 @@ public class TeamService {
     private TeamMember requireMembership(Long teamId, Long userId) {
         return teamMemberRepository.findByTeamIdAndUserId(teamId, userId)
                 .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException("Bu takım için yetkiniz yok"));
+    }
+
+    public TeamResponse toResponse(Team team) {
+        return new TeamResponse(
+                team.getId(),
+                team.getName(),
+                team.getDescription(),
+                team.getCreatedDate());
     }
 }
