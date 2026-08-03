@@ -1,14 +1,175 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 import { clearAuth, isAuthenticated } from "../api";
+import { apiFetch } from "../api";
+import type { NotificationItem } from "../types/notification";
+
+type UnreadCountResponse = {
+    unreadCount: number;
+};
 
 function Navbar() {
-    useLocation();
+    const location = useLocation();
     const navigate = useNavigate();
     const isLoggedIn = isAuthenticated();
+    const notificationRef = useRef<HTMLDivElement | null>(null);
+    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+    const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [isNotificationsLoading, setIsNotificationsLoading] = useState(false);
+    const [notificationError, setNotificationError] = useState("");
 
     function logout() {
         clearAuth();
+        clearNotificationState();
         navigate("/login");
+    }
+
+    function clearNotificationState() {
+        setIsNotificationsOpen(false);
+        setNotifications([]);
+        setUnreadCount(0);
+        setIsNotificationsLoading(false);
+        setNotificationError("");
+    }
+
+    useEffect(() => {
+        if (!isLoggedIn) {
+            clearNotificationState();
+            return;
+        }
+
+        let ignore = false;
+
+        async function loadUnreadCount() {
+            try {
+                const response = await apiFetch("/notifications/unread-count");
+                const data = await parseJsonResponse<UnreadCountResponse>(response);
+
+                if (!ignore) {
+                    setUnreadCount(Math.max(0, data.unreadCount));
+                    setNotificationError("");
+                }
+            } catch (error) {
+                if (!ignore) {
+                    setNotificationError(getSafeErrorMessage(error, "Bildirim sayısı alınamadı."));
+                }
+            }
+        }
+
+        loadUnreadCount();
+
+        return () => {
+            ignore = true;
+        };
+    }, [isLoggedIn, location.pathname]);
+
+    useEffect(() => {
+        if (!isNotificationsOpen) {
+            return;
+        }
+
+        function handlePointerDown(event: MouseEvent) {
+            if (!notificationRef.current?.contains(event.target as Node)) {
+                setIsNotificationsOpen(false);
+            }
+        }
+
+        function handleKeyDown(event: KeyboardEvent) {
+            if (event.key === "Escape") {
+                setIsNotificationsOpen(false);
+            }
+        }
+
+        document.addEventListener("mousedown", handlePointerDown);
+        document.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            document.removeEventListener("mousedown", handlePointerDown);
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isNotificationsOpen]);
+
+    async function toggleNotifications() {
+        const nextOpen = !isNotificationsOpen;
+        setIsNotificationsOpen(nextOpen);
+
+        if (nextOpen) {
+            await loadNotifications();
+        }
+    }
+
+    async function loadNotifications() {
+        setIsNotificationsLoading(true);
+        setNotificationError("");
+
+        try {
+            const response = await apiFetch("/notifications");
+            const data = await parseJsonResponse<NotificationItem[]>(response);
+            setNotifications(data);
+        } catch (error) {
+            setNotificationError(getSafeErrorMessage(error, "Bildirimler alınamadı."));
+        } finally {
+            setIsNotificationsLoading(false);
+        }
+    }
+
+    async function markNotificationAsRead(notification: NotificationItem) {
+        try {
+            const response = await apiFetch(`/notifications/${notification.id}/read`, {
+                method: "PUT"
+            });
+            const updatedNotification = await parseJsonResponse<NotificationItem>(response);
+
+            setNotifications(currentNotifications =>
+                currentNotifications.map(item =>
+                    item.id === updatedNotification.id ? updatedNotification : item
+                )
+            );
+
+            if (!notification.read) {
+                setUnreadCount(currentCount => Math.max(0, currentCount - 1));
+            }
+
+            return true;
+        } catch (error) {
+            setNotificationError(getSafeErrorMessage(error, "Bildirim okundu olarak işaretlenemedi."));
+            return false;
+        }
+    }
+
+    async function markAllNotificationsAsRead() {
+        try {
+            await apiFetch("/notifications/read-all", {
+                method: "PUT"
+            });
+
+            setNotifications(currentNotifications =>
+                currentNotifications.map(notification => ({
+                    ...notification,
+                    read: true
+                }))
+            );
+            setUnreadCount(0);
+            setNotificationError("");
+        } catch (error) {
+            setNotificationError(getSafeErrorMessage(error, "Bildirimler okundu olarak işaretlenemedi."));
+        }
+    }
+
+    async function openNotification(notification: NotificationItem) {
+        const readSucceeded = notification.read || await markNotificationAsRead(notification);
+
+        if (!readSucceeded) {
+            return;
+        }
+
+        const destination = getNotificationDestination(notification);
+
+        if (destination) {
+            setIsNotificationsOpen(false);
+            navigate(destination);
+        }
     }
 
     return (
@@ -30,6 +191,81 @@ function Navbar() {
                         </div>
 
                         <div className="nav-user">
+                            <div className="notification-menu" ref={notificationRef}>
+                                <button
+                                    type="button"
+                                    className="notification-bell"
+                                    aria-label={unreadCount > 0 ? `${unreadCount} okunmamış bildirim` : "Bildirimler"}
+                                    aria-expanded={isNotificationsOpen}
+                                    onClick={toggleNotifications}
+                                >
+                                    <span aria-hidden="true">🔔</span>
+                                    {
+                                        unreadCount > 0 && (
+                                            <span className="notification-badge" aria-label={`${unreadCount} okunmamış bildirim`}>
+                                                {unreadCount > 99 ? "99+" : unreadCount}
+                                            </span>
+                                        )
+                                    }
+                                </button>
+
+                                {
+                                    isNotificationsOpen && (
+                                        <div className="notification-panel" role="dialog" aria-label="Bildirimler">
+                                            <div className="notification-panel-header">
+                                                <strong>Bildirimler</strong>
+                                                {
+                                                    unreadCount > 0 && (
+                                                        <button
+                                                            type="button"
+                                                            className="notification-read-all"
+                                                            onClick={markAllNotificationsAsRead}
+                                                        >
+                                                            Tümünü okundu işaretle
+                                                        </button>
+                                                    )
+                                                }
+                                            </div>
+
+                                            {
+                                                notificationError && (
+                                                    <p className="notification-error" role="status">{notificationError}</p>
+                                                )
+                                            }
+
+                                            {
+                                                isNotificationsLoading ? (
+                                                    <p className="notification-empty">Bildirimler yükleniyor...</p>
+                                                ) : notifications.length === 0 ? (
+                                                    <p className="notification-empty">Henüz bildiriminiz yok.</p>
+                                                ) : (
+                                                    <div className="notification-list">
+                                                        {
+                                                            notifications.map(notification => (
+                                                                <button
+                                                                    type="button"
+                                                                    key={notification.id}
+                                                                    className={notification.read ? "notification-item" : "notification-item is-unread"}
+                                                                    onClick={() => openNotification(notification)}
+                                                                >
+                                                                    <span className="notification-dot" aria-hidden="true" />
+                                                                    <span className="notification-copy">
+                                                                        <strong>{notification.title}</strong>
+                                                                        <span>{notification.message}</span>
+                                                                        <time dateTime={notification.createdAt}>
+                                                                            {formatNotificationDate(notification.createdAt)}
+                                                                        </time>
+                                                                    </span>
+                                                                </button>
+                                                            ))
+                                                        }
+                                                    </div>
+                                                )
+                                            }
+                                        </div>
+                                    )
+                                }
+                            </div>
                             <span className="user-avatar">TT</span>
                             <button className="button button-ghost" onClick={logout}>Çıkış Yap</button>
                         </div>
@@ -44,6 +280,66 @@ function Navbar() {
             }
         </nav>
     );
+}
+
+async function parseJsonResponse<T>(response: Response): Promise<T> {
+    const data: unknown = await response.json().catch(() => null);
+
+    if (!response.ok) {
+        if (isApiError(data)) {
+            throw new Error(data.message);
+        }
+
+        throw new Error("İşlem tamamlanamadı.");
+    }
+
+    return data as T;
+}
+
+function isApiError(data: unknown): data is { message: string } {
+    return typeof data === "object"
+        && data !== null
+        && "message" in data
+        && typeof (data as { message: unknown }).message === "string";
+}
+
+function getSafeErrorMessage(error: unknown, fallback: string) {
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+
+    return fallback;
+}
+
+function formatNotificationDate(value: string) {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return "";
+    }
+
+    return new Intl.DateTimeFormat("tr-TR", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit"
+    }).format(date);
+}
+
+function getNotificationDestination(notification: NotificationItem) {
+    if (!notification.relatedEntityId) {
+        return null;
+    }
+
+    if (notification.type === "TEAM_MEMBER_ADDED" && notification.relatedEntityType === "TEAM") {
+        return `/teams/${notification.relatedEntityId}`;
+    }
+
+    if (notification.type === "TEAM_PROJECT_CREATED" && notification.relatedEntityType === "PROJECT") {
+        return `/project/${notification.relatedEntityId}`;
+    }
+
+    return null;
 }
 
 export default Navbar;
