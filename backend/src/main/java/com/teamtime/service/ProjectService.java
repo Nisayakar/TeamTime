@@ -55,10 +55,8 @@ public class ProjectService {
                     .orElseThrow(() -> new ResourceNotFoundException("Takım bulunamadı"));
             requireTeamProjectManager(team.getId(), userId);
             project.setTeam(team);
-            project.setTeamName(null);
         } else {
             project.setTeam(null);
-            project.setTeamName(null);
         }
 
         projectRepository.save(project);

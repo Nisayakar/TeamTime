@@ -1,6 +1,7 @@
 package com.teamtime;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -11,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamtime.entity.Project;
+import com.teamtime.entity.Team;
 import com.teamtime.entity.TeamRole;
 import com.teamtime.entity.User;
 import com.teamtime.repository.ProjectRepository;
@@ -95,6 +97,8 @@ class ProjectTeamAuthorizationTests {
                         .header(AUTHORIZATION, bearer(owner)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.projectName").value("Personal Plan"))
+                .andExpect(jsonPath("$.teamId").value(nullValue()))
+                .andExpect(jsonPath("$.teamName").value(nullValue()))
                 .andExpect(jsonPath("$.teamProject").value(false));
 
         mockMvc.perform(get("/api/projects/{id}", personalProjectId)
@@ -121,6 +125,46 @@ class ProjectTeamAuthorizationTests {
                         .header(AUTHORIZATION, bearer(owner)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.teamId").value(teamId));
+    }
+
+    @Test
+    void teamNameIsDerivedFromCurrentTeamName() throws Exception {
+        Long teamId = createTeam(owner, "Original Team Name");
+        Long projectId = createTeamProject(owner, teamId, "Derived Team Name Project");
+
+        Team team = teamRepository.findById(teamId).orElseThrow();
+        team.setName("Renamed Team");
+        teamRepository.save(team);
+
+        mockMvc.perform(get("/api/projects/{id}", projectId)
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.teamId").value(teamId))
+                .andExpect(jsonPath("$.teamName").value("Renamed Team"));
+    }
+
+    @Test
+    void legacyRequestTeamNameIsIgnored() throws Exception {
+        mockMvc.perform(post("/api/projects")
+                        .header(AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "projectName": "Legacy Team Name Input",
+                                  "description": "Legacy text must not create a team link",
+                                  "teamName": "Do Not Store"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        Project project = latestAccessibleProject(owner);
+
+        mockMvc.perform(get("/api/projects/{id}", project.getId())
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.teamId").value(nullValue()))
+                .andExpect(jsonPath("$.teamName").value(nullValue()))
+                .andExpect(jsonPath("$.teamProject").value(false));
     }
 
     @Test

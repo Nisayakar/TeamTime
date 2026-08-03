@@ -7,19 +7,10 @@ public class ProjectRequest {
     private String projectName;
     private String description;
     private Long teamId;
-    private String teamName;
     private LocalDate startDate;
     private LocalDate endDate;
 
     public ProjectRequest() {
-    }
-
-    public ProjectRequest(String projectName, String description, String teamName, LocalDate startDate, LocalDate endDate) {
-        this.projectName = projectName;
-        this.description = description;
-        this.teamName = teamName;
-        this.startDate = startDate;
-        this.endDate = endDate;
     }
 
     public ProjectRequest(String projectName, String description, Long teamId, LocalDate startDate, LocalDate endDate) {
@@ -52,14 +43,6 @@ public class ProjectRequest {
 
     public void setTeamId(Long teamId) {
         this.teamId = teamId;
-    }
-
-    public String getTeamName() {
-        return teamName;
-    }
-
-    public void setTeamName(String teamName) {
-        this.teamName = teamName;
     }
 
     public LocalDate getStartDate() {

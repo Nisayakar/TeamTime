@@ -17,9 +17,6 @@ public class Project {
 
     private String description;
 
-    @Column(name = "team_name")
-    private String teamName;
-
     private LocalDate startDate;
 
     private LocalDate endDate;
@@ -37,11 +34,10 @@ public class Project {
     public Project() {
     }
 
-    public Project(Long id, String projectName, String description, String teamName, LocalDate startDate, LocalDate endDate) {
+    public Project(Long id, String projectName, String description, LocalDate startDate, LocalDate endDate) {
         this.id = id;
         this.projectName = projectName;
         this.description = description;
-        this.teamName = teamName;
         this.startDate = startDate;
         this.endDate = endDate;
     }
@@ -75,11 +71,7 @@ public class Project {
             return team.getName();
         }
 
-        return teamName;
-    }
-
-    public void setTeamName(String teamName) {
-        this.teamName = teamName;
+        return null;
     }
 
     public LocalDate getStartDate() {
