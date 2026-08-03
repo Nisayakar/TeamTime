@@ -4,7 +4,9 @@ import com.teamtime.entity.Team;
 import com.teamtime.entity.TeamMember;
 import com.teamtime.entity.TeamRole;
 import com.teamtime.entity.User;
+import com.teamtime.exception.ConflictException;
 import com.teamtime.exception.ResourceNotFoundException;
+import com.teamtime.repository.ProjectRepository;
 import com.teamtime.repository.TeamMemberRepository;
 import com.teamtime.repository.TeamRepository;
 import com.teamtime.repository.UserRepository;
@@ -20,15 +22,18 @@ public class TeamService {
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final UserRepository userRepository;
+    private final ProjectRepository projectRepository;
 
     public TeamService(
             TeamRepository teamRepository,
             TeamMemberRepository teamMemberRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            ProjectRepository projectRepository
     ) {
         this.teamRepository = teamRepository;
         this.teamMemberRepository = teamMemberRepository;
         this.userRepository = userRepository;
+        this.projectRepository = projectRepository;
     }
 
     @Transactional
@@ -81,6 +86,10 @@ public class TeamService {
 
         if (TeamRole.from(currentMembership.getRole()) != TeamRole.OWNER) {
             throw new org.springframework.security.access.AccessDeniedException("Takımı silme yetkiniz yok");
+        }
+
+        if (projectRepository.existsByTeam_Id(id)) {
+            throw new ConflictException("Bu takıma bağlı projeler varken takım silinemez.");
         }
 
         teamMemberRepository.deleteByTeamId(id);

@@ -1,6 +1,8 @@
 package com.teamtime.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.teamtime.entity.Project;
 import java.util.List;
@@ -17,5 +19,29 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     Optional<Project> findByIdAndUserId(Long id, Long userId);
 
     long countByUserId(Long userId);
+
+    boolean existsByTeam_Id(Long teamId);
+
+    @Query("""
+            select distinct project
+            from Project project
+            left join fetch project.team team
+            left join TeamMember membership on membership.team = team and membership.user.id = :userId
+            where (project.team is null and project.user.id = :userId)
+               or membership.id is not null
+            order by project.id desc
+            """)
+    List<Project> findAccessibleProjects(@Param("userId") Long userId);
+
+    @Query("""
+            select distinct project
+            from Project project
+            left join fetch project.team team
+            left join TeamMember membership on membership.team = team and membership.user.id = :userId
+            where ((project.team is null and project.user.id = :userId)
+               or membership.id is not null)
+              and project.id = :projectId
+            """)
+    Optional<Project> findAccessibleProjectById(@Param("projectId") Long projectId, @Param("userId") Long userId);
 
 }

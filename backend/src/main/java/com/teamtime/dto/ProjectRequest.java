@@ -6,6 +6,7 @@ public class ProjectRequest {
 
     private String projectName;
     private String description;
+    private Long teamId;
     private String teamName;
     private LocalDate startDate;
     private LocalDate endDate;
@@ -17,6 +18,14 @@ public class ProjectRequest {
         this.projectName = projectName;
         this.description = description;
         this.teamName = teamName;
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
+
+    public ProjectRequest(String projectName, String description, Long teamId, LocalDate startDate, LocalDate endDate) {
+        this.projectName = projectName;
+        this.description = description;
+        this.teamId = teamId;
         this.startDate = startDate;
         this.endDate = endDate;
     }
@@ -35,6 +44,14 @@ public class ProjectRequest {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Long getTeamId() {
+        return teamId;
+    }
+
+    public void setTeamId(Long teamId) {
+        this.teamId = teamId;
     }
 
     public String getTeamName() {

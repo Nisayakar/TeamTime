@@ -17,6 +17,7 @@ public class Project {
 
     private String description;
 
+    @Column(name = "team_name")
     private String teamName;
 
     private LocalDate startDate;
@@ -27,6 +28,11 @@ public class Project {
     @JoinColumn(name = "user_id")
     @JsonIgnore
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "team_id")
+    @JsonIgnore
+    private Team team;
 
     public Project() {
     }
@@ -65,6 +71,10 @@ public class Project {
     }
 
     public String getTeamName() {
+        if (team != null) {
+            return team.getName();
+        }
+
         return teamName;
     }
 
@@ -94,5 +104,25 @@ public class Project {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public Team getTeam() {
+        return team;
+    }
+
+    public void setTeam(Team team) {
+        this.team = team;
+    }
+
+    public Long getTeamId() {
+        if (team == null) {
+            return null;
+        }
+
+        return team.getId();
+    }
+
+    public boolean isTeamProject() {
+        return team != null;
     }
 }
