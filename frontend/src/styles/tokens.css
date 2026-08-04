@@ -1,0 +1,144 @@
+/* ============================================================
+   TeamTime Design Tokens
+   Phase 1: theme-agnostic semantic variables.
+   Consumed by the new ui-* primitives and the AppShell.
+   Existing App.css keeps its own legacy variables untouched.
+   ============================================================ */
+
+:root,
+[data-theme="light"] {
+  /* Surfaces */
+  --tt-background: #f7f8fa;
+  --tt-surface: #ffffff;
+  --tt-surface-secondary: #f1f3f6;
+
+  /* Text */
+  --tt-text: #1a1d21;
+  --tt-text-secondary: #4a5159;
+  --tt-text-muted: #6b7480;
+
+  /* Primary (calm blue) */
+  --tt-primary: #2f6fdb;
+  --tt-primary-hover: #2459b8;
+  --tt-primary-soft: rgba(47, 111, 219, 0.12);
+  --tt-primary-contrast: #ffffff;
+
+  /* Status */
+  --tt-success: #1a8f4e;
+  --tt-success-soft: rgba(26, 143, 78, 0.12);
+  --tt-warning: #c47b0a;
+  --tt-warning-soft: rgba(196, 123, 10, 0.12);
+  --tt-danger: #d83a3a;
+  --tt-danger-soft: rgba(216, 58, 58, 0.12);
+  --tt-info: #2f6fdb;
+  --tt-info-soft: rgba(47, 111, 219, 0.12);
+
+  /* Lines */
+  --tt-border: #e2e6ec;
+  --tt-border-strong: #cdd3db;
+
+  /* Focus ring */
+  --tt-focus-ring: rgba(47, 111, 219, 0.45);
+
+  /* Shadows */
+  --tt-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.04);
+  --tt-shadow-md: 0 4px 12px rgba(16, 24, 40, 0.08), 0 2px 6px rgba(16, 24, 40, 0.05);
+  --tt-shadow-lg: 0 16px 40px rgba(16, 24, 40, 0.12), 0 6px 16px rgba(16, 24, 40, 0.07);
+
+  /* Radius */
+  --tt-radius-sm: 8px;
+  --tt-radius-md: 12px;
+  --tt-radius-lg: 16px;
+
+  /* Spacing scale (8px base) */
+  --tt-space-1: 4px;
+  --tt-space-2: 8px;
+  --tt-space-3: 12px;
+  --tt-space-4: 16px;
+  --tt-space-5: 20px;
+  --tt-space-6: 24px;
+  --tt-space-8: 32px;
+  --tt-space-10: 40px;
+  --tt-space-12: 48px;
+  --tt-space-16: 64px;
+
+  /* Typography scale */
+  --tt-font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --tt-font-size-xs: 12px;
+  --tt-font-size-sm: 13px;
+  --tt-font-size-md: 14px;
+  --tt-font-size-lg: 16px;
+  --tt-font-size-xl: 18px;
+  --tt-font-size-2xl: 22px;
+  --tt-font-size-3xl: 28px;
+  --tt-line-tight: 1.2;
+  --tt-line-normal: 1.5;
+  --tt-line-relaxed: 1.65;
+
+  /* Layout */
+  --tt-navbar-height: 64px;
+  --tt-container-max: 1120px;
+  --tt-container-pad: clamp(16px, 4vw, 48px);
+}
+
+[data-theme="dark"] {
+  --tt-background: #05070b;
+  --tt-surface: rgba(14, 18, 24, 0.92);
+  --tt-surface-secondary: rgba(20, 25, 33, 0.9);
+
+  --tt-text: #f4f7fb;
+  --tt-text-secondary: rgba(244, 247, 251, 0.78);
+  --tt-text-muted: rgba(244, 247, 251, 0.58);
+
+  --tt-primary: #5b8def;
+  --tt-primary-hover: #7aa3f7;
+  --tt-primary-soft: rgba(91, 141, 239, 0.16);
+  --tt-primary-contrast: #0a1424;
+
+  --tt-success: #34d399;
+  --tt-success-soft: rgba(52, 211, 153, 0.16);
+  --tt-warning: #fbbf24;
+  --tt-warning-soft: rgba(251, 191, 36, 0.16);
+  --tt-danger: #fb7185;
+  --tt-danger-soft: rgba(251, 113, 133, 0.16);
+  --tt-info: #5b8def;
+  --tt-info-soft: rgba(91, 141, 239, 0.16);
+
+  --tt-border: rgba(244, 247, 251, 0.12);
+  --tt-border-strong: rgba(244, 247, 251, 0.22);
+
+  --tt-focus-ring: rgba(91, 141, 239, 0.55);
+
+  --tt-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --tt-shadow-md: 0 6px 16px rgba(0, 0, 0, 0.45);
+  --tt-shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.55);
+}
+
+/* Allow system mode: when no explicit data-theme is set on <html>,
+   resolve based on prefers-color-scheme. ThemeProvider also sets
+   data-theme directly, which takes precedence. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    color-scheme: light;
+  }
+}
+
+/* Reduced-motion foundation */
+@media (prefers-reduced-motion: reduce) {
+  .ui-button,
+  .ui-icon-button,
+  .ui-card,
+  .ui-theme-switcher,
+  .ui-avatar,
+  .ui-search-input,
+  .app-shell-skip-link {
+    transition: none !important;
+    animation: none !important;
+  }
+}

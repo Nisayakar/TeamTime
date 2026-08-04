@@ -1,8 +1,9 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import { clearAuth, isAuthenticated } from "../api";
+import { clearAuth, getStoredUser, isAuthenticated } from "../api";
 import { apiFetch } from "../api";
 import type { NotificationItem, NotificationPage } from "../types/notification";
+import { ThemeSwitcher } from "./ui/ThemeSwitcher";
 
 type UnreadCountResponse = {
     unreadCount: number;
@@ -10,11 +11,27 @@ type UnreadCountResponse = {
 
 const NOTIFICATION_PAGE_SIZE = 20;
 
+function getInitials(name: string, surname: string): string {
+    const first = (name ?? "").trim().charAt(0).toUpperCase();
+    const last = (surname ?? "").trim().charAt(0).toUpperCase();
+
+    if (first && last) {
+        return `${first}${last}`;
+    }
+
+    if (first) {
+        return first;
+    }
+
+    return "TT";
+}
+
 function Navbar() {
     const location = useLocation();
     const navigate = useNavigate();
     const isLoggedIn = isAuthenticated();
     const notificationRef = useRef<HTMLDivElement | null>(null);
+    const profileRef = useRef<HTMLDivElement | null>(null);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [notifications, setNotifications] = useState<NotificationItem[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -24,10 +41,22 @@ function Navbar() {
     const [notificationPage, setNotificationPage] = useState(0);
     const [isLastNotificationPage, setIsLastNotificationPage] = useState(true);
     const [notificationError, setNotificationError] = useState("");
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+    const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+    const storedUser = getStoredUser();
+    const userInitials = storedUser
+        ? getInitials(storedUser.name ?? "", storedUser.surname ?? "")
+        : "TT";
+    const userDisplayName = storedUser
+        ? `${storedUser.name ?? ""} ${storedUser.surname ?? ""}`.trim()
+        : "Hesap";
 
     function logout() {
         clearAuth();
         clearNotificationState();
+        setIsProfileMenuOpen(false);
+        setIsMobileNavOpen(false);
         navigate("/login");
     }
 
@@ -99,6 +128,37 @@ function Navbar() {
             document.removeEventListener("keydown", handleKeyDown);
         };
     }, [isNotificationsOpen]);
+
+    useEffect(() => {
+        if (!isProfileMenuOpen) {
+            return;
+        }
+
+        function handlePointerDown(event: MouseEvent) {
+            if (!profileRef.current?.contains(event.target as Node)) {
+                setIsProfileMenuOpen(false);
+            }
+        }
+
+        function handleKeyDown(event: KeyboardEvent) {
+            if (event.key === "Escape") {
+                setIsProfileMenuOpen(false);
+            }
+        }
+
+        document.addEventListener("mousedown", handlePointerDown);
+        document.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            document.removeEventListener("mousedown", handlePointerDown);
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isProfileMenuOpen]);
+
+    useEffect(() => {
+        setIsMobileNavOpen(false);
+        setIsProfileMenuOpen(false);
+    }, [location.pathname]);
 
     async function toggleNotifications() {
         const nextOpen = !isNotificationsOpen;
@@ -205,8 +265,21 @@ function Navbar() {
         }
     }
 
+    function toggleProfileMenu() {
+        setIsProfileMenuOpen(current => !current);
+    }
+
+    function toggleMobileNav() {
+        setIsMobileNavOpen(current => !current);
+    }
+
+    const navbarClassName = [
+        isLoggedIn ? "app-navbar app-navbar-auth" : "app-navbar app-navbar-public",
+        isMobileNavOpen ? "is-expanded" : ""
+    ].filter(Boolean).join(" ");
+
     return (
-        <nav className={isLoggedIn ? "app-navbar app-navbar-auth" : "app-navbar app-navbar-public"}>
+        <nav className={navbarClassName}>
             <Link to={isLoggedIn ? "/dashboard" : "/"} className="brand">
                 <img className="brand-symbol" src="/home/teamtime-symbol.png" alt="" aria-hidden="true" />
                 <span className="brand-wordmark">TeamTime</span>
@@ -215,7 +288,17 @@ function Navbar() {
             {
                 isLoggedIn ? (
                     <div className="nav-content">
-                        <div className="nav-links">
+                        <button
+                            type="button"
+                            className="app-navbar-mobile-toggle"
+                            aria-label={isMobileNavOpen ? "Menüyü kapat" : "Menüyü aç"}
+                            aria-expanded={isMobileNavOpen}
+                            onClick={toggleMobileNav}
+                        >
+                            <span aria-hidden="true">{isMobileNavOpen ? "\u2715" : "\u2630"}</span>
+                        </button>
+
+                        <div className="nav-links app-navbar-nav-links">
                             <NavLink to="/dashboard">Dashboard</NavLink>
                             <NavLink to="/projects">Projelerim</NavLink>
                             <NavLink to="/teams">Takımlarım</NavLink>
@@ -224,6 +307,10 @@ function Navbar() {
                         </div>
 
                         <div className="nav-user">
+                            <div className="app-navbar-theme">
+                                <ThemeSwitcher />
+                            </div>
+
                             <div className="notification-menu" ref={notificationRef}>
                                 <button
                                     type="button"
@@ -311,7 +398,45 @@ function Navbar() {
                                     )
                                 }
                             </div>
-                            <span className="user-avatar">TT</span>
+
+                            <div className="app-navbar-profile" ref={profileRef}>
+                                <button
+                                    type="button"
+                                    className="app-navbar-profile-toggle"
+                                    aria-label={`Hesap menüsü: ${userDisplayName}`}
+                                    aria-expanded={isProfileMenuOpen}
+                                    aria-haspopup="menu"
+                                    onClick={toggleProfileMenu}
+                                >
+                                    <span className="user-avatar">{userInitials}</span>
+                                    <span className="app-navbar-profile-name">{userDisplayName}</span>
+                                </button>
+
+                                {
+                                    isProfileMenuOpen && (
+                                        <div className="app-navbar-profile-menu" role="menu" aria-label="Hesap menüsü">
+                                            <Link
+                                                to="/profile"
+                                                className="app-navbar-profile-menu-item"
+                                                role="menuitem"
+                                                onClick={() => setIsProfileMenuOpen(false)}
+                                            >
+                                                Profil
+                                            </Link>
+                                            <div className="app-navbar-profile-menu-divider" aria-hidden="true" />
+                                            <button
+                                                type="button"
+                                                className="app-navbar-profile-menu-item is-danger"
+                                                role="menuitem"
+                                                onClick={logout}
+                                            >
+                                                Oturumu Kapat
+                                            </button>
+                                        </div>
+                                    )
+                                }
+                            </div>
+
                             <button className="button button-ghost" onClick={logout}>Çıkış Yap</button>
                         </div>
                     </div>

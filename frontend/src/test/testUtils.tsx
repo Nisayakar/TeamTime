@@ -2,6 +2,7 @@ import { render, type RenderOptions } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { MemoryRouter, type MemoryRouterProps } from "react-router-dom";
 import { ToastProvider } from "../components/ToastProvider";
+import { ThemeProvider } from "../context/ThemeContext";
 
 type RenderWithRouterOptions = RenderOptions & {
     routerProps?: MemoryRouterProps;
@@ -12,7 +13,9 @@ export function renderWithRouter(ui: ReactElement, options: RenderWithRouterOpti
 
     return render(
         <MemoryRouter {...routerProps}>
-            {ui}
+            <ThemeProvider>
+                {ui}
+            </ThemeProvider>
         </MemoryRouter>,
         renderOptions
     );
@@ -23,9 +26,11 @@ export function renderWithProviders(ui: ReactElement, options: RenderWithRouterO
 
     return render(
         <MemoryRouter {...routerProps}>
-            <ToastProvider>
-                {ui}
-            </ToastProvider>
+            <ThemeProvider>
+                <ToastProvider>
+                    {ui}
+                </ToastProvider>
+            </ThemeProvider>
         </MemoryRouter>,
         renderOptions
     );

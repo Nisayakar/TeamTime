@@ -1,0 +1,149 @@
+/* ============================================================
+   Theme compatibility layer
+   Additive only — recolors authenticated chrome (navbar, body)
+   based on the new tokens. Does NOT remove or rename any
+   existing App.css classes. Public/auth cinematic pages keep
+   their own dark treatment via existing body modifiers.
+   ============================================================ */
+
+/* Authenticated body background follows the active theme. */
+[data-theme="light"] body {
+  background: var(--tt-background);
+  color: var(--tt-text);
+}
+
+[data-theme="dark"] body {
+  background: var(--tt-background);
+  color: var(--tt-text);
+}
+
+/* When the auth shell is active, recolor the navbar to match the theme.
+   The .app-navbar-auth class is emitted by the improved Navbar only. */
+[data-theme="light"] .app-navbar-auth {
+  background: var(--tt-surface);
+  border-bottom-color: var(--tt-border);
+  box-shadow: var(--tt-shadow-sm);
+  backdrop-filter: none;
+}
+
+[data-theme="light"] .app-navbar-auth .brand {
+  color: var(--tt-text);
+}
+
+[data-theme="light"] .app-navbar-auth .brand-wordmark::before {
+  color: var(--tt-text);
+}
+
+[data-theme="light"] .app-navbar-auth .nav-links a {
+  color: var(--tt-text-secondary);
+}
+
+[data-theme="light"] .app-navbar-auth .nav-links a:hover,
+[data-theme="light"] .app-navbar-auth .nav-links a.active {
+  background: var(--tt-surface-secondary);
+  color: var(--tt-primary);
+}
+
+[data-theme="light"] .app-navbar-auth .notification-bell {
+  border-color: var(--tt-border);
+  background: var(--tt-surface-secondary);
+  color: var(--tt-text);
+}
+
+[data-theme="light"] .app-navbar-auth .notification-bell:hover {
+  background: var(--tt-surface);
+  border-color: var(--tt-border-strong);
+}
+
+[data-theme="light"] .app-navbar-auth .notification-badge {
+  border-color: var(--tt-surface);
+  background: var(--tt-primary);
+  color: #ffffff;
+}
+
+[data-theme="light"] .app-navbar-auth .notification-panel {
+  background: var(--tt-surface);
+  border-color: var(--tt-border);
+  box-shadow: var(--tt-shadow-lg);
+  backdrop-filter: none;
+}
+
+[data-theme="light"] .app-navbar-auth .notification-panel-header {
+  border-bottom-color: var(--tt-border);
+}
+
+[data-theme="light"] .app-navbar-auth .notification-panel-header strong {
+  color: var(--tt-text);
+}
+
+[data-theme="light"] .app-navbar-auth .notification-read-all {
+  color: var(--tt-primary);
+}
+
+[data-theme="light"] .app-navbar-auth .notification-item {
+  border-bottom-color: var(--tt-border);
+}
+
+[data-theme="light"] .app-navbar-auth .notification-item:hover {
+  background: var(--tt-surface-secondary);
+}
+
+[data-theme="light"] .app-navbar-auth .notification-copy strong {
+  color: var(--tt-text);
+}
+
+[data-theme="light"] .app-navbar-auth .notification-copy span {
+  color: var(--tt-text-secondary);
+}
+
+[data-theme="light"] .app-navbar-auth .notification-copy time {
+  color: var(--tt-text-muted);
+}
+
+[data-theme="light"] .app-navbar-auth .notification-dot {
+  background: transparent;
+}
+
+[data-theme="light"] .app-navbar-auth .notification-item.is-unread .notification-dot {
+  background: var(--tt-primary);
+  box-shadow: 0 0 0 4px var(--tt-primary-soft);
+}
+
+[data-theme="light"] .app-navbar-auth .notification-load-more {
+  border-top-color: var(--tt-border);
+  background: var(--tt-surface-secondary);
+  color: var(--tt-primary);
+}
+
+[data-theme="light"] .app-navbar-auth .notification-load-more:hover:not(:disabled) {
+  background: var(--tt-surface);
+  color: var(--tt-primary-hover);
+}
+
+[data-theme="light"] .app-navbar-auth .nav-user {
+  border-left-color: var(--tt-border);
+}
+
+[data-theme="light"] .app-navbar-auth .user-avatar {
+  background: var(--tt-primary-soft);
+  color: var(--tt-primary);
+}
+
+/* Keep the standalone logout button legible in light mode. */
+[data-theme="light"] .app-navbar-auth .button-ghost {
+  background: var(--tt-surface-secondary);
+  color: var(--tt-text);
+  border-color: var(--tt-border);
+}
+
+[data-theme="light"] .app-navbar-auth .button-ghost:hover {
+  background: var(--tt-surface);
+  border-color: var(--tt-border-strong);
+}
+
+/* Dark theme: keep legacy appearance, but ensure the navbar surface
+   aligns with the token palette when the improved navbar is used. */
+[data-theme="dark"] .app-navbar-auth {
+  background: rgba(5, 7, 11, 0.96);
+  border-bottom-color: var(--tt-border);
+}
