@@ -156,26 +156,26 @@ function Projects() {
     }
 
     return (
-        <main className="page-shell">
-            <section className="page-header">
-                <div>
+        <main className="page-shell app-page projects-page">
+            <section className="page-header app-page-header projects-page-header">
+                <div className="app-page-header-copy projects-page-header-copy">
                     <span className="eyebrow">Projeler</span>
                     <h1>Projelerim</h1>
                     <p>Aktif proje portföyünü, ekipleri ve tarih aralıklarını takip et.</p>
                 </div>
 
-                <Link to="/create-project">
+                <Link to="/create-project" className="projects-create-link">
                     <button className="button button-primary">Yeni Proje</button>
                 </Link>
             </section>
 
             {
                 loading ? (
-                    <p className="empty-state">Projeler yükleniyor...</p>
+                    <p className="empty-state projects-empty-state">Projeler yükleniyor...</p>
                 ) : projects.length === 0 ? (
-                    <p className="empty-state">Henüz erişebileceğiniz proje yok.</p>
+                    <p className="empty-state projects-empty-state">Henüz erişebileceğiniz proje yok.</p>
                 ) : (
-                    <section className="cards-grid">
+                    <section className="cards-grid projects-grid">
                         {
                             projects.map((project) => (
                                 <article className="data-card project-card" key={project.id}>
@@ -184,14 +184,19 @@ function Projects() {
                                         teamId={project.teamId}
                                         teamName={project.teamName}
                                         teamProject={project.teamProject}
-                                        taskCount={0}
                                     />
 
                                     <p className="card-description">{project.description}</p>
 
                                     <div className="meta-grid">
-                                        <span>Başlangıç: {project.startDate || "-"}</span>
-                                        <span>Bitiş: {project.endDate || "-"}</span>
+                                        <span>
+                                            <small>Başlangıç</small>
+                                            {project.startDate || "-"}
+                                        </span>
+                                        <span>
+                                            <small>Bitiş</small>
+                                            {project.endDate || "-"}
+                                        </span>
                                     </div>
 
                                     <div className="button-row">

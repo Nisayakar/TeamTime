@@ -397,9 +397,9 @@ function ProjectDetails() {
     }
 
     return (
-        <main className="page-shell">
-            <section className="page-header">
-                <div>
+        <main className="page-shell app-page project-details-page">
+            <section className="page-header app-page-header">
+                <div className="app-page-header-copy">
                     <span className="eyebrow">Proje</span>
                     <h1>{project?.projectName || "Proje Detayları"}</h1>
                     <p>{loadingProject ? "Proje bilgileri yükleniyor..." : getProjectScopeLabel()}</p>
@@ -409,7 +409,7 @@ function ProjectDetails() {
             <section className="content-grid two-columns">
                 {
                     canMutateTasks ? (
-                        <div className="panel">
+                        <div className="panel app-form-card">
                             <div className="section-heading">
                                 <span className="eyebrow">Görev formu</span>
                                 <h2>{editId ? "Görevi Güncelle" : "Yeni Görev"}</h2>
@@ -470,17 +470,17 @@ function ProjectDetails() {
                             </div>
                         </div>
                     ) : (
-                        <div className="panel">
+                        <div className="panel app-form-card">
                             <div className="section-heading">
                                 <span className="eyebrow">Görev formu</span>
                                 <h2>Görüntüleme Modu</h2>
                             </div>
-                            <p className="empty-state">Bu takım projesindeki görevleri görüntüleyebilirsiniz.</p>
+                            <p className="empty-state app-empty-state">Bu takım projesindeki görevleri görüntüleyebilirsiniz.</p>
                         </div>
                     )
                 }
 
-                <div className="panel">
+                <div className="panel app-form-card tasks-panel">
                     <div className="section-heading">
                         <span className="eyebrow">Akış</span>
                         <h2>Görevler</h2>
@@ -571,11 +571,11 @@ function ProjectDetails() {
 
                     {
                         loadingTasks ? (
-                            <p className="empty-state">Görevler yükleniyor...</p>
+                            <p className="empty-state app-empty-state">Görevler yükleniyor...</p>
                         ) : tasks.length === 0 ? (
-                            <p className="empty-state">Henüz görev bulunmuyor.</p>
+                            <p className="empty-state app-empty-state">Henüz görev bulunmuyor.</p>
                         ) : filteredTasks.length === 0 ? (
-                            <p className="empty-state">Seçilen kriterlere uygun görev bulunamadı.</p>
+                            <p className="empty-state app-empty-state">Seçilen kriterlere uygun görev bulunamadı.</p>
                         ) : (
                             filteredTasks.map(task => (
                                 <div className="task-card" key={task.id}>

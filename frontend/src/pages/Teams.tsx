@@ -237,16 +237,16 @@ function Teams() {
     }
 
     return (
-        <main className="page-shell">
-            <section className="page-header">
-                <div>
+        <main className="page-shell app-page teams-page">
+            <section className="page-header app-page-header">
+                <div className="app-page-header-copy">
                     <span className="eyebrow">Takımlar</span>
                     <h1>Takımlarım</h1>
                     <p>Üyeleri, rolleri ve ekip odaklarını düzenli bir alanda yönet.</p>
                 </div>
             </section>
 
-            <section className="panel">
+            <section className="panel app-form-card teams-create-panel">
                 <div className="section-heading">
                     <span className="eyebrow">Yeni takım</span>
                     <h2>Takım oluştur</h2>
@@ -279,15 +279,15 @@ function Teams() {
 
             {
                 teams.length === 0 ? (
-                    <p className="empty-state">Henüz takım yok</p>
+                    <p className="empty-state app-empty-state">Henüz takım yok</p>
                 ) : (
-                    <section className="cards-grid">
+                    <section className="cards-grid teams-grid">
                         {
                             teams.map(team => (
-                                <article className="data-card team-card" key={team.id}>
+                                <article className="data-card team-card app-entity-card" key={team.id}>
                                     {
                                         editingTeamId === team.id ? (
-                                            <>
+                                            <div className="team-edit-form">
                                                 <input
                                                     type="text"
                                                     value={editName}
@@ -309,12 +309,12 @@ function Teams() {
                                                         Vazgeç
                                                     </button>
                                                 </div>
-                                            </>
+                                            </div>
                                         ) : (
                                             <>
                                                 <div className="project-card-body">
-                                                    <div className="card-icon">TM</div>
-                                                    <div>
+                                                    <div className="card-icon app-card-icon">TM</div>
+                                                    <div className="app-card-copy">
                                                         <h3>{team.name}</h3>
                                                         <p>{team.description}</p>
                                                     </div>

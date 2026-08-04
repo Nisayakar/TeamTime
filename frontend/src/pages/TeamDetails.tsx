@@ -276,8 +276,8 @@ function TeamDetails() {
     }
 
     return (
-        <main className="page-shell">
-            <section className="hero-card team-profile">
+        <main className="page-shell app-page team-details-page">
+            <section className="hero-card team-profile app-page-header">
                 <div className="profile-avatar">TM</div>
 
                 <div>

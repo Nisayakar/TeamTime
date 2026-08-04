@@ -10,9 +10,9 @@ export function AppShell({ children }: AppShellProps) {
             <a className="app-shell-skip-link" href="#app-shell-main">
                 İçeriğe geç
             </a>
-            <main id="app-shell-main" className="app-shell-main">
+            <div id="app-shell-main" className="app-shell-main" tabIndex={-1}>
                 {children}
-            </main>
+            </div>
         </div>
     );
 }

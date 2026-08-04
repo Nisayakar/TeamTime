@@ -5,7 +5,7 @@ type ProjectCardProps = {
     teamId: Project["teamId"];
     teamName: Project["teamName"];
     teamProject: Project["teamProject"];
-    taskCount: number;
+    taskCount?: number;
 }
 
 function ProjectCard(props: ProjectCardProps) {
@@ -15,11 +15,15 @@ function ProjectCard(props: ProjectCardProps) {
 
     return (
         <div className="project-card-body">
-            <div className="card-icon">PR</div>
-            <div>
+            <div className="card-icon project-card-icon">PR</div>
+            <div className="project-card-copy">
                 <h3>{props.projectName}</h3>
-                <p>{projectScopeLabel}</p>
-                <span className="badge badge-blue">{props.taskCount} görev</span>
+                <span className="badge badge-blue project-scope-badge">{projectScopeLabel}</span>
+                {
+                    typeof props.taskCount === "number" && props.taskCount > 0 && (
+                        <span className="badge badge-blue project-task-badge">{props.taskCount} görev</span>
+                    )
+                }
             </div>
         </div>
     );

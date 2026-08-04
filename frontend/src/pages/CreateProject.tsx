@@ -168,21 +168,26 @@ function CreateProject() {
     }
 
     return (
-        <main className="page-shell narrow-page">
-            <section className="page-header">
-                <div>
+        <main className="page-shell narrow-page app-page create-project-page">
+            <section className="page-header app-page-header">
+                <div className="app-page-header-copy">
                     <span className="eyebrow">Proje</span>
                     <h1>Proje Oluştur</h1>
                     <p>Yeni bir proje alanı aç ve takım planını zaman çizelgesiyle başlat.</p>
                 </div>
             </section>
 
-            <form className="form-card" onSubmit={createProject}>
+            <form className="form-card app-form-card" onSubmit={createProject}>
+                <div className="section-heading">
+                    <span className="eyebrow">Detaylar</span>
+                    <h2>Proje bilgileri</h2>
+                </div>
+
                 <label>Proje Adı</label>
                 <input type="text" value={projectName} onChange={(e) => setProjectName(e.target.value)} required />
 
                 <label>Proje Açıklaması</label>
-                <input type="text" value={projectDescription} onChange={(e) => setProjectDescription(e.target.value)} />
+                <textarea value={projectDescription} onChange={(e) => setProjectDescription(e.target.value)} />
 
                 <label>Proje Türü</label>
                 <select value={projectMode} onChange={(e) => setProjectMode(e.target.value as ProjectMode)}>
@@ -196,9 +201,9 @@ function CreateProject() {
                             <label>Takım</label>
                             {
                                 loadingTeams ? (
-                                    <p className="empty-state">Takımlar yükleniyor...</p>
+                                    <p className="empty-state app-empty-state">Takımlar yükleniyor...</p>
                                 ) : teams.length === 0 ? (
-                                    <p className="empty-state">Proje oluşturabileceğiniz yönetilebilir takım bulunmuyor.</p>
+                                    <p className="empty-state app-empty-state">Proje oluşturabileceğiniz yönetilebilir takım bulunmuyor.</p>
                                 ) : (
                                     <select
                                         value={selectedTeamId}

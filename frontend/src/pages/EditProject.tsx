@@ -156,9 +156,9 @@ function EditProject() {
     }
 
     return (
-        <main className="page-shell narrow-page">
-            <section className="page-header">
-                <div>
+        <main className="page-shell narrow-page app-page edit-project-page">
+            <section className="page-header app-page-header">
+                <div className="app-page-header-copy">
                     <span className="eyebrow">Proje</span>
                     <h1>Proje Düzenle</h1>
                     <p>Proje bilgilerini güncelle ve takvimini düzenli tut.</p>
@@ -167,11 +167,11 @@ function EditProject() {
 
             {
                 loading ? (
-                    <p className="empty-state">Proje yükleniyor...</p>
+                    <p className="empty-state app-empty-state">Proje yükleniyor...</p>
                 ) : !project ? (
-                    <p className="empty-state">Proje bulunamadı.</p>
+                    <p className="empty-state app-empty-state">Proje bulunamadı.</p>
                 ) : (
-                    <form className="form-card" onSubmit={updateProject}>
+                    <form className="form-card app-form-card" onSubmit={updateProject}>
                         <label>Proje Adı</label>
                         <input
                             name="projectName"
@@ -188,7 +188,7 @@ function EditProject() {
                         />
 
                         <label>Proje Türü</label>
-                        <p className="empty-state">
+                        <p className="empty-state app-empty-state">
                             {project.teamProject ? `Takım Projesi: ${project.teamName || "Takım"}` : "Kişisel Proje"}
                         </p>
 
@@ -220,7 +220,7 @@ function EditProject() {
                                     {submitting ? "Güncelleniyor..." : "Güncelle"}
                                 </button>
                             ) : (
-                                <p className="empty-state">Bu takım projesini düzenleme yetkiniz yok.</p>
+                                <p className="empty-state app-empty-state">Bu takım projesini düzenleme yetkiniz yok.</p>
                             )
                         }
                     </form>

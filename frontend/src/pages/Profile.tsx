@@ -132,21 +132,21 @@ function Profile() {
     }
 
     return (
-        <main className="page-shell">
-            <section className="hero-card profile-cover">
+        <main className="page-shell app-page profile-page">
+            <section className="hero-card profile-cover app-page-header profile-hero">
                 <div className="profile-avatar">
                     {(user?.name || "T").slice(0, 1)}{(user?.surname || "T").slice(0, 1)}
                 </div>
 
-                <div>
+                <div className="app-page-header-copy">
                     <span className="eyebrow">Profil</span>
                     <h1>{user ? `${user.name} ${user.surname}` : "Profil"}</h1>
                     <p>{user?.email || "Profil bilgileri yükleniyor"}</p>
                 </div>
             </section>
 
-            <section className="content-grid two-columns">
-                <div className="panel">
+            <section className="content-grid two-columns profile-grid">
+                <div className="panel app-form-card">
                     <div className="section-heading">
                         <span className="eyebrow">Hesap</span>
                         <h2>Profil Bilgileri</h2>
@@ -193,7 +193,7 @@ function Profile() {
 
                 </div>
 
-                <div className="panel">
+                <div className="panel app-form-card">
                     <div className="section-heading">
                         <span className="eyebrow">Güvenlik</span>
                         <h2>Şifre Değiştir</h2>
