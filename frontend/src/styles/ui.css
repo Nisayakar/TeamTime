@@ -803,3 +803,363 @@
         display: none;
     }
 }
+
+/* ============================================================
+   Dashboard — Phase 2 visual redesign
+   Uses tt-* tokens. Scoped under .dashboard-page to avoid
+   affecting other authenticated pages.
+   ============================================================ */
+
+.dashboard-page {
+    width: min(var(--tt-container-max), calc(100% - 32px));
+    margin: 0 auto;
+    padding: var(--tt-space-6) 0 var(--tt-space-12);
+}
+
+/* ---- Welcome hero ---- */
+.dashboard-hero-new {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--tt-space-6);
+    margin-bottom: var(--tt-space-8);
+    padding: clamp(24px, 4vw, 40px);
+    border: 1px solid var(--tt-border);
+    border-radius: var(--tt-radius-lg);
+    background: var(--tt-surface);
+    box-shadow: var(--tt-shadow-sm);
+}
+
+.dashboard-hero-new::before {
+    position: absolute;
+    top: -30%;
+    right: -4%;
+    width: 320px;
+    height: 320px;
+    content: "";
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--tt-primary-soft) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.dashboard-hero-new::after {
+    position: absolute;
+    bottom: -40%;
+    right: 8%;
+    width: 180px;
+    height: 180px;
+    content: "";
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(47, 111, 219, 0.06) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+[data-theme="dark"] .dashboard-hero-new::after {
+    background: radial-gradient(circle, rgba(91, 141, 239, 0.08) 0%, transparent 70%);
+}
+
+.dashboard-hero-content {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+}
+
+.dashboard-hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: var(--tt-space-2);
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--tt-primary-soft);
+    color: var(--tt-primary);
+    font-size: var(--tt-font-size-xs);
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.dashboard-hero-title {
+    color: var(--tt-text);
+    font-size: clamp(24px, 3.5vw, 32px);
+    font-weight: 800;
+    line-height: var(--tt-line-tight);
+}
+
+.dashboard-hero-subtitle {
+    margin-top: var(--tt-space-2);
+    max-width: 560px;
+    color: var(--tt-text-secondary);
+    font-size: var(--tt-font-size-md);
+    line-height: var(--tt-line-relaxed);
+}
+
+.dashboard-hero-email {
+    margin-top: var(--tt-space-1);
+    color: var(--tt-text-muted);
+    font-size: var(--tt-font-size-sm);
+}
+
+.dashboard-hero-action {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 auto;
+}
+
+/* ---- Stat grid ---- */
+.dashboard-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--tt-space-4);
+    margin-bottom: var(--tt-space-8);
+}
+
+/* ---- Content sections ---- */
+.dashboard-content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--tt-space-5);
+}
+
+.dashboard-content-grid .dashboard-section-full {
+    grid-column: 1 / -1;
+}
+
+.dashboard-section {
+    display: flex;
+    flex-direction: column;
+    padding: var(--tt-space-5);
+    border: 1px solid var(--tt-border);
+    border-radius: var(--tt-radius-lg);
+    background: var(--tt-surface);
+    box-shadow: var(--tt-shadow-sm);
+}
+
+.dashboard-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--tt-space-3);
+    margin-bottom: var(--tt-space-4);
+}
+
+.dashboard-section-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    border-radius: var(--tt-radius-md);
+    background: var(--tt-primary-soft);
+    color: var(--tt-primary);
+    font-size: 16px;
+}
+
+.dashboard-section-icon.is-success {
+    background: var(--tt-success-soft);
+    color: var(--tt-success);
+}
+
+.dashboard-section-icon.is-warning {
+    background: var(--tt-warning-soft);
+    color: var(--tt-warning);
+}
+
+.dashboard-section-titles {
+    min-width: 0;
+}
+
+.dashboard-section-title {
+    color: var(--tt-text);
+    font-size: var(--tt-font-size-lg);
+    font-weight: 800;
+    line-height: var(--tt-line-tight);
+}
+
+.dashboard-section-subtitle {
+    margin-top: 2px;
+    color: var(--tt-text-muted);
+    font-size: var(--tt-font-size-sm);
+}
+
+/* ---- List items inside sections ---- */
+.dashboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tt-space-2);
+}
+
+.dashboard-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--tt-space-3);
+    padding: var(--tt-space-3) var(--tt-space-4);
+    border: 1px solid var(--tt-border);
+    border-radius: var(--tt-radius-md);
+    background: var(--tt-surface);
+    transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+.dashboard-list-item:hover {
+    border-color: var(--tt-border-strong);
+    background: var(--tt-surface-secondary);
+}
+
+.dashboard-list-item.is-clickable {
+    width: 100%;
+    border: 1px solid var(--tt-border);
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.dashboard-list-item.is-clickable:hover {
+    transform: translateY(-1px);
+    border-color: var(--tt-primary);
+    background: var(--tt-surface);
+    box-shadow: var(--tt-shadow-sm);
+}
+
+.dashboard-list-item.is-clickable:focus-visible {
+    outline: 3px solid var(--tt-focus-ring);
+    outline-offset: 2px;
+}
+
+.dashboard-list-item-main {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.dashboard-list-item-title {
+    color: var(--tt-text);
+    font-size: var(--tt-font-size-md);
+    font-weight: 700;
+    line-height: var(--tt-line-tight);
+    overflow-wrap: anywhere;
+}
+
+.dashboard-list-item-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--tt-space-2);
+    flex-wrap: wrap;
+}
+
+.dashboard-list-item-sub {
+    color: var(--tt-text-muted);
+    font-size: var(--tt-font-size-sm);
+}
+
+.dashboard-list-item-badges {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+/* ---- Project list item icon ---- */
+.dashboard-project-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    border-radius: var(--tt-radius-sm);
+    background: var(--tt-primary-soft);
+    color: var(--tt-primary);
+    font-size: 14px;
+}
+
+/* ---- Overdue stat urgency indicator ---- */
+.ui-stat-card.is-overdue {
+    border-color: var(--tt-danger-soft);
+    background: linear-gradient(135deg, var(--tt-surface) 0%, var(--tt-danger-soft) 200%);
+}
+
+.ui-stat-card.is-overdue .ui-stat-card-icon {
+    background: var(--tt-danger-soft);
+    color: var(--tt-danger);
+}
+
+.ui-stat-card.is-overdue .ui-stat-card-value {
+    color: var(--tt-danger);
+}
+
+.ui-stat-card.is-overdue .ui-stat-card-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--tt-danger);
+    font-weight: 700;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 1280px) {
+    .dashboard-stat-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 1024px) {
+    .dashboard-stat-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dashboard-content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-hero-new {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .dashboard-hero-action {
+        width: 100%;
+    }
+}
+
+@media (max-width: 375px) {
+    .dashboard-stat-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-list-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .dashboard-list-item-badges {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 320px) {
+    .dashboard-page {
+        width: calc(100% - 16px);
+        padding: var(--tt-space-4) 0 var(--tt-space-8);
+    }
+
+    .dashboard-hero-new {
+        padding: var(--tt-space-4);
+    }
+
+    .dashboard-section {
+        padding: var(--tt-space-4);
+    }
+}

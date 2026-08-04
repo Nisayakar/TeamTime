@@ -147,3 +147,94 @@
   background: rgba(5, 7, 11, 0.96);
   border-bottom-color: var(--tt-border);
 }
+
+[data-theme="dark"] .app-navbar-auth .nav-links a {
+  color: var(--tt-text-secondary);
+}
+
+[data-theme="dark"] .app-navbar-auth .nav-links a:hover,
+[data-theme="dark"] .app-navbar-auth .nav-links a.active {
+  background: var(--tt-surface-secondary);
+  color: var(--tt-primary);
+}
+
+[data-theme="dark"] .app-navbar-auth .notification-bell {
+  border-color: var(--tt-border);
+  background: var(--tt-surface-secondary);
+  color: var(--tt-text);
+}
+
+[data-theme="dark"] .app-navbar-auth .notification-bell:hover {
+  background: var(--tt-surface);
+  border-color: var(--tt-border-strong);
+}
+
+[data-theme="dark"] .app-navbar-auth .notification-panel {
+  background: var(--tt-surface);
+  border-color: var(--tt-border);
+  box-shadow: var(--tt-shadow-lg);
+  backdrop-filter: none;
+}
+
+[data-theme="dark"] .app-navbar-auth .notification-panel-header {
+  border-bottom-color: var(--tt-border);
+}
+
+[data-theme="dark"] .app-navbar-auth .notification-panel-header strong {
+  color: var(--tt-text);
+}
+
+[data-theme="dark"] .app-navbar-auth .notification-read-all {
+  color: var(--tt-primary);
+}
+
+[data-theme="dark"] .app-navbar-auth .notification-item {
+  border-bottom-color: var(--tt-border);
+}
+
+[data-theme="dark"] .app-navbar-auth .notification-item:hover {
+  background: var(--tt-surface-secondary);
+}
+
+[data-theme="dark"] .app-navbar-auth .notification-copy strong {
+  color: var(--tt-text);
+}
+
+[data-theme="dark"] .app-navbar-auth .notification-copy span {
+  color: var(--tt-text-secondary);
+}
+
+[data-theme="dark"] .app-navbar-auth .notification-copy time {
+  color: var(--tt-text-muted);
+}
+
+[data-theme="dark"] .app-navbar-auth .notification-item.is-unread .notification-dot {
+  background: var(--tt-primary);
+  box-shadow: 0 0 0 4px var(--tt-primary-soft);
+}
+
+[data-theme="dark"] .app-navbar-auth .notification-load-more {
+  border-top-color: var(--tt-border);
+  background: var(--tt-surface-secondary);
+  color: var(--tt-primary);
+}
+
+[data-theme="dark"] .app-navbar-auth .nav-user {
+  border-left-color: var(--tt-border);
+}
+
+[data-theme="dark"] .app-navbar-auth .user-avatar {
+  background: var(--tt-primary-soft);
+  color: var(--tt-primary);
+}
+
+[data-theme="dark"] .app-navbar-auth .button-ghost {
+  background: var(--tt-surface-secondary);
+  color: var(--tt-text);
+  border-color: var(--tt-border);
+}
+
+[data-theme="dark"] .app-navbar-auth .button-ghost:hover {
+  background: var(--tt-surface);
+  border-color: var(--tt-border-strong);
+}

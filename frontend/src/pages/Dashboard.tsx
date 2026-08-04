@@ -1,33 +1,34 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiFetch, clearAuth, getStoredUser } from "../api";
+import { apiFetch, getStoredUser } from "../api";
 import type { Task, TaskPriority, TaskStatus } from "../types/task";
+import { Badge, Button, EmptyState, LoadingState, StatCard, type BadgeVariant } from "../components/ui";
+
+type DashboardData = {
+    projectCount: number;
+    taskCount: number;
+    completedTaskCount: number;
+    inProgressTaskCount: number;
+    teamCount: number;
+    overdueTaskCount: number;
+    dueTodayTaskCount: number;
+    upcomingTaskCount: number;
+};
+
+type RecentProject = {
+    id: number;
+    projectName: string;
+    description: string;
+};
+
+type StoredUser = {
+    id: number;
+    name: string;
+    surname: string;
+    email: string;
+};
 
 function Dashboard() {
-    type DashboardData = {
-        projectCount: number;
-        taskCount: number;
-        completedTaskCount: number;
-        inProgressTaskCount: number;
-        teamCount: number;
-        overdueTaskCount: number;
-        dueTodayTaskCount: number;
-        upcomingTaskCount: number;
-    }
-
-    type RecentProject = {
-        id: number;
-        projectName: string;
-        description: string;
-    }
-
-    type StoredUser = {
-        id: number;
-        name: string;
-        surname: string;
-        email: string;
-    }
-
     const [user, setUser] = useState<StoredUser | null>(null);
     const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
     const [recentTasks, setRecentTasks] = useState<Task[]>([]);
@@ -82,119 +83,127 @@ function Dashboard() {
             });
     }, []);
 
-    function logout() {
-
-        clearAuth();
-
-        navigate("/login");
-
-    }
+    const recentProjectsLoading = false;
+    const recentTasksLoading = false;
 
     return (
-        <main className="page-shell">
-            <section className="hero-card dashboard-hero">
-                <div>
-                    <span className="eyebrow">Dashboard</span>
-                    <h1>Hoş Geldin {user?.name ?? ""}</h1>
-                    <p>Projeler, görevler ve takım akışlarını tek ekranda takip et.</p>
-                    {
-                        user && (
-                            <p className="muted">Email: {user.email}</p>
-                        )
-                    }
+        <main className="dashboard-page">
+            <section className="dashboard-hero-new">
+                <div className="dashboard-hero-content">
+                    <span className="dashboard-hero-eyebrow">Dashboard</span>
+                    <h1 className="dashboard-hero-title">Hoş Geldin {user?.name ?? ""}</h1>
+                    <p className="dashboard-hero-subtitle">Projeler, görevler ve takım akışlarını tek ekranda takip et.</p>
+                    {user && <p className="dashboard-hero-email">{user.email}</p>}
                 </div>
-
-                <button className="button button-secondary" onClick={logout}>
-                    Çıkış Yap
-                </button>
-            </section>
-
-            <section className="stats-grid">
-                <div className="stat-card">
-                    <span className="card-icon">PR</span>
-                    <p>Toplam Proje</p>
-                    <strong>{dashboardData?.projectCount ?? 0}</strong>
-                </div>
-
-                <div className="stat-card">
-                    <span className="card-icon">GV</span>
-                    <p>Toplam Görev</p>
-                    <strong>{dashboardData?.taskCount ?? 0}</strong>
-                </div>
-
-                <div className="stat-card">
-                    <span className="card-icon success">OK</span>
-                    <p>Tamamlanan Görev</p>
-                    <strong>{dashboardData?.completedTaskCount ?? 0}</strong>
-                </div>
-
-                <div className="stat-card">
-                    <span className="card-icon warning">IP</span>
-                    <p>Devam Eden Görev</p>
-                    <strong>{dashboardData?.inProgressTaskCount ?? 0}</strong>
-                </div>
-
-                <div className="stat-card">
-                    <span className="card-icon">TM</span>
-                    <p>👥 Takımlarım</p>
-                    <strong>{dashboardData?.teamCount ?? 0}</strong>
-                </div>
-
-                <div className="stat-card">
-                    <span className="card-icon warning">GC</span>
-                    <p>Gecikmiş Görevler</p>
-                    <strong>{dashboardData?.overdueTaskCount ?? 0}</strong>
-                </div>
-
-                <div className="stat-card">
-                    <span className="card-icon">BG</span>
-                    <p>Bugün Bitenler</p>
-                    <strong>{dashboardData?.dueTodayTaskCount ?? 0}</strong>
-                </div>
-
-                <div className="stat-card">
-                    <span className="card-icon success">YG</span>
-                    <p>Yaklaşan Görevler</p>
-                    <strong>{dashboardData?.upcomingTaskCount ?? 0}</strong>
+                <div className="dashboard-hero-action">
+                    <Button variant="primary" size="lg" onClick={() => navigate("/create-project")}>
+                        Yeni Proje Oluştur
+                    </Button>
                 </div>
             </section>
 
-            <section className="content-grid two-columns">
-                <div className="panel">
-                    <div className="section-heading">
-                        <span className="eyebrow">Takvim</span>
-                        <h2>Yaklaşan Görevler</h2>
+            <section className="dashboard-stat-grid" aria-label="Genel istatistikler">
+                <StatCard
+                    label="Toplam Proje"
+                    value={dashboardData?.projectCount ?? 0}
+                    icon={<span aria-hidden="true">&#9636;</span>}
+                    tone="primary"
+                />
+                <StatCard
+                    label="Toplam Görev"
+                    value={dashboardData?.taskCount ?? 0}
+                    icon={<span aria-hidden="true">&#9744;</span>}
+                    tone="primary"
+                />
+                <StatCard
+                    label="Takımlarım"
+                    value={dashboardData?.teamCount ?? 0}
+                    icon={<span aria-hidden="true">&#9830;</span>}
+                    tone="primary"
+                />
+                <StatCard
+                    label="Tamamlanan"
+                    value={dashboardData?.completedTaskCount ?? 0}
+                    icon={<span aria-hidden="true">&#10003;</span>}
+                    tone="success"
+                />
+                <StatCard
+                    label="Devam Eden"
+                    value={dashboardData?.inProgressTaskCount ?? 0}
+                    icon={<span aria-hidden="true">&#9658;</span>}
+                    tone="warning"
+                />
+                <StatCard
+                    label="Gecikmiş Görevler"
+                    value={dashboardData?.overdueTaskCount ?? 0}
+                    icon={<span aria-hidden="true">!</span>}
+                    tone="danger"
+                    className={dashboardData && dashboardData.overdueTaskCount > 0 ? "is-overdue" : ""}
+                    hint={dashboardData && dashboardData.overdueTaskCount > 0 ? "Acil dikkat gerekiyor" : undefined}
+                />
+                <StatCard
+                    label="Bugün Bitenler"
+                    value={dashboardData?.dueTodayTaskCount ?? 0}
+                    icon={<span aria-hidden="true">&#9679;</span>}
+                    tone="primary"
+                />
+                <StatCard
+                    label="Yaklaşan Görevler"
+                    value={dashboardData?.upcomingTaskCount ?? 0}
+                    icon={<span aria-hidden="true">&#9650;</span>}
+                    tone="primary"
+                />
+            </section>
+
+            <section className="dashboard-content-grid">
+                <div className="dashboard-section">
+                    <div className="dashboard-section-header">
+                        <span className="dashboard-section-icon is-warning" aria-hidden="true">&#9650;</span>
+                        <div className="dashboard-section-titles">
+                            <h2 className="dashboard-section-title">Yaklaşan Görevler</h2>
+                            <p className="dashboard-section-subtitle">Yaklaşan son tarihler</p>
+                        </div>
                     </div>
 
-                    {
-                        upcomingTasksLoading ? (
-                            <p className="empty-state">Yaklaşan görevler yükleniyor...</p>
-                        ) : upcomingTasksError ? (
-                            <p className="empty-state">{upcomingTasksError}</p>
-                        ) : upcomingTasks.length === 0 ? (
-                            <p className="empty-state">Yaklaşan göreviniz bulunmuyor.</p>
-                        ) : (
-                            upcomingTasks.map((task) => {
+                    {upcomingTasksLoading ? (
+                        <LoadingState message="Yaklaşan görevler yükleniyor..." />
+                    ) : upcomingTasksError ? (
+                        <EmptyState
+                            icon={<span aria-hidden="true">&#9888;</span>}
+                            title={upcomingTasksError}
+                        />
+                    ) : upcomingTasks.length === 0 ? (
+                        <EmptyState
+                            icon={<span aria-hidden="true">&#9650;</span>}
+                            title="Yaklaşan göreviniz bulunmuyor."
+                            message="Önümüzdeki dönem için planlanmış göreviniz yok."
+                        />
+                    ) : (
+                        <div className="dashboard-list">
+                            {upcomingTasks.map(task => {
                                 const content = (
                                     <>
-                                        <div>
-                                            <h3>{task.title}</h3>
-                                            {task.projectName && <p>{task.projectName}</p>}
+                                        <div className="dashboard-list-item-main">
+                                            <span className="dashboard-list-item-title">{task.title}</span>
+                                            {task.projectName && (
+                                                <span className="dashboard-list-item-sub">{task.projectName}</span>
+                                            )}
                                         </div>
-
-                                        <div className="task-meta-row">
-                                            <span className="badge badge-blue">{formatDate(task.dueDate)}</span>
-                                            <span className={getPriorityClass(task.priority)}>
+                                        <div className="dashboard-list-item-badges">
+                                            <Badge variant="info">{formatDate(task.dueDate)}</Badge>
+                                            <Badge variant={getPriorityBadgeVariant(task.priority)}>
                                                 {getPriorityLabel(task.priority)}
-                                            </span>
-                                            <span className="badge">{getStatusLabel(task.status)}</span>
+                                            </Badge>
+                                            <Badge variant={getStatusBadgeVariant(task.status)}>
+                                                {getStatusLabel(task.status)}
+                                            </Badge>
                                         </div>
                                     </>
                                 );
 
                                 return task.projectId ? (
                                     <button
-                                        className="list-card list-card-button"
+                                        className="dashboard-list-item is-clickable"
                                         key={task.id}
                                         type="button"
                                         onClick={() => navigate(`/project/${task.projectId}`)}
@@ -202,57 +211,87 @@ function Dashboard() {
                                         {content}
                                     </button>
                                 ) : (
-                                    <div className="list-card" key={task.id}>
+                                    <div className="dashboard-list-item" key={task.id}>
                                         {content}
                                     </div>
                                 );
-                            })
-                        )
-                    }
+                            })}
+                        </div>
+                    )}
                 </div>
 
-                <div className="panel">
-                    <div className="section-heading">
-                        <span className="eyebrow">Aktivite</span>
-                        <h2>Son Görevler</h2>
+                <div className="dashboard-section">
+                    <div className="dashboard-section-header">
+                        <span className="dashboard-section-icon" aria-hidden="true">&#9658;</span>
+                        <div className="dashboard-section-titles">
+                            <h2 className="dashboard-section-title">Son Görevler</h2>
+                            <p className="dashboard-section-subtitle">Son aktiviteler</p>
+                        </div>
                     </div>
 
-                    {
-                        recentTasks.length === 0 ? (
-                            <p className="empty-state">Henüz görev yok</p>
-                        ) : (
-                            recentTasks.map((task) => (
-                                <div className="list-card" key={task.id}>
-                                    <div>
-                                        <h3>{task.title}</h3>
-                                        <span className="badge badge-blue">{task.status}</span>
+                    {recentTasksLoading ? (
+                        <LoadingState message="Görevler yükleniyor..." />
+                    ) : recentTasks.length === 0 ? (
+                        <EmptyState
+                            icon={<span aria-hidden="true">&#9744;</span>}
+                            title="Henüz görev yok"
+                            message="Oluşturulan görevler burada görünecek."
+                        />
+                    ) : (
+                        <div className="dashboard-list">
+                            {recentTasks.map(task => (
+                                <div className="dashboard-list-item" key={task.id}>
+                                    <div className="dashboard-list-item-main">
+                                        <span className="dashboard-list-item-title">{task.title}</span>
+                                    </div>
+                                    <div className="dashboard-list-item-badges">
+                                        <Badge variant={getStatusBadgeVariant(task.status)}>
+                                            {getStatusLabel(task.status)}
+                                        </Badge>
                                     </div>
                                 </div>
-                            ))
-                        )
-                    }
+                            ))}
+                        </div>
+                    )}
                 </div>
 
-                <div className="panel">
-                    <div className="section-heading">
-                        <span className="eyebrow">Portföy</span>
-                        <h2>Son Projeler</h2>
+                <div className="dashboard-section dashboard-section-full">
+                    <div className="dashboard-section-header">
+                        <span className="dashboard-section-icon" aria-hidden="true">&#9636;</span>
+                        <div className="dashboard-section-titles">
+                            <h2 className="dashboard-section-title">Son Projeler</h2>
+                            <p className="dashboard-section-subtitle">Son oluşturulan projeler</p>
+                        </div>
                     </div>
 
-                    {
-                        recentProjects.length === 0 ? (
-                            <p className="empty-state">Henüz proje yok</p>
-                        ) : (
-                            recentProjects.map((project) => (
-                                <div className="list-card" key={project.id}>
-                                    <div>
-                                        <h3>{project.projectName}</h3>
-                                        <p>{project.description}</p>
+                    {recentProjectsLoading ? (
+                        <LoadingState message="Projeler yükleniyor..." />
+                    ) : recentProjects.length === 0 ? (
+                        <EmptyState
+                            icon={<span aria-hidden="true">&#9636;</span>}
+                            title="Henüz proje yok"
+                            message="Oluşturulan projeler burada görünecek."
+                            action={
+                                <Button variant="primary" onClick={() => navigate("/create-project")}>
+                                    Yeni Proje Oluştur
+                                </Button>
+                            }
+                        />
+                    ) : (
+                        <div className="dashboard-list">
+                            {recentProjects.map(project => (
+                                <div className="dashboard-list-item" key={project.id}>
+                                    <div className="dashboard-list-item-main">
+                                        <span className="dashboard-list-item-title">{project.projectName}</span>
+                                        {project.description && (
+                                            <span className="dashboard-list-item-sub">{project.description}</span>
+                                        )}
                                     </div>
+                                    <span className="dashboard-project-icon" aria-hidden="true">&#9636;</span>
                                 </div>
-                            ))
-                        )
-                    }
+                            ))}
+                        </div>
+                    )}
                 </div>
             </section>
         </main>
@@ -270,12 +309,20 @@ function getPriorityLabel(priority: TaskPriority) {
     return labels[priority];
 }
 
-function getPriorityClass(priority: TaskPriority) {
-    if (priority === "URGENT" || priority === "HIGH") {
-        return "badge badge-warning";
+function getPriorityBadgeVariant(priority: TaskPriority): BadgeVariant {
+    if (priority === "URGENT") {
+        return "danger";
     }
 
-    return "badge";
+    if (priority === "HIGH") {
+        return "warning";
+    }
+
+    if (priority === "MEDIUM") {
+        return "info";
+    }
+
+    return "neutral";
 }
 
 function getStatusLabel(status: TaskStatus) {
@@ -286,6 +333,18 @@ function getStatusLabel(status: TaskStatus) {
     };
 
     return labels[status];
+}
+
+function getStatusBadgeVariant(status: TaskStatus): BadgeVariant {
+    if (status === "TAMAMLANDI") {
+        return "success";
+    }
+
+    if (status === "DEVAM_EDIYOR") {
+        return "warning";
+    }
+
+    return "info";
 }
 
 function formatDate(value: string | null) {
