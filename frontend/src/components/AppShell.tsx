@@ -11,9 +11,7 @@ export function AppShell({ children }: AppShellProps) {
                 İçeriğe geç
             </a>
             <main id="app-shell-main" className="app-shell-main">
-                <div className="app-shell-container">
-                    {children}
-                </div>
+                {children}
             </main>
         </div>
     );

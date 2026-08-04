@@ -1,9 +1,8 @@
 /* ============================================================
    Theme compatibility layer
-   Additive only — recolors authenticated chrome (navbar, body)
-   based on the new tokens. Does NOT remove or rename any
-   existing App.css classes. Public/auth cinematic pages keep
-   their own dark treatment via existing body modifiers.
+   Recolors authenticated chrome (navbar, body) based on tokens.
+   Public/auth cinematic pages keep their own dark treatment
+   via existing body modifiers in App.css.
    ============================================================ */
 
 /* Authenticated body background follows the active theme. */
@@ -17,47 +16,64 @@
   color: var(--tt-text);
 }
 
-/* When the auth shell is active, recolor the navbar to match the theme.
-   The .app-navbar-auth class is emitted by the improved Navbar only. */
+/* ---- Authenticated navbar: light theme ---- */
 [data-theme="light"] .app-navbar-auth {
-  background: var(--tt-surface);
-  border-bottom-color: var(--tt-border);
-  box-shadow: var(--tt-shadow-sm);
+  background: var(--tt-surface-container-low);
+  border-bottom: 1px solid var(--tt-border);
+  box-shadow: none;
   backdrop-filter: none;
 }
 
 [data-theme="light"] .app-navbar-auth .brand {
-  color: var(--tt-text);
+  color: var(--tt-primary);
 }
 
 [data-theme="light"] .app-navbar-auth .brand-wordmark::before {
-  color: var(--tt-text);
+  color: var(--tt-primary);
 }
 
 [data-theme="light"] .app-navbar-auth .nav-links a {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-2);
   color: var(--tt-text-secondary);
+  font-weight: 500;
+  transition: color 160ms ease;
 }
 
-[data-theme="light"] .app-navbar-auth .nav-links a:hover,
-[data-theme="light"] .app-navbar-auth .nav-links a.active {
-  background: var(--tt-surface-secondary);
+[data-theme="light"] .app-navbar-auth .nav-links a:hover {
   color: var(--tt-primary);
+  background: transparent;
+  transform: none;
+}
+
+[data-theme="light"] .app-navbar-auth .nav-links a.active {
+  color: var(--tt-primary);
+  background: transparent;
+  border-bottom: 3px solid var(--tt-primary);
+  transform: none;
+}
+
+[data-theme="light"] .app-navbar-auth .nav-links .nav-cta {
+  background: var(--tt-primary);
+  color: var(--tt-primary-contrast);
+  border-radius: var(--tt-radius-sm);
 }
 
 [data-theme="light"] .app-navbar-auth .notification-bell {
   border-color: var(--tt-border);
-  background: var(--tt-surface-secondary);
-  color: var(--tt-text);
+  background: var(--tt-surface);
+  color: var(--tt-text-secondary);
 }
 
 [data-theme="light"] .app-navbar-auth .notification-bell:hover {
-  background: var(--tt-surface);
+  background: var(--tt-surface-secondary);
   border-color: var(--tt-border-strong);
 }
 
 [data-theme="light"] .app-navbar-auth .notification-badge {
-  border-color: var(--tt-surface);
-  background: var(--tt-primary);
+  border-color: var(--tt-surface-container-low);
+  background: var(--tt-danger);
   color: #ffffff;
 }
 
@@ -78,6 +94,10 @@
 
 [data-theme="light"] .app-navbar-auth .notification-read-all {
   color: var(--tt-primary);
+}
+
+[data-theme="light"] .app-navbar-auth .notification-read-all:hover {
+  color: var(--tt-primary-hover);
 }
 
 [data-theme="light"] .app-navbar-auth .notification-item {
@@ -125,48 +145,80 @@
 }
 
 [data-theme="light"] .app-navbar-auth .user-avatar {
-  background: var(--tt-primary-soft);
-  color: var(--tt-primary);
+  background: var(--tt-primary);
+  color: var(--tt-primary-contrast);
 }
 
-/* Keep the standalone logout button legible in light mode. */
 [data-theme="light"] .app-navbar-auth .button-ghost {
-  background: var(--tt-surface-secondary);
+  background: var(--tt-surface);
   color: var(--tt-text);
   border-color: var(--tt-border);
 }
 
 [data-theme="light"] .app-navbar-auth .button-ghost:hover {
-  background: var(--tt-surface);
+  background: var(--tt-surface-secondary);
   border-color: var(--tt-border-strong);
 }
 
-/* Dark theme: keep legacy appearance, but ensure the navbar surface
-   aligns with the token palette when the improved navbar is used. */
+/* ---- Authenticated navbar: dark theme ---- */
 [data-theme="dark"] .app-navbar-auth {
-  background: rgba(5, 7, 11, 0.96);
+  background: var(--tt-surface);
   border-bottom-color: var(--tt-border);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+[data-theme="dark"] .app-navbar-auth .brand {
+  color: var(--tt-primary);
+}
+
+[data-theme="dark"] .app-navbar-auth .brand-wordmark::before {
+  color: var(--tt-primary);
 }
 
 [data-theme="dark"] .app-navbar-auth .nav-links a {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-2);
   color: var(--tt-text-secondary);
+  font-weight: 500;
+  transition: color 160ms ease;
 }
 
-[data-theme="dark"] .app-navbar-auth .nav-links a:hover,
-[data-theme="dark"] .app-navbar-auth .nav-links a.active {
-  background: var(--tt-surface-secondary);
+[data-theme="dark"] .app-navbar-auth .nav-links a:hover {
   color: var(--tt-primary);
+  background: transparent;
+  transform: none;
+}
+
+[data-theme="dark"] .app-navbar-auth .nav-links a.active {
+  color: var(--tt-primary);
+  background: transparent;
+  border-bottom: 3px solid var(--tt-primary);
+  transform: none;
+}
+
+[data-theme="dark"] .app-navbar-auth .nav-links .nav-cta {
+  background: var(--tt-primary);
+  color: var(--tt-primary-contrast);
+  border-radius: var(--tt-radius-sm);
 }
 
 [data-theme="dark"] .app-navbar-auth .notification-bell {
   border-color: var(--tt-border);
   background: var(--tt-surface-secondary);
-  color: var(--tt-text);
+  color: var(--tt-text-secondary);
 }
 
 [data-theme="dark"] .app-navbar-auth .notification-bell:hover {
-  background: var(--tt-surface);
+  background: var(--tt-surface-container);
   border-color: var(--tt-border-strong);
+}
+
+[data-theme="dark"] .app-navbar-auth .notification-badge {
+  border-color: var(--tt-surface);
+  background: var(--tt-danger);
+  color: #ffffff;
 }
 
 [data-theme="dark"] .app-navbar-auth .notification-panel {
@@ -186,6 +238,10 @@
 
 [data-theme="dark"] .app-navbar-auth .notification-read-all {
   color: var(--tt-primary);
+}
+
+[data-theme="dark"] .app-navbar-auth .notification-read-all:hover {
+  color: var(--tt-primary-hover);
 }
 
 [data-theme="dark"] .app-navbar-auth .notification-item {
@@ -224,8 +280,8 @@
 }
 
 [data-theme="dark"] .app-navbar-auth .user-avatar {
-  background: var(--tt-primary-soft);
-  color: var(--tt-primary);
+  background: var(--tt-primary);
+  color: var(--tt-primary-contrast);
 }
 
 [data-theme="dark"] .app-navbar-auth .button-ghost {
@@ -235,6 +291,6 @@
 }
 
 [data-theme="dark"] .app-navbar-auth .button-ghost:hover {
-  background: var(--tt-surface);
+  background: var(--tt-surface-container);
   border-color: var(--tt-border-strong);
 }

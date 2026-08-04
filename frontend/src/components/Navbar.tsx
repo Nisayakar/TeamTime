@@ -1,5 +1,5 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { clearAuth, getStoredUser, isAuthenticated } from "../api";
 import { apiFetch } from "../api";
 import type { NotificationItem, NotificationPage } from "../types/notification";
@@ -24,6 +24,71 @@ function getInitials(name: string, surname: string): string {
     }
 
     return "TT";
+}
+
+function DashboardIcon() {
+    return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+        </svg>
+    );
+}
+
+function ProjectsIcon() {
+    return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        </svg>
+    );
+}
+
+function TeamsIcon() {
+    return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+    );
+}
+
+function CreateIcon() {
+    return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+        </svg>
+    );
+}
+
+function ProfileIcon() {
+    return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2" />
+        </svg>
+    );
+}
+
+function BellIcon() {
+    return (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        </svg>
+    );
+}
+
+function renderNavIcon(to: string): ReactNode {
+    if (to === "/dashboard") return <DashboardIcon />;
+    if (to === "/projects") return <ProjectsIcon />;
+    if (to === "/teams") return <TeamsIcon />;
+    if (to === "/create-project") return <CreateIcon />;
+    if (to === "/profile") return <ProfileIcon />;
+    return null;
 }
 
 function Navbar() {
@@ -278,6 +343,14 @@ function Navbar() {
         isMobileNavOpen ? "is-expanded" : ""
     ].filter(Boolean).join(" ");
 
+    const navLinks = [
+        { to: "/dashboard", label: "Dashboard" },
+        { to: "/projects", label: "Projelerim" },
+        { to: "/teams", label: "Takımlarım" },
+        { to: "/create-project", label: "Proje Oluştur" },
+        { to: "/profile", label: "Profil" }
+    ];
+
     return (
         <nav className={navbarClassName}>
             <Link to={isLoggedIn ? "/dashboard" : "/"} className="brand">
@@ -299,11 +372,12 @@ function Navbar() {
                         </button>
 
                         <div className="nav-links app-navbar-nav-links">
-                            <NavLink to="/dashboard">Dashboard</NavLink>
-                            <NavLink to="/projects">Projelerim</NavLink>
-                            <NavLink to="/teams">Takımlarım</NavLink>
-                            <NavLink to="/create-project">Proje Oluştur</NavLink>
-                            <NavLink to="/profile">Profil</NavLink>
+                            {navLinks.map(link => (
+                                <NavLink key={link.to} to={link.to}>
+                                    <span className="app-navbar-nav-icon">{renderNavIcon(link.to)}</span>
+                                    {link.label}
+                                </NavLink>
+                            ))}
                         </div>
 
                         <div className="nav-user">
@@ -319,7 +393,7 @@ function Navbar() {
                                     aria-expanded={isNotificationsOpen}
                                     onClick={toggleNotifications}
                                 >
-                                    <span aria-hidden="true">🔔</span>
+                                    <BellIcon />
                                     {
                                         unreadCount > 0 && (
                                             <span className="notification-badge" aria-label={`${unreadCount} okunmamış bildirim`}>
@@ -421,6 +495,7 @@ function Navbar() {
                                                 role="menuitem"
                                                 onClick={() => setIsProfileMenuOpen(false)}
                                             >
+                                                <ProfileIcon />
                                                 Profil
                                             </Link>
                                             <div className="app-navbar-profile-menu-divider" aria-hidden="true" />
