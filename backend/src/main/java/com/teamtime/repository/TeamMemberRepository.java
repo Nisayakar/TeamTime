@@ -16,6 +16,12 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
 
     List<TeamMember> findByUserId(Long userId);
 
+    List<TeamMember> findByUserIdAndRoleIn(Long userId, List<String> roles);
+
+    List<TeamMember> findByTeamIdAndUserIdNotOrderByJoinedDateAsc(Long teamId, Long userId);
+
+    void deleteByUserId(Long userId);
+
     @Query("""
             select count(distinct teamMember.team.id)
             from TeamMember teamMember

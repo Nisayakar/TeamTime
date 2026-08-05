@@ -20,6 +20,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     void deleteByProjectId(Long projectId);
 
+    void deleteByProjectUserId(Long userId);
+
     List<Task> findByProjectIdAndProjectUserId(Long projectId, Long userId);
 
     List<Task> findAllByProjectUserIdOrderByIdDesc(Long userId);

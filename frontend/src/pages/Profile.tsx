@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiFetch, updateStoredUser } from "../api";
+import { apiFetch, clearAuth, updateStoredUser } from "../api";
 import { useToast } from "../context/toast";
+import { ThemeSwitcher } from "../components/ui/ThemeSwitcher";
+import ConfirmModal from "../components/ConfirmModal";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
 import { navigateForInitialLoadError } from "../utils/routeErrors";
 
@@ -23,6 +25,8 @@ function Profile() {
     const [newPassword, setNewPassword] = useState("");
     const [savingProfile, setSavingProfile] = useState(false);
     const [savingPassword, setSavingPassword] = useState(false);
+    const [deletingAccount, setDeletingAccount] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
     useEffect(() => {
         async function loadProfile() {
@@ -131,6 +135,49 @@ function Profile() {
         }
     }
 
+    async function deleteAccount() {
+        if (deletingAccount) {
+            return;
+        }
+
+        setDeletingAccount(true);
+
+        try {
+            const response = await apiFetch("/profile", {
+                method: "DELETE"
+            });
+
+            if (!response.ok) {
+                throw new Error(await parseApiError(response, "Hesap silinemedi"));
+            }
+
+            clearAuth();
+            showToast({
+                type: "success",
+                message: "Hesabınız silindi."
+            });
+            setDeleteModalOpen(false);
+            navigate("/login", { replace: true });
+        } catch (error) {
+            showToast({
+                type: "error",
+                message: getErrorMessage(error, "Hesap silinemedi")
+            });
+        } finally {
+            setDeletingAccount(false);
+        }
+    }
+
+    function openDeleteModal() {
+        setDeleteModalOpen(true);
+    }
+
+    function closeDeleteModal() {
+        if (!deletingAccount) {
+            setDeleteModalOpen(false);
+        }
+    }
+
     return (
         <main className="page-shell app-page profile-page">
             <section className="hero-card profile-cover app-page-header profile-hero">
@@ -195,11 +242,24 @@ function Profile() {
 
                 <div className="panel app-form-card">
                     <div className="section-heading">
-                        <span className="eyebrow">Güvenlik</span>
-                        <h2>Şifre Değiştir</h2>
+                        <span className="eyebrow">Ayarlar</span>
+                        <h2>Hesap Ayarları</h2>
                     </div>
 
                     <div className="stacked-form">
+                        <div className="profile-settings-block">
+                            <div>
+                                <strong>Tema</strong>
+                                <span>Uygulama görünümünü seçin.</span>
+                            </div>
+                            <ThemeSwitcher />
+                        </div>
+
+                        <div className="section-heading compact-heading">
+                            <span className="eyebrow">Güvenlik</span>
+                            <h3>Şifre Değiştir</h3>
+                        </div>
+
                         <div className="field">
                             <input
                                 aria-label="Eski Şifre"
@@ -225,9 +285,31 @@ function Profile() {
                         <button className="button button-primary" onClick={updatePassword} disabled={savingPassword}>
                             {savingPassword ? "Güncelleniyor..." : "Şifreyi Güncelle"}
                         </button>
+
+                        <div className="profile-danger-zone">
+                            <div>
+                                <strong>Hesabı Sil</strong>
+                                <span>Bu işlem hesabınızı ve size bağlı verileri kalıcı olarak kaldırır.</span>
+                            </div>
+                            <button className="button button-danger" onClick={openDeleteModal} disabled={deletingAccount}>
+                                Hesabı Sil
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>
+
+            <ConfirmModal
+                open={deleteModalOpen}
+                title="Hesabınızı silmek istediğinizden emin misiniz?"
+                message="Bu işlem geri alınamaz. Hesabınız ve hesabınıza bağlı veriler kalıcı olarak silinecektir."
+                cancelLabel="İptal"
+                confirmLabel="Hesabımı Kalıcı Olarak Sil"
+                variant="danger"
+                loading={deletingAccount}
+                onCancel={closeDeleteModal}
+                onConfirm={deleteAccount}
+            />
         </main>
     );
 }

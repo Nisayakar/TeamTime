@@ -18,6 +18,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     Optional<Notification> findByIdAndRecipientId(Long id, Long recipientId);
 
+    void deleteByRecipientId(Long recipientId);
+
     @Modifying
     @Query("""
             update Notification notification

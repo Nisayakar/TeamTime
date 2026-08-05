@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { mockJsonResponse, mockTextResponse, renderWithProviders } from "../test/testUtils";
@@ -102,6 +102,116 @@ describe("Profile", () => {
 
         resolveUpdate(mockJsonResponse(profile()));
         expect(await screen.findByRole("button", { name: "Profil Bilgilerini Güncelle" })).toBeEnabled();
+    });
+
+    it("opens the account deletion modal without calling native confirm or delete immediately", async () => {
+        const user = userEvent.setup();
+        localStorage.setItem("token", "token");
+        localStorage.setItem("user", JSON.stringify(profile()));
+        const confirmSpy = vi.spyOn(window, "confirm");
+        const fetchMock = vi.fn<typeof fetch>()
+            .mockResolvedValueOnce(mockJsonResponse(profile()));
+        vi.stubGlobal("fetch", fetchMock);
+
+        renderWithProviders(<Profile />);
+
+        expect(await screen.findByRole("heading", { name: "Hesap Ayarları" })).toBeInTheDocument();
+        expect(screen.getByRole("radio", { name: "Açık tema" })).toBeInTheDocument();
+        await user.click(screen.getByRole("button", { name: "Hesabı Sil" }));
+
+        expect(screen.getByRole("dialog", { name: "Hesabınızı silmek istediğinizden emin misiniz?" })).toBeInTheDocument();
+        expect(screen.getByText("Bu işlem geri alınamaz. Hesabınız ve hesabınıza bağlı veriler kalıcı olarak silinecektir.")).toBeInTheDocument();
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(confirmSpy).not.toHaveBeenCalled();
+    });
+
+    it("closes the account deletion modal on cancel without sending a delete request", async () => {
+        const user = userEvent.setup();
+        const fetchMock = vi.fn<typeof fetch>()
+            .mockResolvedValueOnce(mockJsonResponse(profile()));
+        vi.stubGlobal("fetch", fetchMock);
+
+        renderWithProviders(<Profile />);
+
+        await screen.findByDisplayValue("Ayşe");
+        await user.click(screen.getByRole("button", { name: "Hesabı Sil" }));
+        await user.click(screen.getByRole("button", { name: "İptal" }));
+
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("sends the existing delete request after modal confirmation and clears auth on success", async () => {
+        const user = userEvent.setup();
+        localStorage.setItem("token", "token");
+        localStorage.setItem("user", JSON.stringify(profile()));
+        const fetchMock = vi.fn<typeof fetch>()
+            .mockResolvedValueOnce(mockJsonResponse(profile()))
+            .mockResolvedValueOnce(mockTextResponse("Hesap başarıyla silindi"));
+        vi.stubGlobal("fetch", fetchMock);
+
+        renderWithProviders(<Profile />);
+
+        await screen.findByDisplayValue("Ayşe");
+        await user.click(screen.getByRole("button", { name: "Hesabı Sil" }));
+        await user.click(screen.getByRole("button", { name: "Hesabımı Kalıcı Olarak Sil" }));
+
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+        expect(fetchMock.mock.calls[1][0]).toContain("/profile");
+        expect(fetchMock.mock.calls[1][1]?.method).toBe("DELETE");
+        expect(localStorage.getItem("token")).toBeNull();
+        expect(localStorage.getItem("user")).toBeNull();
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("blocks duplicate account deletion confirmation while loading", async () => {
+        const user = userEvent.setup();
+        let resolveDelete: (response: Response) => void = () => undefined;
+        const deletePromise = new Promise<Response>(resolve => {
+            resolveDelete = resolve;
+        });
+        const fetchMock = vi.fn<typeof fetch>()
+            .mockResolvedValueOnce(mockJsonResponse(profile()))
+            .mockReturnValueOnce(deletePromise);
+        vi.stubGlobal("fetch", fetchMock);
+
+        renderWithProviders(<Profile />);
+
+        await screen.findByDisplayValue("Ayşe");
+        await user.click(screen.getByRole("button", { name: "Hesabı Sil" }));
+        await user.click(screen.getByRole("button", { name: "Hesabımı Kalıcı Olarak Sil" }));
+
+        expect(screen.getByRole("button", { name: "Hesabımı Kalıcı Olarak Sil..." })).toBeDisabled();
+        expect(screen.getByRole("button", { name: "İptal" })).toBeDisabled();
+
+        await user.click(screen.getByRole("button", { name: "Hesabımı Kalıcı Olarak Sil..." }));
+        fireEvent.keyDown(document, { key: "Escape" });
+        fireEvent.mouseDown(screen.getByRole("dialog", { name: "Hesabınızı silmek istediğinizden emin misiniz?" }).parentElement as HTMLElement);
+
+        expect(screen.getByRole("dialog", { name: "Hesabınızı silmek istediğinizden emin misiniz?" })).toBeInTheDocument();
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+
+        resolveDelete(mockTextResponse("Hesap başarıyla silindi"));
+        await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    });
+
+    it("keeps the deletion modal open after an error and shows the parsed toast message", async () => {
+        const user = userEvent.setup();
+        const fetchMock = vi.fn<typeof fetch>()
+            .mockResolvedValueOnce(mockJsonResponse(profile()))
+            .mockResolvedValueOnce(mockJsonResponse({ message: "Hesap silinemedi" }, { status: 400 }));
+        vi.stubGlobal("fetch", fetchMock);
+
+        renderWithProviders(<Profile />);
+
+        await screen.findByDisplayValue("Ayşe");
+        await user.click(screen.getByRole("button", { name: "Hesabı Sil" }));
+        await user.click(screen.getByRole("button", { name: "Hesabımı Kalıcı Olarak Sil" }));
+
+        expect(await screen.findByText("Hesap silinemedi")).toBeInTheDocument();
+        expect(screen.getByRole("dialog", { name: "Hesabınızı silmek istediğinizden emin misiniz?" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Hesabımı Kalıcı Olarak Sil" })).toBeEnabled();
+        expect(screen.queryByText("[object Object]")).not.toBeInTheDocument();
     });
 });
 

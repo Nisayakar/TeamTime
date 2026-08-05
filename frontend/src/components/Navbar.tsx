@@ -3,7 +3,6 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { clearAuth, getStoredUser, isAuthenticated } from "../api";
 import { apiFetch } from "../api";
 import type { NotificationItem, NotificationPage } from "../types/notification";
-import { ThemeSwitcher } from "./ui/ThemeSwitcher";
 
 type UnreadCountResponse = {
     unreadCount: number;
@@ -87,7 +86,6 @@ function renderNavIcon(to: string): ReactNode {
     if (to === "/projects") return <ProjectsIcon />;
     if (to === "/teams") return <TeamsIcon />;
     if (to === "/create-project") return <CreateIcon />;
-    if (to === "/profile") return <ProfileIcon />;
     return null;
 }
 
@@ -347,8 +345,7 @@ function Navbar() {
         { to: "/dashboard", label: "Dashboard" },
         { to: "/projects", label: "Projelerim" },
         { to: "/teams", label: "Takımlarım" },
-        { to: "/create-project", label: "Proje Oluştur" },
-        { to: "/profile", label: "Profil" }
+        { to: "/create-project", label: "Proje Oluştur" }
     ];
 
     return (
@@ -381,10 +378,6 @@ function Navbar() {
                         </div>
 
                         <div className="nav-user">
-                            <div className="app-navbar-theme">
-                                <ThemeSwitcher />
-                            </div>
-
                             <div className="notification-menu" ref={notificationRef}>
                                 <button
                                     type="button"

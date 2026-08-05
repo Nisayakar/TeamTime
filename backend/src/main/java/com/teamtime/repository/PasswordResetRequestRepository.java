@@ -8,4 +8,6 @@ import com.teamtime.entity.PasswordResetRequest;
 
 public interface PasswordResetRequestRepository extends JpaRepository<PasswordResetRequest, Long> {
     Optional<PasswordResetRequest> findByEmail(String email);
+
+    void deleteByEmail(String email);
 }

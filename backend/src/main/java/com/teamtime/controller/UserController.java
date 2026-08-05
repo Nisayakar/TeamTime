@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 import jakarta.validation.Valid;
 import java.util.List;
@@ -118,6 +119,15 @@ public class UserController {
         Long userId = (Long) authentication.getPrincipal();
 
         return ResponseEntity.ok(userService.updatePassword(userId, request));
+    }
+
+    @DeleteMapping("/profile")
+    public ResponseEntity<Void> deleteProfile(Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+
+        userService.deleteProfile(userId);
+
+        return ResponseEntity.noContent().build();
     }
     
     

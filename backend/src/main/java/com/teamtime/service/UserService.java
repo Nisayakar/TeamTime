@@ -13,12 +13,21 @@ import com.teamtime.dto.VerifyRegistrationRequest;
 import com.teamtime.dto.VerifyPasswordResetCodeRequest;
 import com.teamtime.entity.PendingRegistration;
 import com.teamtime.entity.PasswordResetRequest;
+import com.teamtime.entity.Project;
+import com.teamtime.entity.Team;
+import com.teamtime.entity.TeamMember;
+import com.teamtime.entity.TeamRole;
 import com.teamtime.entity.User;
 import com.teamtime.exception.ResendCooldownException;
 import com.teamtime.exception.TooManyVerificationAttemptsException;
 import com.teamtime.exception.VerificationCodeException;
 import com.teamtime.repository.PendingRegistrationRepository;
 import com.teamtime.repository.PasswordResetRequestRepository;
+import com.teamtime.repository.ProjectRepository;
+import com.teamtime.repository.TaskRepository;
+import com.teamtime.repository.TeamMemberRepository;
+import com.teamtime.repository.NotificationRepository;
+import com.teamtime.repository.TeamRepository;
 import com.teamtime.repository.UserRepository;
 import com.teamtime.security.JwtService;
 import com.teamtime.dto.LoginRequest;
@@ -30,6 +39,7 @@ import com.teamtime.dto.UserSearchResponse;
 import com.teamtime.exception.DuplicateEmailException;
 import com.teamtime.exception.InvalidCredentialsException;
 import com.teamtime.exception.ResourceNotFoundException;
+import com.teamtime.exception.ConflictException;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -52,6 +62,11 @@ public class UserService {
     private final VerificationCodeGenerator verificationCodeGenerator;
     private final VerificationCodeHashService verificationCodeHashService;
     private final EmailVerificationMailService emailVerificationMailService;
+    private final NotificationRepository notificationRepository;
+    private final TaskRepository taskRepository;
+    private final ProjectRepository projectRepository;
+    private final TeamMemberRepository teamMemberRepository;
+    private final TeamRepository teamRepository;
 
     public UserService(
             UserRepository userRepository,
@@ -61,7 +76,12 @@ public class UserService {
             PasswordEncoder passwordEncoder,
             VerificationCodeGenerator verificationCodeGenerator,
             VerificationCodeHashService verificationCodeHashService,
-            EmailVerificationMailService emailVerificationMailService
+            EmailVerificationMailService emailVerificationMailService,
+            NotificationRepository notificationRepository,
+            TaskRepository taskRepository,
+            ProjectRepository projectRepository,
+            TeamMemberRepository teamMemberRepository,
+            TeamRepository teamRepository
     ) {
         this.userRepository = userRepository;
         this.pendingRegistrationRepository = pendingRegistrationRepository;
@@ -71,6 +91,11 @@ public class UserService {
         this.verificationCodeGenerator = verificationCodeGenerator;
         this.verificationCodeHashService = verificationCodeHashService;
         this.emailVerificationMailService = emailVerificationMailService;
+        this.notificationRepository = notificationRepository;
+        this.taskRepository = taskRepository;
+        this.projectRepository = projectRepository;
+        this.teamMemberRepository = teamMemberRepository;
+        this.teamRepository = teamRepository;
     }
 
     @Transactional
@@ -343,6 +368,103 @@ public class UserService {
         userRepository.save(user);
 
         return "Şifre başarıyla güncellendi";
+    }
+
+    @Transactional
+    public void deleteProfile(Long userId) {
+        User user = findUserById(userId);
+        String email = normalizeEmail(user.getEmail());
+
+        notificationRepository.deleteByRecipientId(userId);
+        passwordResetRequestRepository.deleteByEmail(email);
+        pendingRegistrationRepository.deleteByEmail(email);
+
+        handleOwnedTeamsBeforeAccountDeletion(user);
+        transferRemainingTeamProjectsCreatedBy(user);
+        deleteNonOwnerMemberships(userId);
+        deletePersonalProjects(userId);
+
+        userRepository.delete(user);
+    }
+
+    private void handleOwnedTeamsBeforeAccountDeletion(User user) {
+        List<TeamMember> ownerMemberships = teamMemberRepository
+                .findByUserIdAndRoleIn(user.getId(), List.of(TeamRole.OWNER.name()));
+
+        for (TeamMember ownerMembership : ownerMemberships) {
+            Team team = ownerMembership.getTeam();
+            List<TeamMember> otherMembers = teamMemberRepository
+                    .findByTeamIdAndUserIdNotOrderByJoinedDateAsc(team.getId(), user.getId());
+            Optional<TeamMember> nextOwner = chooseNextOwner(otherMembers);
+
+            if (nextOwner.isPresent()) {
+                TeamMember promotedMember = nextOwner.get();
+                promotedMember.setRole(TeamRole.OWNER.name());
+                teamMemberRepository.save(promotedMember);
+                transferTeamProjectsCreatedBy(team.getId(), user.getId(), promotedMember.getUser());
+                teamMemberRepository.delete(ownerMembership);
+            } else if (projectRepository.existsByTeam_Id(team.getId())) {
+                throw new ConflictException("Sahibi olduğunuz ve projelere bağlı takımlar bulunduğu için hesabınız silinemiyor. Önce takım projelerini silin veya takım sahipliğini başka bir üyeye devredin.");
+            } else {
+                teamMemberRepository.delete(ownerMembership);
+                teamRepository.delete(team);
+            }
+        }
+    }
+
+    private Optional<TeamMember> chooseNextOwner(List<TeamMember> members) {
+        Optional<TeamMember> admin = members.stream()
+                .filter(member -> TeamRole.from(member.getRole()) == TeamRole.ADMIN)
+                .findFirst();
+
+        if (admin.isPresent()) {
+            return admin;
+        }
+
+        return members.stream()
+                .filter(member -> TeamRole.from(member.getRole()) == TeamRole.MEMBER)
+                .findFirst();
+    }
+
+    private void transferRemainingTeamProjectsCreatedBy(User user) {
+        List<Project> teamProjects = projectRepository.findByUserIdAndTeamIsNotNull(user.getId());
+
+        for (Project project : teamProjects) {
+            User owner = findTeamOwner(project.getTeam().getId())
+                    .orElseThrow(() -> new ConflictException("Takım projeleri için geçerli bir takım sahibi bulunamadı."));
+            project.setUser(owner);
+            projectRepository.save(project);
+        }
+    }
+
+    private void transferTeamProjectsCreatedBy(Long teamId, Long userId, User nextOwner) {
+        for (Project project : projectRepository.findByTeam_IdAndUserId(teamId, userId)) {
+            project.setUser(nextOwner);
+            projectRepository.save(project);
+        }
+    }
+
+    private Optional<User> findTeamOwner(Long teamId) {
+        return teamMemberRepository.findByTeamId(teamId)
+                .stream()
+                .filter(member -> TeamRole.from(member.getRole()) == TeamRole.OWNER)
+                .map(TeamMember::getUser)
+                .findFirst();
+    }
+
+    private void deleteNonOwnerMemberships(Long userId) {
+        teamMemberRepository
+                .findByUserIdAndRoleIn(userId, List.of(TeamRole.ADMIN.name(), TeamRole.MEMBER.name()))
+                .forEach(teamMemberRepository::delete);
+    }
+
+    private void deletePersonalProjects(Long userId) {
+        List<Project> personalProjects = projectRepository.findByUserIdAndTeamIsNull(userId);
+
+        for (Project project : personalProjects) {
+            taskRepository.deleteByProjectId(project.getId());
+            projectRepository.delete(project);
+        }
     }
 
     public List<UserSearchResponse> searchUsers(String query) {

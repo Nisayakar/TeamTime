@@ -8,4 +8,6 @@ import com.teamtime.entity.PendingRegistration;
 
 public interface PendingRegistrationRepository extends JpaRepository<PendingRegistration, Long> {
     Optional<PendingRegistration> findByEmail(String email);
+
+    void deleteByEmail(String email);
 }
