@@ -10,6 +10,7 @@ import CreateProject from "./pages/CreateProject";
 import { Routes, Route } from "react-router-dom"
 import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
+import MyTasks from './pages/MyTasks';
 import Profile from './pages/Profile';
 import AppShell from './components/AppShell';
 import Navbar from './components/Navbar';
@@ -42,6 +43,7 @@ function App() {
             <Route path="/edit-project/:id" element={<EditProject />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/projects" element={<Projects />} />
+            <Route path="/my-tasks" element={<MyTasks />} />
             <Route path="/teams" element={<Teams />} />
             <Route path="/teams/:id" element={<TeamDetails />} />
             <Route path="/profile" element={<Profile />} />

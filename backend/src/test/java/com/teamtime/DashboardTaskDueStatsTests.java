@@ -130,7 +130,7 @@ class DashboardTaskDueStatsTests {
         addTeamMember(team, owner, TeamRole.OWNER);
         addTeamMember(team, member, TeamRole.MEMBER);
         Project teamProject = saveProject("Shared Dashboard Project", owner, team);
-        saveTask("Shared Upcoming", teamProject, "BEKLIYOR", TaskPriority.HIGH, today.plusDays(2), 1);
+        saveTask("Shared Upcoming", teamProject, member, "BEKLIYOR", TaskPriority.HIGH, today.plusDays(2), 1);
 
         mockMvc.perform(get("/api/dashboard")
                         .header(AUTHORIZATION, bearer(member)))
@@ -270,10 +270,12 @@ class DashboardTaskDueStatsTests {
         Project inaccessibleTeamProject = saveProject("Inaccessible Team Project", outsider, inaccessibleTeam);
 
         saveTask("Personal Plus Two", personalProject, "DEVAM_EDIYOR", TaskPriority.HIGH, today.plusDays(2), 1);
-        saveTask("Owner Team Plus Two", ownerTeamProject, "DEVAM_EDIYOR", TaskPriority.HIGH, today.plusDays(2), 2);
-        saveTask("Admin Team Plus Two", adminTeamProject, "DEVAM_EDIYOR", TaskPriority.HIGH, today.plusDays(2), 3);
-        saveTask("Member Team Plus Two", memberTeamProject, "DEVAM_EDIYOR", TaskPriority.HIGH, today.plusDays(2), 4);
+        saveTask("Owner Team Plus Two", ownerTeamProject, owner, "DEVAM_EDIYOR", TaskPriority.HIGH, today.plusDays(2), 2);
+        saveTask("Admin Team Plus Two", adminTeamProject, admin, "DEVAM_EDIYOR", TaskPriority.HIGH, today.plusDays(2), 3);
+        saveTask("Member Team Plus Two", memberTeamProject, member, "DEVAM_EDIYOR", TaskPriority.HIGH, today.plusDays(2), 4);
         saveTask("Inaccessible Plus Two", inaccessibleTeamProject, "DEVAM_EDIYOR", TaskPriority.HIGH, today.plusDays(2), 5);
+        saveTask("Owner Team Unassigned", ownerTeamProject, "DEVAM_EDIYOR", TaskPriority.HIGH, today.plusDays(2), 6);
+        saveTask("Owner Team Assigned To Admin", ownerTeamProject, admin, "DEVAM_EDIYOR", TaskPriority.HIGH, today.plusDays(2), 7);
 
         mockMvc.perform(get("/api/tasks/upcoming")
                         .header(AUTHORIZATION, bearer(owner)))
@@ -281,13 +283,16 @@ class DashboardTaskDueStatsTests {
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[?(@.title == 'Personal Plus Two')]", hasSize(1)))
                 .andExpect(jsonPath("$[?(@.title == 'Owner Team Plus Two')]", hasSize(1)))
+                .andExpect(jsonPath("$[?(@.title == 'Owner Team Unassigned')]", hasSize(0)))
+                .andExpect(jsonPath("$[?(@.title == 'Owner Team Assigned To Admin')]", hasSize(0)))
                 .andExpect(jsonPath("$[?(@.title == 'Inaccessible Plus Two')]", hasSize(0)));
 
         mockMvc.perform(get("/api/tasks/upcoming")
                         .header(AUTHORIZATION, bearer(admin)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[?(@.title == 'Admin Team Plus Two')]", hasSize(1)));
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[?(@.title == 'Admin Team Plus Two')]", hasSize(1)))
+                .andExpect(jsonPath("$[?(@.title == 'Owner Team Assigned To Admin')]", hasSize(1)));
 
         mockMvc.perform(get("/api/tasks/upcoming")
                         .header(AUTHORIZATION, bearer(member)))
@@ -323,6 +328,10 @@ class DashboardTaskDueStatsTests {
     }
 
     private void saveTask(String title, Project project, String status, TaskPriority priority, LocalDate dueDate, int createdAtOffset) {
+        saveTask(title, project, null, status, priority, dueDate, createdAtOffset);
+    }
+
+    private void saveTask(String title, Project project, User assignedUser, String status, TaskPriority priority, LocalDate dueDate, int createdAtOffset) {
         Task task = new Task();
         task.setTitle(title);
         task.setDescription("Dashboard task description");
@@ -331,6 +340,10 @@ class DashboardTaskDueStatsTests {
         task.setDueDate(dueDate);
         task.setCreatedAt(LocalDateTime.now().plusMinutes(createdAtOffset));
         task.setProject(project);
+        if (assignedUser != null) {
+            task.setAssignedUser(assignedUser);
+            task.setAssignmentStatus(com.teamtime.entity.AssignmentStatus.ACCEPTED);
+        }
         taskRepository.save(task);
     }
 

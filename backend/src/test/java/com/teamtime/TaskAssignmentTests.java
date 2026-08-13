@@ -3,8 +3,10 @@ package com.teamtime;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.empty;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -256,6 +258,85 @@ class TaskAssignmentTests {
                 .andExpect(jsonPath("$.rejectionReason").value(nullValue()))
                 .andExpect(jsonPath("$.assignedAt").value(nullValue()))
                 .andExpect(jsonPath("$.respondedAt").value(nullValue()));
+    }
+
+    @Test
+    void assignedTaskAppearsInCurrentUsersMyTasksOnly() throws Exception {
+        assign(owner, teamTaskId, member).andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/tasks/my")
+                        .header(AUTHORIZATION, bearer(member)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id").value(teamTaskId))
+                .andExpect(jsonPath("$[0].assignedUserId").value(member.getId()))
+                .andExpect(jsonPath("$[0].assignmentStatus").value("PENDING"));
+
+        mockMvc.perform(get("/api/tasks/my")
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", empty()));
+    }
+
+    @Test
+    void myTasksExcludesUnassignedTasksAndTasksAssignedToOtherUsers() throws Exception {
+        Long otherTaskId = createTask(owner, teamProjectId, "Other member task", "BEKLIYOR");
+        assign(owner, otherTaskId, otherMember).andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/tasks/my")
+                        .header(AUTHORIZATION, bearer(member)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", empty()));
+    }
+
+    @Test
+    void myTasksIncludesPendingAcceptedRejectedAndCompletedAssignedTasks() throws Exception {
+        Long pendingTaskId = teamTaskId;
+        Long acceptedTaskId = createTask(owner, teamProjectId, "Accepted task", "BEKLIYOR");
+        Long rejectedTaskId = createTask(owner, teamProjectId, "Rejected task", "BEKLIYOR");
+        Long completedTaskId = createTask(owner, teamProjectId, "Completed task", "TAMAMLANDI");
+
+        assign(owner, pendingTaskId, member).andExpect(status().isOk());
+        assign(owner, acceptedTaskId, member).andExpect(status().isOk());
+        assign(owner, rejectedTaskId, member).andExpect(status().isOk());
+        assign(owner, completedTaskId, member).andExpect(status().isOk());
+        mockMvc.perform(post("/api/tasks/{id}/assignment/accept", acceptedTaskId)
+                        .header(AUTHORIZATION, bearer(member)))
+                .andExpect(status().isOk());
+        reject(member, rejectedTaskId, "Takvimim dolu").andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/tasks/my")
+                        .header(AUTHORIZATION, bearer(member)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(4)))
+                .andExpect(jsonPath("$[?(@.id == %d && @.assignmentStatus == 'PENDING')]".formatted(pendingTaskId), hasSize(1)))
+                .andExpect(jsonPath("$[?(@.id == %d && @.assignmentStatus == 'ACCEPTED')]".formatted(acceptedTaskId), hasSize(1)))
+                .andExpect(jsonPath("$[?(@.id == %d && @.assignmentStatus == 'REJECTED')]".formatted(rejectedTaskId), hasSize(1)))
+                .andExpect(jsonPath("$[?(@.id == %d && @.status == 'TAMAMLANDI')]".formatted(completedTaskId), hasSize(1)));
+    }
+
+    @Test
+    void myTasksDoesNotAcceptClientUserIdAndRequiresAuthentication() throws Exception {
+        assign(owner, teamTaskId, member).andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/tasks/my")
+                        .param("userId", String.valueOf(member.getId()))
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", empty()));
+
+        mockMvc.perform(get("/api/tasks/my"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void assignedTaskRemainsVisibleInProjectScopeForOwner() throws Exception {
+        assign(owner, teamTaskId, member).andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/tasks/project/{projectId}", teamProjectId)
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == %d)]".formatted(teamTaskId), hasSize(1)));
     }
 
     private org.springframework.test.web.servlet.ResultActions assign(User actor, Long taskId, User target) throws Exception {

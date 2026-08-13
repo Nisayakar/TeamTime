@@ -44,6 +44,10 @@ describe("Dashboard", () => {
 
     it("renders a high-priority in-progress task returned by the upcoming endpoint", async () => {
         setStoredUser();
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = tomorrow.toISOString().split("T")[0];
+
         vi.stubGlobal("fetch", dashboardFetchMock({
             upcomingTasks: [
                 {
@@ -52,7 +56,7 @@ describe("Dashboard", () => {
                     description: "Frontend",
                     status: "DEVAM_EDIYOR",
                     priority: "HIGH",
-                    dueDate: "2026-08-15",
+                    dueDate: tomorrowStr,
                     createdAt: "2026-08-13T10:00:00",
                     completedAt: null,
                     overdue: false,
@@ -278,13 +282,17 @@ function LocationProbe() {
 }
 
 function task(id: number, title: string, projectId: number | null) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split("T")[0];
+
     return {
         id,
         title,
         description: "Description",
         status: "BEKLIYOR",
         priority: "MEDIUM",
-        dueDate: "2026-08-04",
+        dueDate: tomorrowStr,
         createdAt: "2026-08-03T10:00:00",
         completedAt: null,
         overdue: false,

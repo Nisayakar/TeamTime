@@ -121,6 +121,13 @@ public class TaskService {
                 .toList();
     }
 
+    public List<TaskResponse> getTasksAssignedToMe(Long userId) {
+        return taskRepository.findTasksAssignedToUser(userId)
+                .stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+
 
 
     @Transactional

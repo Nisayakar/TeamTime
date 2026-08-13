@@ -44,6 +44,15 @@ function ProjectsIcon() {
     );
 }
 
+function MyTasksIcon() {
+    return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M9 11l3 3L22 4" />
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+        </svg>
+    );
+}
+
 function TeamsIcon() {
     return (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -84,6 +93,7 @@ function BellIcon() {
 function renderNavIcon(to: string): ReactNode {
     if (to === "/dashboard") return <DashboardIcon />;
     if (to === "/projects") return <ProjectsIcon />;
+    if (to === "/my-tasks") return <MyTasksIcon />;
     if (to === "/teams") return <TeamsIcon />;
     if (to === "/create-project") return <CreateIcon />;
     return null;
@@ -344,6 +354,7 @@ function Navbar() {
     const navLinks = [
         { to: "/dashboard", label: "Dashboard" },
         { to: "/projects", label: "Projelerim" },
+        { to: "/my-tasks", label: "Görevlerim" },
         { to: "/teams", label: "Takımlarım" },
         { to: "/create-project", label: "Proje Oluştur" }
     ];

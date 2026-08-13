@@ -65,6 +65,14 @@ public class TaskController {
 
     }
 
+    @GetMapping("/my")
+    public List<TaskResponse> getTasksAssignedToMe(Authentication authentication) {
+
+        Long userId = (Long) authentication.getPrincipal();
+        return taskService.getTasksAssignedToMe(userId);
+
+    }
+
     @PutMapping("/{id}")
     public TaskResponse updateTask(
             @PathVariable Long id,

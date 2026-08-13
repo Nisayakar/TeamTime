@@ -37,10 +37,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("""
             select distinct task
             from Task task
-            left join task.project.team team
-            left join TeamMember membership on membership.team = team and membership.user.id = :userId
             where (task.project.team is null and task.project.user.id = :userId)
-               or membership.id is not null
+               or (task.project.team is not null and task.assignedUser.id = :userId)
             order by task.id desc
             """)
     List<Task> findAccessibleTasksOrderByIdDesc(@Param("userId") Long userId);
@@ -48,20 +46,16 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("""
             select count(distinct task.id)
             from Task task
-            left join task.project.team team
-            left join TeamMember membership on membership.team = team and membership.user.id = :userId
             where (task.project.team is null and task.project.user.id = :userId)
-               or membership.id is not null
+               or (task.project.team is not null and task.assignedUser.id = :userId)
             """)
     long countAccessibleTasks(@Param("userId") Long userId);
 
     @Query("""
             select count(distinct task.id)
             from Task task
-            left join task.project.team team
-            left join TeamMember membership on membership.team = team and membership.user.id = :userId
             where ((task.project.team is null and task.project.user.id = :userId)
-               or membership.id is not null)
+               or (task.project.team is not null and task.assignedUser.id = :userId))
               and task.status = :status
             """)
     long countAccessibleTasksByStatus(@Param("userId") Long userId, @Param("status") String status);
@@ -69,10 +63,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("""
             select count(distinct task.id)
             from Task task
-            left join task.project.team team
-            left join TeamMember membership on membership.team = team and membership.user.id = :userId
             where ((task.project.team is null and task.project.user.id = :userId)
-               or membership.id is not null)
+               or (task.project.team is not null and task.assignedUser.id = :userId))
               and task.status <> 'TAMAMLANDI'
               and task.dueDate < :today
             """)
@@ -81,10 +73,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("""
             select count(distinct task.id)
             from Task task
-            left join task.project.team team
-            left join TeamMember membership on membership.team = team and membership.user.id = :userId
             where ((task.project.team is null and task.project.user.id = :userId)
-               or membership.id is not null)
+               or (task.project.team is not null and task.assignedUser.id = :userId))
               and task.status <> 'TAMAMLANDI'
               and task.dueDate = :today
             """)
@@ -93,10 +83,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("""
             select count(distinct task.id)
             from Task task
-            left join task.project.team team
-            left join TeamMember membership on membership.team = team and membership.user.id = :userId
             where ((task.project.team is null and task.project.user.id = :userId)
-              or membership.id is not null)
+              or (task.project.team is not null and task.assignedUser.id = :userId))
               and task.status <> 'TAMAMLANDI'
               and task.dueDate > :today
               and task.dueDate <= :upcomingEndDate
@@ -112,12 +100,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             join fetch task.project project
             left join fetch project.team team
             where ((project.team is null and project.user.id = :userId)
-              or exists (
-                  select 1
-                  from TeamMember membership
-                  where membership.team = project.team
-                    and membership.user.id = :userId
-              ))
+              or (project.team is not null and task.assignedUser.id = :userId))
               and task.status <> 'TAMAMLANDI'
               and task.dueDate > :today
               and task.dueDate <= :upcomingEndDate
@@ -136,5 +119,36 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             @Param("today") LocalDate today,
             @Param("upcomingEndDate") LocalDate upcomingEndDate,
             Pageable pageable);
+
+    @Query("""
+            select task
+            from Task task
+            join fetch task.project project
+            left join fetch project.team team
+            where task.assignedUser.id = :userId
+              and task.assignmentStatus in (
+                  com.teamtime.entity.AssignmentStatus.PENDING,
+                  com.teamtime.entity.AssignmentStatus.ACCEPTED,
+                  com.teamtime.entity.AssignmentStatus.REJECTED
+              )
+            order by
+                case task.assignmentStatus
+                    when com.teamtime.entity.AssignmentStatus.PENDING then 0
+                    when com.teamtime.entity.AssignmentStatus.ACCEPTED then 1
+                    when com.teamtime.entity.AssignmentStatus.REJECTED then 2
+                    else 3
+                end asc,
+                case when task.dueDate is null then 1 else 0 end asc,
+                task.dueDate asc,
+                case task.priority
+                    when com.teamtime.entity.TaskPriority.URGENT then 4
+                    when com.teamtime.entity.TaskPriority.HIGH then 3
+                    when com.teamtime.entity.TaskPriority.MEDIUM then 2
+                    when com.teamtime.entity.TaskPriority.LOW then 1
+                    else 0
+                end desc,
+                task.createdAt desc
+            """)
+    List<Task> findTasksAssignedToUser(@Param("userId") Long userId);
 
 }
