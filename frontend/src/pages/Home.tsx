@@ -81,7 +81,6 @@ const featureDeckItems = [
 
 function Home() {
     const [menuOpen, setMenuOpen] = useState(false);
-    const [loading, setLoading] = useState(true);
     const [activeFeatureIndex, setActiveFeatureIndex] = useState(0);
     const [hasFeatureDeckChanged, setHasFeatureDeckChanged] = useState(false);
     const [contactFields, setContactFields] = useState({
@@ -110,14 +109,6 @@ function Home() {
             window.clearTimeout(featureHoverRepeatRef.current);
             featureHoverRepeatRef.current = null;
         }
-    }, []);
-
-    useEffect(() => {
-        const timer = window.setTimeout(() => {
-            setLoading(false);
-        }, 900);
-
-        return () => window.clearTimeout(timer);
     }, []);
 
     useEffect(() => clearFeatureDeckTimers, [clearFeatureDeckTimers]);
@@ -244,12 +235,6 @@ function Home() {
 
     return (
         <main className="template-home">
-            {loading && (
-                <div className="template-loader" role="status" aria-label="Sayfa yükleniyor">
-                    <div aria-hidden="true" />
-                </div>
-            )}
-
             <header className="template-header">
                 <div className="template-container template-header-row">
                     <Link className="template-logo home-image-logo" to="/" aria-label="TeamTime Ana Sayfa">

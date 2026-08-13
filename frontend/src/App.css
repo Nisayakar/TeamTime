@@ -148,6 +148,14 @@ body:has(.login-designed-page) .app-navbar-public {
   background: transparent;
 }
 
+body:has(.auth-page) .app-navbar-public .nav-links-public a,
+body:has(.auth-page) .app-navbar-public .nav-links-public a:hover,
+body:has(.auth-page) .app-navbar-public .nav-links-public a.active,
+body:has(.auth-page) .app-navbar-public .nav-links-public .nav-cta {
+  background: transparent;
+  box-shadow: none;
+}
+
 .brand {
   display: inline-flex;
   align-items: center;
@@ -725,11 +733,11 @@ body:has(.login-designed-page) .app-navbar-public {
 
 .toast-container {
   position: fixed;
-  top: 18px;
-  right: 18px;
-  z-index: 1000;
+  top: calc(var(--tt-navbar-height, 72px) + 20px);
+  right: 24px;
+  z-index: 80;
   display: grid;
-  width: min(380px, calc(100vw - 32px));
+  width: clamp(320px, 28vw, 420px);
   gap: 12px;
   pointer-events: none;
 }
@@ -799,6 +807,15 @@ body:has(.login-designed-page) .app-navbar-public {
 .toast-close:focus-visible {
   outline: 3px solid rgba(242, 163, 180, 0.45);
   outline-offset: 2px;
+}
+
+@media (max-width: 575px) {
+  .toast-container {
+    top: calc(var(--tt-navbar-height, 72px) + 14px);
+    right: 16px;
+    left: 16px;
+    width: auto;
+  }
 }
 
 .confirm-modal-backdrop {
@@ -1572,10 +1589,11 @@ button:focus-visible {
   z-index: 1;
   content: "";
   background:
-    radial-gradient(ellipse at 12% 16%, rgba(255, 255, 255, 0.06), transparent 34%),
-    linear-gradient(135deg, #1a1a1a 0%, #242424 42%, #333333 100%);
+    radial-gradient(ellipse at 12% 16%, rgba(197, 192, 255, 0.14), transparent 34%),
+    radial-gradient(ellipse at 72% 72%, rgba(255, 255, 255, 0.07), transparent 34%),
+    linear-gradient(135deg, #0c1d36 0%, #10233f 42%, #081426 100%);
   clip-path: polygon(0 0, 70% 0, 30% 100%, 0 100%);
-  opacity: 0.9;
+  opacity: 1;
   pointer-events: none;
 }
 
@@ -1589,18 +1607,49 @@ button:focus-visible {
   padding: clamp(48px, 7vw, 110px);
 }
 
+.login-reference-page .login-design-visual > * {
+  transform: translateY(-14vh);
+}
+
 .login-reference-page .login-design-visual .eyebrow {
-  color: #f2a3b4;
+  color: #c5c0ff;
+  text-shadow: 0 10px 24px rgba(0, 0, 0, 0.36);
 }
 
 .login-reference-page .login-design-visual h1 {
   max-width: 660px;
+  color: #ffffff;
   font-size: clamp(42px, 5vw, 64px);
+  font-weight: 850;
+  text-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
 }
 
 .login-reference-page .login-design-visual p {
   max-width: 480px;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(248, 250, 252, 0.82);
+  font-weight: 650;
+  text-shadow: 0 12px 30px rgba(0, 0, 0, 0.34);
+}
+
+.login-reference-page .auth-preview {
+  border-color: rgba(197, 192, 255, 0.16);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+}
+
+.login-reference-page .auth-preview .badge-blue {
+  background: rgba(197, 192, 255, 0.16);
+  color: #e5e2ff;
+}
+
+.login-reference-page .auth-preview .badge-purple {
+  background: rgba(197, 192, 255, 0.12);
+  color: #d8d5ff;
+}
+
+.login-reference-page .auth-preview .badge-green {
+  background: rgba(16, 185, 129, 0.14);
+  color: #baf7cf;
 }
 
 .login-reference-page .login-design-form-panel {
@@ -1611,6 +1660,10 @@ button:focus-visible {
 .login-reference-page .login-design-card {
   width: min(100%, 440px);
   gap: 16px;
+}
+
+.login-reference-page .register-card {
+  width: min(100%, 500px);
 }
 
 .login-reference-page .login-design-card .field input {
@@ -1625,19 +1678,86 @@ button:focus-visible {
 }
 
 .login-reference-page .login-design-card .field input:focus {
-  border-color: #5b4fd8;
+  border-color: #c5c0ff;
   background: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 0 20px rgba(91, 79, 216, 0.1);
+  box-shadow: 0 0 0 4px rgba(197, 192, 255, 0.14), 0 0 22px rgba(197, 192, 255, 0.1);
 }
 
 .login-reference-page .login-design-submit {
-  background: #c5c0ff;
-  box-shadow: 0 18px 36px rgba(197, 192, 255, 0.2);
-  color: #130067;
+  background: #0c1d36;
+  box-shadow: 0 18px 36px rgba(12, 29, 54, 0.32);
+  color: #ffffff;
 }
 
-.login-reference-page .login-design-submit:hover {
-  filter: brightness(1.08);
+.login-reference-page .login-design-submit:hover,
+.login-reference-page .register-card .button-primary:hover {
+  background: #10233f;
+  filter: none;
+}
+
+.login-reference-page .login-design-submit:focus-visible,
+.login-reference-page .register-card .button-primary:focus-visible {
+  outline: 3px solid rgba(197, 192, 255, 0.48);
+  outline-offset: 4px;
+}
+
+.login-reference-page .register-card .button-primary {
+  min-height: 58px;
+  border: 0;
+  border-radius: 8px;
+  background: #0c1d36;
+  box-shadow: 0 18px 36px rgba(12, 29, 54, 0.32);
+  color: #ffffff;
+}
+
+.login-reference-page .register-card .button-secondary,
+.login-reference-page .register-card .button-ghost {
+  min-height: 54px;
+  border-color: rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  color: #ffffff;
+}
+
+.login-reference-page .register-card .button-secondary:hover,
+.login-reference-page .register-card .button-ghost:hover {
+  border-color: rgba(197, 192, 255, 0.34);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.login-reference-page .register-card .auth-switch {
+  margin: 0;
+  color: #ffffff;
+  font-size: 14px;
+  text-align: center;
+}
+
+.login-reference-page .register-step {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.login-reference-page .register-step.is-active {
+  border-color: rgba(197, 192, 255, 0.42);
+  background: rgba(197, 192, 255, 0.12);
+  color: #e5e2ff;
+}
+
+.login-reference-page .register-step.is-complete {
+  border-color: rgba(134, 239, 172, 0.28);
+  background: rgba(16, 185, 129, 0.12);
+  color: #baf7cf;
+}
+
+.login-reference-page .verification-email {
+  border-color: rgba(197, 192, 255, 0.2);
+  background: rgba(197, 192, 255, 0.09);
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.login-reference-page .resend-panel p {
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .login-reference-page .login-design-divider {
@@ -1697,6 +1817,10 @@ button:focus-visible {
   .login-design-visual {
     min-height: 360px;
     clip-path: none;
+  }
+
+  .login-reference-page .login-design-visual > * {
+    transform: none;
   }
 
   .login-design-form-panel {

@@ -284,8 +284,8 @@ function Register() {
     }
 
     return (
-        <div className="auth-page">
-            <section className="auth-panel auth-visual">
+        <div className="auth-page login-designed-page login-reference-page register-reference-page">
+            <section className="auth-panel auth-visual login-design-visual">
                 <span className="eyebrow">Yeni çalışma alanı</span>
                 <h1>TeamTime ile ekip ritmini düzenle.</h1>
                 <p>Projeleri, görevleri ve takım üyelerini profesyonel bir panelde takip et.</p>
@@ -297,8 +297,8 @@ function Register() {
                 </div>
             </section>
 
-            <section className="auth-panel auth-form-panel">
-                <div className="form-card register-card">
+            <section className="auth-panel auth-form-panel login-design-form-panel">
+                <div className="form-card login-design-card register-card">
                     <div className="register-stepper" aria-label="Kayıt adımları">
                         <span className={step === "details" ? "register-step is-active" : "register-step is-complete"}>
                             1 Bilgiler
