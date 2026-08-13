@@ -1,18 +1,36 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Route, Routes } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { Route, Routes, useLocation } from "react-router-dom";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { mockJsonResponse, renderWithRouter } from "../test/testUtils";
 import Dashboard from "./Dashboard";
 
 describe("Dashboard", () => {
+    beforeEach(() => {
+        window.matchMedia = vi.fn().mockReturnValue({
+            matches: false,
+            media: "",
+            onchange: null,
+            addListener: vi.fn(),
+            removeListener: vi.fn(),
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+            dispatchEvent: vi.fn()
+        });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it("renders statistic cards and returned upcoming tasks", async () => {
         setStoredUser();
         vi.stubGlobal("fetch", dashboardFetchMock());
 
         renderWithRouter(<Dashboard />);
 
-        expect(await screen.findByText("Toplam Proje")).toBeInTheDocument();
+        expect(await screen.findByRole("link", { name: "Projeleri görüntüle" })).toBeInTheDocument();
+        expect(screen.getByText("Toplam Proje")).toBeInTheDocument();
         expect(screen.getByText("12")).toBeInTheDocument();
         expect(screen.getByText("Gecikmiş Görevler")).toBeInTheDocument();
         expect(screen.getByText("3")).toBeInTheDocument();
@@ -69,6 +87,97 @@ describe("Dashboard", () => {
         expect(screen.getByRole("heading", { name: "Project Detail" })).toBeInTheDocument();
     });
 
+    it("navigates from the project count metric to projects", async () => {
+        const user = userEvent.setup();
+        setStoredUser();
+        vi.stubGlobal("fetch", dashboardFetchMock());
+
+        renderWithRouter(
+            <Routes>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/projects" element={<h1>Projects Page</h1>} />
+            </Routes>,
+            { routerProps: { initialEntries: ["/dashboard"] } }
+        );
+
+        await user.click(await screen.findByRole("link", { name: "Projeleri görüntüle" }));
+
+        expect(screen.getByRole("heading", { name: "Projects Page" })).toBeInTheDocument();
+    });
+
+    it("navigates from the team count metric to teams", async () => {
+        const user = userEvent.setup();
+        setStoredUser();
+        vi.stubGlobal("fetch", dashboardFetchMock());
+
+        renderWithRouter(
+            <Routes>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/teams" element={<h1>Teams Page</h1>} />
+            </Routes>,
+            { routerProps: { initialEntries: ["/dashboard"] } }
+        );
+
+        await user.click(await screen.findByRole("link", { name: "Takımları görüntüle" }));
+
+        expect(screen.getByRole("heading", { name: "Teams Page" })).toBeInTheDocument();
+    });
+
+    it("supports keyboard navigation on metric links", async () => {
+        const user = userEvent.setup();
+        setStoredUser();
+        vi.stubGlobal("fetch", dashboardFetchMock());
+
+        renderWithRouter(
+            <Routes>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/projects" element={<h1>Projects Page</h1>} />
+            </Routes>,
+            { routerProps: { initialEntries: ["/dashboard"] } }
+        );
+
+        const projectMetric = await screen.findByRole("link", { name: "Projeleri görüntüle" });
+        projectMetric.focus();
+
+        expect(projectMetric).toHaveFocus();
+
+        await user.keyboard("{Enter}");
+
+        expect(screen.getByRole("heading", { name: "Projects Page" })).toBeInTheDocument();
+    });
+
+    it("keeps metric cards non-navigable while dashboard metrics are loading", () => {
+        setStoredUser();
+        vi.stubGlobal("fetch", dashboardFetchMock({ dashboardPending: true }));
+
+        renderWithRouter(<Dashboard />);
+
+        expect(screen.queryByRole("link", { name: "Projeleri görüntüle" })).not.toBeInTheDocument();
+        expect(screen.getByText("Toplam Proje")).toBeInTheDocument();
+    });
+
+    it("moves focus to the upcoming tasks section from the upcoming metric", async () => {
+        const user = userEvent.setup();
+        setStoredUser();
+        vi.stubGlobal("fetch", dashboardFetchMock());
+        const scrollIntoView = vi.fn();
+        Element.prototype.scrollIntoView = scrollIntoView;
+
+        renderWithRouter(
+            <Routes>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="*" element={<LocationProbe />} />
+            </Routes>,
+            { routerProps: { initialEntries: ["/dashboard"] } }
+        );
+
+        await user.click(await screen.findByRole("link", { name: "Yaklaşan görevler bölümüne git" }));
+
+        const upcomingSection = document.getElementById("dashboard-upcoming-tasks");
+        expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
+        expect(upcomingSection).toHaveFocus();
+    });
+
     it("renders empty states safely", async () => {
         setStoredUser();
         vi.stubGlobal("fetch", dashboardFetchMock({
@@ -111,11 +220,16 @@ function dashboardFetchMock(options: {
     recentProjects?: unknown[];
     upcomingError?: boolean;
     upcomingStatusError?: boolean;
+    dashboardPending?: boolean;
 } = {}) {
     return vi.fn<typeof fetch>((input: RequestInfo | URL) => {
         const url = String(input);
 
         if (url.includes("/dashboard")) {
+            if (options.dashboardPending) {
+                return new Promise<Response>(() => {});
+            }
+
             return Promise.resolve(mockJsonResponse({
                 projectCount: 12,
                 taskCount: 20,
@@ -156,6 +270,11 @@ function dashboardFetchMock(options: {
             { id: 1, projectName: "Recent Project", description: "Project description" }
         ]));
     });
+}
+
+function LocationProbe() {
+    const location = useLocation();
+    return <h1>{location.pathname}</h1>;
 }
 
 function task(id: number, title: string, projectId: number | null) {

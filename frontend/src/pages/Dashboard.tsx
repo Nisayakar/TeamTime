@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, type ReactNode } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { apiFetch, getStoredUser } from "../api";
 import type { Task, TaskPriority, TaskStatus } from "../types/task";
 import { Badge, Button, EmptyState, LoadingState, StatCard, type BadgeVariant } from "../components/ui";
@@ -42,6 +42,7 @@ function Dashboard() {
     const [upcomingTasksError, setUpcomingTasksError] = useState("");
     const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
     const navigate = useNavigate();
+    const metricsReady = dashboardData !== null;
 
     useEffect(() => {
         setUser(getStoredUser());
@@ -113,64 +114,85 @@ function Dashboard() {
             </header>
 
             <section className="dashboard-stat-grid" aria-label="Genel istatistikler">
-                <StatCard
-                    label="Toplam Proje"
-                    value={dashboardData?.projectCount ?? 0}
-                    icon={<FolderIcon />}
-                    tone="primary"
-                    layout="top"
-                />
-                <StatCard
-                    label="Toplam Görev"
-                    value={dashboardData?.taskCount ?? 0}
-                    icon={<TaskIcon />}
-                    tone="primary"
-                    layout="top"
-                />
-                <StatCard
-                    label="Takımlarım"
-                    value={dashboardData?.teamCount ?? 0}
-                    icon={<GroupIcon />}
-                    tone="primary"
-                    layout="top"
-                />
-                <StatCard
-                    label="Tamamlanan"
-                    value={dashboardData?.completedTaskCount ?? 0}
-                    icon={<CheckIcon />}
-                    tone="success"
-                    layout="top"
-                />
-                <StatCard
-                    label="Devam Eden"
-                    value={dashboardData?.inProgressTaskCount ?? 0}
-                    icon={<PlayIcon />}
-                    tone="warning"
-                    layout="top"
-                />
-                <StatCard
-                    label="Gecikmiş Görevler"
-                    value={dashboardData?.overdueTaskCount ?? 0}
-                    icon={<WarningIcon />}
-                    tone="danger"
-                    layout="top"
-                    className={dashboardData && dashboardData.overdueTaskCount > 0 ? "is-overdue" : ""}
-                    hint={dashboardData && dashboardData.overdueTaskCount > 0 ? "görev acil" : undefined}
-                />
-                <StatCard
-                    label="Bugün Bitenler"
-                    value={dashboardData?.dueTodayTaskCount ?? 0}
-                    icon={<DotIcon />}
-                    tone="primary"
-                    layout="top"
-                />
-                <StatCard
-                    label="Yaklaşan Görevler"
-                    value={dashboardData?.upcomingTaskCount ?? 0}
-                    icon={<CalendarIcon />}
-                    tone="primary"
-                    layout="top"
-                />
+                <MetricCardLink to="/projects" ariaLabel="Projeleri görüntüle" disabled={!metricsReady}>
+                    <StatCard
+                        label="Toplam Proje"
+                        value={dashboardData?.projectCount ?? 0}
+                        icon={<FolderIcon />}
+                        tone="primary"
+                        layout="top"
+                    />
+                </MetricCardLink>
+                <MetricCardLink to="/projects" ariaLabel="Projeler üzerinden görevleri görüntüle" disabled={!metricsReady}>
+                    <StatCard
+                        label="Toplam Görev"
+                        value={dashboardData?.taskCount ?? 0}
+                        icon={<TaskIcon />}
+                        tone="primary"
+                        layout="top"
+                    />
+                </MetricCardLink>
+                <MetricCardLink to="/teams" ariaLabel="Takımları görüntüle" disabled={!metricsReady}>
+                    <StatCard
+                        label="Takımlarım"
+                        value={dashboardData?.teamCount ?? 0}
+                        icon={<GroupIcon />}
+                        tone="primary"
+                        layout="top"
+                    />
+                </MetricCardLink>
+                <MetricCardLink to="/projects" ariaLabel="Tamamlanan görevleri projeler üzerinden görüntüle" disabled={!metricsReady}>
+                    <StatCard
+                        label="Tamamlanan"
+                        value={dashboardData?.completedTaskCount ?? 0}
+                        icon={<CheckIcon />}
+                        tone="success"
+                        layout="top"
+                    />
+                </MetricCardLink>
+                <MetricCardLink to="/projects" ariaLabel="Devam eden görevleri projeler üzerinden görüntüle" disabled={!metricsReady}>
+                    <StatCard
+                        label="Devam Eden"
+                        value={dashboardData?.inProgressTaskCount ?? 0}
+                        icon={<PlayIcon />}
+                        tone="warning"
+                        layout="top"
+                    />
+                </MetricCardLink>
+                <MetricCardLink to="/projects" ariaLabel="Gecikmiş görevleri projeler üzerinden görüntüle" disabled={!metricsReady}>
+                    <StatCard
+                        label="Gecikmiş Görevler"
+                        value={dashboardData?.overdueTaskCount ?? 0}
+                        icon={<WarningIcon />}
+                        tone="danger"
+                        layout="top"
+                        className={dashboardData && dashboardData.overdueTaskCount > 0 ? "is-overdue" : ""}
+                        hint={dashboardData && dashboardData.overdueTaskCount > 0 ? "görev acil" : undefined}
+                    />
+                </MetricCardLink>
+                <MetricCardLink to="/projects" ariaLabel="Bugün biten görevleri projeler üzerinden görüntüle" disabled={!metricsReady}>
+                    <StatCard
+                        label="Bugün Bitenler"
+                        value={dashboardData?.dueTodayTaskCount ?? 0}
+                        icon={<DotIcon />}
+                        tone="primary"
+                        layout="top"
+                    />
+                </MetricCardLink>
+                <MetricCardLink
+                    href="#dashboard-upcoming-tasks"
+                    ariaLabel="Yaklaşan görevler bölümüne git"
+                    disabled={!metricsReady}
+                    onAnchorNavigate={focusUpcomingTasksSection}
+                >
+                    <StatCard
+                        label="Yaklaşan Görevler"
+                        value={dashboardData?.upcomingTaskCount ?? 0}
+                        icon={<CalendarIcon />}
+                        tone="primary"
+                        layout="top"
+                    />
+                </MetricCardLink>
             </section>
 
             <div className="dashboard-layout-grid">
@@ -295,7 +317,11 @@ function Dashboard() {
                     )}
                 </div>
 
-                <div className="dashboard-section">
+                <div
+                    className="dashboard-section"
+                    id="dashboard-upcoming-tasks"
+                    tabIndex={-1}
+                >
                     <div className="dashboard-section-header">
                         <div className="dashboard-section-titles">
                             <h2 className="dashboard-section-title">Yaklaşan Görevler</h2>
@@ -354,6 +380,80 @@ function Dashboard() {
     );
 }
 
+type MetricCardLinkProps = {
+    children: ReactNode;
+    ariaLabel: string;
+    disabled: boolean;
+    to?: string;
+    href?: string;
+    onAnchorNavigate?: () => void;
+};
+
+function MetricCardLink({
+    children,
+    ariaLabel,
+    disabled,
+    to,
+    href,
+    onAnchorNavigate
+}: MetricCardLinkProps) {
+    const content = (
+        <>
+            {children}
+            <span className="dashboard-stat-link-indicator" aria-hidden="true">
+                <ChevronRightIcon />
+            </span>
+        </>
+    );
+
+    if (disabled) {
+        return (
+            <div className="dashboard-stat-link is-disabled" aria-disabled="true">
+                {children}
+            </div>
+        );
+    }
+
+    if (to) {
+        return (
+            <Link className="dashboard-stat-link" to={to} aria-label={ariaLabel}>
+                {content}
+            </Link>
+        );
+    }
+
+    return (
+        <a
+            className="dashboard-stat-link"
+            href={href}
+            aria-label={ariaLabel}
+            onClick={event => {
+                if (onAnchorNavigate) {
+                    event.preventDefault();
+                    onAnchorNavigate();
+                }
+            }}
+        >
+            {content}
+        </a>
+    );
+}
+
+function focusUpcomingTasksSection() {
+    const section = document.getElementById("dashboard-upcoming-tasks");
+
+    if (!section) {
+        return;
+    }
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    section.scrollIntoView({
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+        block: "start"
+    });
+    section.focus({ preventScroll: true });
+}
+
 /* ---- Inline SVG icons ---- */
 
 function FolderIcon() {
@@ -386,6 +486,10 @@ function DotIcon() {
 
 function CalendarIcon() {
     return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>;
+}
+
+function ChevronRightIcon() {
+    return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6" /></svg>;
 }
 
 /* ---- Label/format helpers ---- */
