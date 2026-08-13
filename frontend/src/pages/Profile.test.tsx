@@ -118,7 +118,7 @@ describe("Profile", () => {
 
         renderWithProviders(<Profile />);
 
-        expect(await screen.findByRole("heading", { name: "Hesap Ayarları" })).toBeInTheDocument();
+        expect(await screen.findByRole("heading", { name: "Profil Bilgileri" })).toBeInTheDocument();
         expect(screen.getByRole("radio", { name: "Açık tema" })).toBeInTheDocument();
         await user.click(screen.getByRole("button", { name: "Hesabı Sil" }));
 

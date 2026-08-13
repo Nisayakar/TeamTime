@@ -191,7 +191,7 @@ function Profile() {
             </section>
 
             <section className="content-grid two-columns profile-grid">
-                <div className="panel app-form-card">
+                <div className="panel app-form-card profile-card profile-details-card">
                     <div className="section-heading">
                         <span className="eyebrow">Hesap</span>
                         <h2>Profil Bilgileri</h2>
@@ -236,16 +236,10 @@ function Profile() {
                         </button>
                         {profileFeedback && <InlineFeedback type={profileFeedback.type} message={profileFeedback.message} />}
                     </div>
-
                 </div>
 
-                <div className="panel app-form-card">
-                    <div className="section-heading">
-                        <span className="eyebrow">Ayarlar</span>
-                        <h2>Hesap Ayarları</h2>
-                    </div>
-
-                    <div className="stacked-form">
+                <div className="profile-side-column">
+                    <section className="panel app-form-card profile-card profile-section-card">
                         <div className="profile-settings-block">
                             <div>
                                 <strong>Tema</strong>
@@ -253,39 +247,45 @@ function Profile() {
                             </div>
                             <ThemeSwitcher />
                         </div>
+                    </section>
 
+                    <section className="panel app-form-card profile-card profile-section-card">
                         <div className="section-heading compact-heading">
                             <span className="eyebrow">Güvenlik</span>
                             <h3>Şifre Değiştir</h3>
                         </div>
 
-                        <div className="field">
-                            <input
-                                aria-label="Eski Şifre"
-                                type="password"
-                                value={oldPassword}
-                                onChange={(e) => setOldPassword(e.target.value)}
-                                placeholder=" "
-                            />
-                            <label>Eski Şifre</label>
+                        <div className="stacked-form">
+                            <div className="field">
+                                <input
+                                    aria-label="Eski Şifre"
+                                    type="password"
+                                    value={oldPassword}
+                                    onChange={(e) => setOldPassword(e.target.value)}
+                                    placeholder=" "
+                                />
+                                <label>Eski Şifre</label>
+                            </div>
+
+                            <div className="field">
+                                <input
+                                    aria-label="Yeni Şifre"
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    placeholder=" "
+                                />
+                                <label>Yeni Şifre</label>
+                            </div>
+
+                            <button className="button button-primary" onClick={updatePassword} disabled={savingPassword}>
+                                {savingPassword ? "Güncelleniyor..." : "Şifreyi Güncelle"}
+                            </button>
+                            {passwordFeedback && <InlineFeedback type={passwordFeedback.type} message={passwordFeedback.message} />}
                         </div>
+                    </section>
 
-                        <div className="field">
-                            <input
-                                aria-label="Yeni Şifre"
-                                type="password"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                placeholder=" "
-                            />
-                            <label>Yeni Şifre</label>
-                        </div>
-
-                        <button className="button button-primary" onClick={updatePassword} disabled={savingPassword}>
-                            {savingPassword ? "Güncelleniyor..." : "Şifreyi Güncelle"}
-                        </button>
-                        {passwordFeedback && <InlineFeedback type={passwordFeedback.type} message={passwordFeedback.message} />}
-
+                    <section className="panel app-form-card profile-card profile-section-card profile-danger-card">
                         <div className="profile-danger-zone">
                             <div>
                                 <strong>Hesabı Sil</strong>
@@ -295,7 +295,7 @@ function Profile() {
                                 Hesabı Sil
                             </button>
                         </div>
-                    </div>
+                    </section>
                 </div>
             </section>
 
