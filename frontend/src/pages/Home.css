@@ -988,7 +988,6 @@ body:has(.template-home) .app-navbar {
     object-position: center;
     opacity: 1;
     filter: blur(2px) saturate(0.9) brightness(0.86);
-    transform: scale(1.03);
 }
 
 .template-contact::before {

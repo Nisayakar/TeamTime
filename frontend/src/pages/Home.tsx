@@ -390,14 +390,15 @@ function Home() {
             <section id="contact" className="template-contact">
                 <div className="template-contact-video" aria-hidden="true">
                     <video
-                        src="/media/13729409_1920_1080_60fps.mp4"
                         autoPlay
                         muted
                         loop
                         playsInline
-                        preload="metadata"
+                        preload="auto"
                         tabIndex={-1}
-                    />
+                    >
+                        <source src="/media/13729409_1920_1080_60fps.mp4" type="video/mp4" />
+                    </video>
                 </div>
                 <div className="template-container">
                     <div className="template-contact-grid">
