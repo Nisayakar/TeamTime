@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch, getStoredUser } from "../api";
 import InlineFeedback, { type InlineFeedbackType } from "../components/ui/InlineFeedback";
 import type { Project, ProjectRequest } from "../types/project";
-import { canManageTeamProjects, type TeamMember, type TeamRole } from "../types/team";
+import { canManageTeamProjects, getTeamRoleLabel, type TeamMember, type TeamRole } from "../types/team";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
 import { navigateForInitialLoadError } from "../utils/routeErrors";
 
@@ -180,10 +180,29 @@ function EditProject() {
                             onChange={(event) => setDescription(event.target.value)}
                         />
 
-                        <label>Proje Türü</label>
-                        <p className="empty-state app-empty-state">
-                            {project.teamProject ? `Takım Projesi: ${project.teamName || "Takım"}` : "Kişisel Proje"}
-                        </p>
+                        <div className="project-team-readonly">
+                            <div>
+                                <span>Proje Türü</span>
+                                <strong>{project.teamProject ? "Takım Projesi" : "Kişisel Proje"}</strong>
+                            </div>
+                            {
+                                project.teamProject && (
+                                    <div>
+                                        <span>Takım</span>
+                                        <strong>{project.teamName || "Takım"}</strong>
+                                    </div>
+                                )
+                            }
+                            {
+                                project.teamProject && currentTeamRole && (
+                                    <div>
+                                        <span>Rolünüz</span>
+                                        <strong>{getTeamRoleLabel(currentTeamRole)}</strong>
+                                    </div>
+                                )
+                            }
+                            <p>Projenin takım bağlantısı oluşturulduktan sonra değiştirilemez.</p>
+                        </div>
 
                         <div className="form-grid two-columns">
                             <div>

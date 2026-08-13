@@ -65,7 +65,7 @@ public class NotificationService {
         createNotification(
                 recipient,
                 "Takıma eklendiniz",
-                "%s takımına %s rolüyle eklendiniz.".formatted(team.getName(), role),
+                "%s takımına %s rolüyle eklendiniz.".formatted(team.getName(), roleLabel(role)),
                 NotificationType.TEAM_MEMBER_ADDED,
                 team.getId(),
                 TEAM_ENTITY);
@@ -171,6 +171,19 @@ public class NotificationService {
         if (size < 1 || size > MAX_PAGE_SIZE) {
             throw new IllegalArgumentException("Size must be between 1 and 50.");
         }
+    }
+
+    private String roleLabel(String role) {
+        if (role == null) {
+            return "Üye";
+        }
+
+        return switch (role.trim().toUpperCase()) {
+            case "OWNER" -> "Sahip";
+            case "ADMIN" -> "Yönetici";
+            case "MEMBER" -> "Üye";
+            default -> role;
+        };
     }
 
     private NotificationResponse convertToResponse(Notification notification) {

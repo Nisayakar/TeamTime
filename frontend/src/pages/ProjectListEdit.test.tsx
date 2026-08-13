@@ -25,7 +25,9 @@ describe("project list and edit permissions", () => {
             { routerProps: { initialEntries: ["/edit-project/7"] } }
         );
 
-        expect(await screen.findByText("Takım Projesi: Platform Takımı")).toBeInTheDocument();
+        expect(await screen.findByText("Takım Projesi")).toBeInTheDocument();
+        expect(screen.getByText("Platform Takımı")).toBeInTheDocument();
+        expect(screen.getByText("Projenin takım bağlantısı oluşturulduktan sonra değiştirilemez.")).toBeInTheDocument();
         expect(screen.queryByRole("combobox", { name: "Takım" })).not.toBeInTheDocument();
     });
 

@@ -18,6 +18,7 @@ type TeamMember = {
     id: number;
     userId: number;
     userName: string;
+    userEmail?: string;
     teamId: number;
     teamName: string;
     role: TeamRole;
@@ -45,9 +46,15 @@ function TeamDetails() {
     const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
     const [role, setRole] = useState<TeamRole>("MEMBER");
     const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null);
+    const [memberToTransfer, setMemberToTransfer] = useState<TeamMember | null>(null);
+    const [leaveModalOpen, setLeaveModalOpen] = useState(false);
     const [removingMember, setRemovingMember] = useState(false);
+    const [transferringOwner, setTransferringOwner] = useState(false);
+    const [leavingTeam, setLeavingTeam] = useState(false);
     const [memberFeedback, setMemberFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
     const [removeFeedback, setRemoveFeedback] = useState("");
+    const [transferFeedback, setTransferFeedback] = useState("");
+    const [leaveFeedback, setLeaveFeedback] = useState("");
 
     useEffect(() => {
         const query = userSearch.trim();
@@ -101,6 +108,7 @@ function TeamDetails() {
     const currentUserRole = currentMember?.role;
     const canManageMembers = currentUserRole === "OWNER" || currentUserRole === "ADMIN";
     const roleOptions: TeamRole[] = currentUserRole === "OWNER" ? ["MEMBER", "ADMIN"] : ["MEMBER"];
+    const canTransferOwnership = currentUserRole === "OWNER";
 
     function getFullName(user: UserSearchResult) {
         return `${user.name} ${user.surname}`;
@@ -213,8 +221,8 @@ function TeamDetails() {
 
                 return response.json();
             })
-            .then(createdMember => {
-                setMembers([...members, createdMember]);
+            .then(() => {
+                getMembers();
                 setSelectedUser(null);
                 setUserSearch("");
                 setUserResults([]);
@@ -236,6 +244,23 @@ function TeamDetails() {
         }
 
         return false;
+    }
+
+    function canTransferToMember(member: TeamMember) {
+        return canTransferOwnership && member.userId !== currentUserId && member.role !== "OWNER";
+    }
+
+    function getInitials(member: TeamMember) {
+        return member.userName
+            ?.split(" ")
+            .filter(Boolean)
+            .slice(0, 2)
+            .map(part => part.slice(0, 1).toUpperCase())
+            .join("") || "US";
+    }
+
+    function getMemberEmailLabel(member: TeamMember) {
+        return member.userEmail?.trim() || "E-posta bilgisi yok";
     }
 
     async function confirmRemoveMember() {
@@ -265,6 +290,62 @@ function TeamDetails() {
         }
     }
 
+    async function confirmTransferOwnership() {
+        if (!memberToTransfer || transferringOwner) {
+            return;
+        }
+
+        setTransferringOwner(true);
+
+        try {
+            const response = await apiFetch(`/teams/${id}/members/${memberToTransfer.userId}/owner`, {
+                method: "PUT"
+            });
+
+            if (!response.ok) {
+                setTransferFeedback(await parseApiError(response, "Takım sahipliği devredilemedi"));
+                return;
+            }
+
+            const updatedMembers: unknown = await response.json();
+            setMembers(Array.isArray(updatedMembers) ? updatedMembers : []);
+            setMemberFeedback({ type: "success", message: "Takım sahipliği devredildi." });
+            setMemberToTransfer(null);
+        } catch (error) {
+            setTransferFeedback(getErrorMessage(error, "Takım sahipliği devredilemedi"));
+        } finally {
+            setTransferringOwner(false);
+        }
+    }
+
+    async function confirmLeaveTeam() {
+        if (leavingTeam) {
+            return;
+        }
+
+        setLeavingTeam(true);
+
+        try {
+            const response = await apiFetch(`/teams/${id}/members/me`, {
+                method: "DELETE"
+            });
+
+            if (!response.ok) {
+                const message = await parseApiError(response, "Takımdan ayrılamadınız");
+                setLeaveFeedback(message);
+                return;
+            }
+
+            setLeaveModalOpen(false);
+            navigate("/teams", { replace: true });
+        } catch (error) {
+            const message = getErrorMessage(error, "Takımdan ayrılamadınız");
+            setLeaveFeedback(message);
+        } finally {
+            setLeavingTeam(false);
+        }
+    }
+
     return (
         <main className="page-shell app-page team-details-page">
             <section className="hero-card team-profile app-page-header">
@@ -276,6 +357,21 @@ function TeamDetails() {
                     <p>{team ? team.description : "Takım bilgisi bulunamadı"}</p>
                     <span className="badge badge-purple">{members.length} üye</span>
                 </div>
+
+                {
+                    currentMember && (
+                        <button
+                            className="button button-danger team-leave-button"
+                            type="button"
+                            onClick={() => {
+                                setLeaveFeedback("");
+                                setLeaveModalOpen(true);
+                            }}
+                        >
+                            Takımdan Ayrıl
+                        </button>
+                    )
+                }
             </section>
 
             <section className="content-grid two-columns">
@@ -361,23 +457,41 @@ function TeamDetails() {
                             <p className="empty-state">Bu takımda henüz üye yok</p>
                         ) : (
                             members.map(member => (
-                                <div className="member-card" key={member.id}>
-                                    <div className="user-avatar">{member.userName?.slice(0, 2).toUpperCase() || "US"}</div>
+                                <div className={member.role === "OWNER" ? "member-card team-member-card is-owner" : "member-card team-member-card"} key={member.id}>
+                                    <div className="user-avatar">{getInitials(member)}</div>
 
-                                    <div>
+                                    <div className="team-member-main">
                                         <h3>{member.userName}</h3>
-                                        <p>
-                                            Kullanıcı Id: {member.userId}
-                                            {member.userId === currentUserId ? " · Siz" : ""}
-                                        </p>
+                                        <p>{getMemberEmailLabel(member)}</p>
                                     </div>
 
-                                    <span className="badge badge-blue">{getTeamRoleLabel(member.role)}</span>
+                                    <div className="team-member-meta">
+                                        <span className={member.role === "OWNER" ? "badge badge-purple" : "badge badge-blue"}>
+                                            {getTeamRoleLabel(member.role)}
+                                        </span>
+                                        {member.userId === currentUserId && <span className="badge badge-green">Siz</span>}
+                                    </div>
 
-                                    {
-                                        canRemoveMember(member) && (
+                                    <div className="team-member-actions">
+                                        {
+                                            canTransferToMember(member) && (
+                                                <button
+                                                    className="button button-secondary"
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setTransferFeedback("");
+                                                        setMemberToTransfer(member);
+                                                    }}
+                                                >
+                                                    Sahipliği Devret
+                                                </button>
+                                            )
+                                        }
+                                        {
+                                            canRemoveMember(member) && (
                                             <button
                                                 className="button button-danger"
+                                                type="button"
                                                 onClick={() => {
                                                     setRemoveFeedback("");
                                                     setMemberToRemove(member);
@@ -385,8 +499,9 @@ function TeamDetails() {
                                             >
                                                 Çıkar
                                             </button>
-                                        )
-                                    }
+                                            )
+                                        }
+                                    </div>
                                 </div>
                             ))
                         )
@@ -405,6 +520,38 @@ function TeamDetails() {
                 onCancel={() => {
                     setRemoveFeedback("");
                     setMemberToRemove(null);
+                }}
+            />
+            <ConfirmModal
+                open={memberToTransfer !== null}
+                title="Takım sahipliğini devret"
+                message={`Takım sahipliğini ${memberToTransfer?.userName ?? "bu kullanıcı"} kullanıcısına devretmek istediğinizden emin misiniz? Devretme sonrası rolünüz Yönetici olacaktır.`}
+                confirmLabel={transferringOwner ? "Devrediliyor" : "Sahipliği Devret"}
+                variant="warning"
+                loading={transferringOwner}
+                errorMessage={transferFeedback}
+                onConfirm={confirmTransferOwnership}
+                onCancel={() => {
+                    setTransferFeedback("");
+                    setMemberToTransfer(null);
+                }}
+            />
+            <ConfirmModal
+                open={leaveModalOpen}
+                title="Takımdan ayrıl"
+                message={
+                    currentUserRole === "OWNER"
+                        ? "Takımdan ayrılmadan önce takım sahipliğini başka bir üyeye devretmeniz gerekir."
+                        : "Bu takımdan ayrılmak istediğinizden emin misiniz?"
+                }
+                confirmLabel={leavingTeam ? "Ayrılıyor" : "Takımdan Ayrıl"}
+                variant="danger"
+                loading={leavingTeam}
+                errorMessage={leaveFeedback}
+                onConfirm={confirmLeaveTeam}
+                onCancel={() => {
+                    setLeaveFeedback("");
+                    setLeaveModalOpen(false);
                 }}
             />
         </main>

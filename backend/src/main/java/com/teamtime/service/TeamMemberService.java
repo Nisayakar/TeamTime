@@ -54,11 +54,11 @@ public class TeamMemberService {
         TeamRole requestedRole = normalizeRequestedRole(request.getRole());
 
         if (requestedRole == TeamRole.OWNER) {
-            throw new ConflictException("OWNER rolü üye ekleme isteği ile atanamaz.");
+            throw new ConflictException("Sahip rolü üye ekleme isteği ile atanamaz.");
         }
 
         if (requestedRole == TeamRole.ADMIN && currentRole != TeamRole.OWNER) {
-            throw new org.springframework.security.access.AccessDeniedException("ADMIN rolü yalnızca takım sahibi tarafından atanabilir");
+            throw new org.springframework.security.access.AccessDeniedException("Yönetici rolü yalnızca takım sahibi tarafından atanabilir");
         }
 
         TeamMember teamMember = new TeamMember();
@@ -70,7 +70,7 @@ public class TeamMemberService {
         TeamMember savedTeamMember = teamMemberRepository.save(teamMember);
         notificationService.notifyTeamMemberAdded(user, team, requestedRole.name());
 
-        return convertToResponse(savedTeamMember);
+        return convertToResponse(savedTeamMember, false);
     }
 
     @Transactional
@@ -91,11 +91,52 @@ public class TeamMemberService {
         }
 
         if (currentRole == TeamRole.ADMIN && targetRole == TeamRole.ADMIN) {
-            throw new org.springframework.security.access.AccessDeniedException("ADMIN başka bir ADMIN üyeyi çıkaramaz");
+            throw new org.springframework.security.access.AccessDeniedException("Yönetici başka bir yöneticiyi çıkaramaz");
         }
 
         notificationService.notifyTeamMemberRemoved(teamMember.getUser(), teamMember.getTeam());
         teamMemberRepository.delete(teamMember);
+    }
+
+    @Transactional
+    public void leaveTeam(Long teamId, Long currentUserId) {
+        TeamMember currentMembership = requireMembership(teamId, currentUserId);
+
+        if (TeamRole.from(currentMembership.getRole()) == TeamRole.OWNER) {
+            throw new ConflictException("Takımdan çıkmadan önce takım sahipliğini başka bir üyeye devretmelisiniz.");
+        }
+
+        teamMemberRepository.delete(currentMembership);
+    }
+
+    @Transactional
+    public List<TeamMemberResponse> transferOwnership(Long teamId, Long targetUserId, Long currentUserId) {
+        TeamMember currentMembership = requireMembership(teamId, currentUserId);
+
+        if (TeamRole.from(currentMembership.getRole()) != TeamRole.OWNER) {
+            throw new org.springframework.security.access.AccessDeniedException("Takım sahipliğini devretme yetkiniz yok");
+        }
+
+        if (currentUserId.equals(targetUserId)) {
+            throw new ConflictException("Takım sahipliği mevcut sahibine devredilemez.");
+        }
+
+        TeamMember targetMembership = teamMemberRepository.findByTeamIdAndUserId(teamId, targetUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Hedef kullanıcı takım üyesi değil"));
+
+        List<TeamMember> teamMembers = teamMemberRepository.findByTeamId(teamId);
+        teamMembers.forEach(member -> {
+            if (member.getId().equals(targetMembership.getId())) {
+                member.setRole(TeamRole.OWNER.name());
+            } else if (TeamRole.from(member.getRole()) == TeamRole.OWNER) {
+                member.setRole(TeamRole.ADMIN.name());
+            }
+        });
+
+        return teamMemberRepository.saveAll(teamMembers)
+                .stream()
+                .map(teamMember -> convertToResponse(teamMember, true))
+                .toList();
     }
 
     public List<TeamMemberResponse> getTeamMembers(Long teamId, Long currentUserId) {
@@ -103,7 +144,7 @@ public class TeamMemberService {
 
         return teamMemberRepository.findByTeamId(teamId)
                 .stream()
-                .map(this::convertToResponse)
+                .map(teamMember -> convertToResponse(teamMember, true))
                 .toList();
     }
 
@@ -132,13 +173,18 @@ public class TeamMemberService {
     }
 
     private TeamMemberResponse convertToResponse(TeamMember teamMember) {
+        return convertToResponse(teamMember, false);
+    }
+
+    private TeamMemberResponse convertToResponse(TeamMember teamMember, boolean includeEmail) {
         User user = teamMember.getUser();
         Team team = teamMember.getTeam();
 
         return new TeamMemberResponse(
                 teamMember.getId(),
                 user.getId(),
-                user.getName(),
+                "%s %s".formatted(user.getName(), user.getSurname()).trim(),
+                includeEmail ? user.getEmail() : null,
                 team.getId(),
                 team.getName(),
                 teamMember.getRole(),

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { apiFetch, getStoredUser } from "../api";
 import InlineFeedback, { type InlineFeedbackType } from "../components/ui/InlineFeedback";
 import type { ProjectRequest } from "../types/project";
@@ -35,6 +36,11 @@ function CreateProject() {
 
         return Number(selectedTeamId);
     }, [selectedTeamId]);
+
+    const selectedTeam = useMemo(
+        () => teams.find(team => team.id === selectedTeamIdNumber),
+        [selectedTeamIdNumber, teams]
+    );
 
     const getCurrentUserId = useCallback(() => {
         const storedUser: unknown = getStoredUser();
@@ -96,10 +102,6 @@ function CreateProject() {
             const manageableTeams: ManageableTeam[] = teamsWithRoles.filter((team): team is ManageableTeam => team !== null);
             setTeams(manageableTeams);
             setTeamFeedback(null);
-
-            if (manageableTeams.length > 0) {
-                setSelectedTeamId(String(manageableTeams[0].id));
-            }
         } catch (error) {
             setTeamFeedback({ type: "error", message: getErrorMessage(error, "Takımlar yüklenemedi") });
             setTeams([]);
@@ -120,7 +122,7 @@ function CreateProject() {
         }
 
         if (projectMode === "team" && selectedTeamIdNumber === null) {
-            setFormFeedback({ type: "warning", message: "Lütfen proje için bir takım seçin" });
+            setFormFeedback({ type: "warning", message: "Lütfen bir takım seçin." });
             return;
         }
 
@@ -165,7 +167,7 @@ function CreateProject() {
                 </div>
             </section>
 
-            <form className="form-card app-form-card" onSubmit={createProject}>
+            <form className="form-card app-form-card" onSubmit={createProject} noValidate>
                 <div className="section-heading">
                     <span className="eyebrow">Detaylar</span>
                     <h2>Proje bilgileri</h2>
@@ -177,40 +179,84 @@ function CreateProject() {
                 <label>Proje Açıklaması</label>
                 <textarea value={projectDescription} onChange={(e) => setProjectDescription(e.target.value)} />
 
-                <label>Proje Türü</label>
-                <select value={projectMode} onChange={(e) => setProjectMode(e.target.value as ProjectMode)}>
-                    <option value="personal">Kişisel Proje</option>
-                    <option value="team">Takım Projesi</option>
-                </select>
+                <div className="project-type-section">
+                    <label>Proje Türü</label>
+                    <div className="project-type-options" role="radiogroup" aria-label="Proje Türü">
+                        <button
+                            className={projectMode === "personal" ? "project-type-option is-active" : "project-type-option"}
+                            type="button"
+                            role="radio"
+                            aria-checked={projectMode === "personal"}
+                            onClick={() => {
+                                setProjectMode("personal");
+                                setFormFeedback(null);
+                            }}
+                        >
+                            <strong>Kişisel Proje</strong>
+                            <span>Sadece size ait bir proje.</span>
+                        </button>
+
+                        <button
+                            className={projectMode === "team" ? "project-type-option is-active" : "project-type-option"}
+                            type="button"
+                            role="radio"
+                            aria-checked={projectMode === "team"}
+                            onClick={() => {
+                                setProjectMode("team");
+                                setFormFeedback(null);
+                            }}
+                        >
+                            <strong>Takım Projesi</strong>
+                            <span>Bir ekiple ortak yürütülen proje.</span>
+                        </button>
+                    </div>
+                </div>
 
                 {
                     projectMode === "team" && (
-                        <>
+                        <div className="team-project-picker">
                             <label>Takım</label>
+                            <p className="form-helper-text">Yalnızca yönetici veya sahibi olduğunuz takımlar listelenir.</p>
                             {
                                 loadingTeams ? (
                                     <p className="empty-state app-empty-state">Takımlar yükleniyor...</p>
                                 ) : teamFeedback ? (
                                     <InlineFeedback type={teamFeedback.type} message={teamFeedback.message} />
                                 ) : teams.length === 0 ? (
-                                    <p className="empty-state app-empty-state">Proje oluşturabileceğiniz yönetilebilir takım bulunmuyor.</p>
+                                    <div className="empty-state app-empty-state team-project-empty">
+                                        <strong>Takım projesi oluşturabileceğiniz bir takım bulunmuyor.</strong>
+                                        <span>Takım projesi oluşturmak için bir takımda Sahip veya Yönetici rolünde olmanız gerekir.</span>
+                                        <Link className="button button-secondary" to="/teams">Takımlarıma Git</Link>
+                                    </div>
                                 ) : (
-                                    <select
-                                        value={selectedTeamId}
-                                        onChange={(e) => setSelectedTeamId(e.target.value)}
-                                        required
-                                    >
+                                    <>
+                                        <select
+                                            aria-label="Takım"
+                                            value={selectedTeamId}
+                                            onChange={(e) => setSelectedTeamId(e.target.value)}
+                                            required
+                                        >
+                                            <option value="">Bir takım seçin</option>
+                                            {
+                                                teams.map(team => (
+                                                    <option value={team.id} key={team.id}>
+                                                        {team.name}
+                                                    </option>
+                                                ))
+                                            }
+                                        </select>
                                         {
-                                            teams.map(team => (
-                                                <option value={team.id} key={team.id}>
-                                                    {team.name} - {getTeamRoleLabel(team.role)}
-                                                </option>
-                                            ))
+                                            selectedTeam && (
+                                                <div className="selected-team-summary">
+                                                    <strong>{selectedTeam.name}</strong>
+                                                    <span>Rolünüz: {getTeamRoleLabel(selectedTeam.role)}</span>
+                                                </div>
+                                            )
                                         }
-                                    </select>
+                                    </>
                                 )
                             }
-                        </>
+                        </div>
                     )
                 }
 

@@ -10,6 +10,8 @@ public class TeamMemberResponse {
 
     private String userName;
 
+    private String userEmail;
+
     private Long teamId;
 
     private String teamName;
@@ -26,6 +28,18 @@ public class TeamMemberResponse {
         this.id = id;
         this.userId = userId;
         this.userName = userName;
+        this.teamId = teamId;
+        this.teamName = teamName;
+        this.role = role;
+        this.joinedDate = joinedDate;
+    }
+
+    public TeamMemberResponse(Long id, Long userId, String userName, String userEmail, Long teamId, String teamName,
+            String role, LocalDateTime joinedDate) {
+        this.id = id;
+        this.userId = userId;
+        this.userName = userName;
+        this.userEmail = userEmail;
         this.teamId = teamId;
         this.teamName = teamName;
         this.role = role;
@@ -54,6 +68,14 @@ public class TeamMemberResponse {
 
     public void setUserName(String userName) {
         this.userName = userName;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
 
     public Long getTeamId() {

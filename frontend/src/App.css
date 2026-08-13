@@ -2868,6 +2868,103 @@ button:focus-visible {
   color: #ffffff;
 }
 
+.project-type-section,
+.team-project-picker {
+  display: grid;
+  gap: 10px;
+}
+
+.project-type-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.project-type-option {
+  display: grid;
+  gap: 5px;
+  min-height: 86px;
+  padding: 14px;
+  border: 1px solid var(--tt-border);
+  border-radius: 14px;
+  background: var(--tt-surface);
+  color: var(--tt-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.project-type-option:hover {
+  border-color: var(--tt-border-strong);
+  background: var(--tt-surface-secondary);
+}
+
+.project-type-option.is-active {
+  border-color: var(--tt-primary);
+  background: var(--tt-primary-soft);
+  box-shadow: 0 0 0 3px var(--tt-primary-soft);
+}
+
+.project-type-option strong,
+.selected-team-summary strong,
+.project-team-readonly strong,
+.team-project-empty strong {
+  color: var(--tt-text);
+  font-weight: 900;
+}
+
+.project-type-option span,
+.form-helper-text,
+.selected-team-summary span,
+.project-team-readonly span,
+.team-project-empty span {
+  color: var(--tt-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.form-helper-text {
+  margin: -4px 0 2px;
+}
+
+.selected-team-summary,
+.project-team-readonly {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--tt-border);
+  border-radius: 14px;
+  background: var(--tt-surface-secondary);
+}
+
+.selected-team-summary {
+  gap: 3px;
+}
+
+.project-team-readonly {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.project-team-readonly > div {
+  display: grid;
+  gap: 4px;
+}
+
+.project-team-readonly p {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.team-project-empty {
+  display: grid;
+  gap: 8px;
+}
+
+.team-project-empty .button {
+  width: fit-content;
+  margin-top: 4px;
+}
+
 .app-empty-state,
 .app-page .empty-state,
 .projects-empty-state {
@@ -3039,8 +3136,47 @@ button:focus-visible {
   color: var(--tt-text);
 }
 
+.team-details-page .team-member-card {
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 14px;
+}
+
+.team-details-page .team-member-card.is-owner {
+  border-color: color-mix(in srgb, var(--tt-primary) 32%, var(--tt-border));
+}
+
+.team-member-main {
+  min-width: 0;
+}
+
+.team-member-main h3 {
+  margin: 0;
+}
+
 .team-details-page .member-card p {
   color: var(--tt-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.team-member-meta,
+.team-member-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.team-member-actions {
+  justify-content: flex-end;
+}
+
+.team-member-actions .button,
+.team-leave-button {
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
 }
 
 .team-details-page .autocomplete-list {
@@ -3063,6 +3199,23 @@ button:focus-visible {
 
 [data-theme="dark"] .team-details-page .member-card {
   background: #18181b;
+}
+
+@media (max-width: 720px) {
+  .team-details-page .team-member-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .team-member-meta,
+  .team-member-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  .team-member-actions .button,
+  .team-leave-button {
+    width: 100%;
+  }
 }
 
 .team-edit-form {
@@ -3304,6 +3457,16 @@ button:focus-visible {
   .profile-page .stacked-form .button,
   .profile-email-change-actions .button,
   .profile-email-resend .button,
+  .project-type-options,
+  .project-team-readonly,
+  .profile-danger-zone .button {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-page .stacked-form .button,
+  .profile-email-change-actions .button,
+  .profile-email-resend .button,
+  .team-project-empty .button,
   .profile-danger-zone .button {
     width: 100%;
   }

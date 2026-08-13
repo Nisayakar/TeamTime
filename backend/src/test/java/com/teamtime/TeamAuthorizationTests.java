@@ -128,6 +128,24 @@ class TeamAuthorizationTests {
     }
 
     @Test
+    void teamMemberResponseIncludesEmailOnlyForTeamMembers() throws Exception {
+        Long teamId = createTeam(owner, "Visible Email Team");
+        addMember(owner, teamId, member.getId(), TeamRole.MEMBER);
+
+        mockMvc.perform(get("/api/teams/{teamId}/members", teamId)
+                        .header(AUTHORIZATION, bearer(member)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].userName").value("Owner User"))
+                .andExpect(jsonPath("$[0].userEmail").value("owner@example.com"))
+                .andExpect(jsonPath("$[1].userName").value("Member User"))
+                .andExpect(jsonPath("$[1].userEmail").value("member@example.com"));
+
+        mockMvc.perform(get("/api/teams/{teamId}/members", teamId)
+                        .header(AUTHORIZATION, bearer(outsider)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void memberCannotUpdateOrDeleteTeam() throws Exception {
         Long teamId = createTeam(owner, "Managed Team");
         addMember(owner, teamId, member.getId(), TeamRole.MEMBER);
@@ -159,6 +177,101 @@ class TeamAuthorizationTests {
                         .content(addMemberJson(member.getId(), TeamRole.MEMBER)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.role").value(TeamRole.MEMBER.name()));
+    }
+
+    @Test
+    void onlyOwnerCanTransferOwnershipToExistingMember() throws Exception {
+        Long teamId = createTeam(owner, "Transfer Team");
+        addMember(owner, teamId, admin.getId(), TeamRole.ADMIN);
+        addMember(owner, teamId, member.getId(), TeamRole.MEMBER);
+
+        mockMvc.perform(put("/api/teams/{teamId}/members/{userId}/owner", teamId, member.getId())
+                        .header(AUTHORIZATION, bearer(admin)))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(put("/api/teams/{teamId}/members/{userId}/owner", teamId, admin.getId())
+                        .header(AUTHORIZATION, bearer(member)))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(put("/api/teams/{teamId}/members/{userId}/owner", teamId, outsider.getId())
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(put("/api/teams/{teamId}/members/{userId}/owner", teamId, owner.getId())
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isConflict());
+
+        mockMvc.perform(put("/api/teams/{teamId}/members/{userId}/owner", teamId, member.getId())
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(3)));
+
+        TeamMember previousOwner = teamMemberRepository.findByTeamIdAndUserId(teamId, owner.getId()).orElseThrow();
+        TeamMember newOwner = teamMemberRepository.findByTeamIdAndUserId(teamId, member.getId()).orElseThrow();
+
+        org.assertj.core.api.Assertions.assertThat(previousOwner.getRole()).isEqualTo(TeamRole.ADMIN.name());
+        org.assertj.core.api.Assertions.assertThat(newOwner.getRole()).isEqualTo(TeamRole.OWNER.name());
+        org.assertj.core.api.Assertions.assertThat(ownerCount(teamId)).isEqualTo(1);
+    }
+
+    @Test
+    void membersAndAdminsCanLeaveButOwnerMustTransferFirst() throws Exception {
+        Long memberLeaveTeamId = createTeam(owner, "Member Leave Team");
+        addMember(owner, memberLeaveTeamId, member.getId(), TeamRole.MEMBER);
+
+        mockMvc.perform(delete("/api/teams/{teamId}/members/me", memberLeaveTeamId)
+                        .header(AUTHORIZATION, bearer(member)))
+                .andExpect(status().isNoContent());
+
+        org.assertj.core.api.Assertions
+                .assertThat(teamMemberRepository.findByTeamIdAndUserId(memberLeaveTeamId, member.getId()))
+                .isEmpty();
+
+        Long adminLeaveTeamId = createTeam(owner, "Admin Leave Team");
+        addMember(owner, adminLeaveTeamId, admin.getId(), TeamRole.ADMIN);
+
+        mockMvc.perform(delete("/api/teams/{teamId}/members/me", adminLeaveTeamId)
+                        .header(AUTHORIZATION, bearer(admin)))
+                .andExpect(status().isNoContent());
+
+        org.assertj.core.api.Assertions
+                .assertThat(teamMemberRepository.findByTeamIdAndUserId(adminLeaveTeamId, admin.getId()))
+                .isEmpty();
+
+        Long ownerLeaveTeamId = createTeam(owner, "Owner Leave Team");
+        addMember(owner, ownerLeaveTeamId, member.getId(), TeamRole.MEMBER);
+
+        mockMvc.perform(delete("/api/teams/{teamId}/members/me", ownerLeaveTeamId)
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Takımdan çıkmadan önce takım sahipliğini başka bir üyeye devretmelisiniz."));
+
+        mockMvc.perform(put("/api/teams/{teamId}/members/{userId}/owner", ownerLeaveTeamId, member.getId())
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(delete("/api/teams/{teamId}/members/me", ownerLeaveTeamId)
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isNoContent());
+
+        org.assertj.core.api.Assertions
+                .assertThat(teamMemberRepository.findByTeamIdAndUserId(ownerLeaveTeamId, owner.getId()))
+                .isEmpty();
+        org.assertj.core.api.Assertions.assertThat(ownerCount(ownerLeaveTeamId)).isEqualTo(1);
+    }
+
+    @Test
+    void leaveEndpointDoesNotAcceptAnotherUserId() throws Exception {
+        Long teamId = createTeam(owner, "Leave Safety Team");
+        addMember(owner, teamId, member.getId(), TeamRole.MEMBER);
+
+        mockMvc.perform(delete("/api/teams/{teamId}/members/{userId}", teamId, owner.getId())
+                        .header(AUTHORIZATION, bearer(member)))
+                .andExpect(status().isForbidden());
+
+        org.assertj.core.api.Assertions
+                .assertThat(teamMemberRepository.findByTeamIdAndUserId(teamId, owner.getId()))
+                .isPresent();
     }
 
     @Test
@@ -241,6 +354,13 @@ class TeamAuthorizationTests {
                   "role": "%s"
                 }
                 """.formatted(userId, role.name());
+    }
+
+    private long ownerCount(Long teamId) {
+        return teamMemberRepository.findByTeamId(teamId)
+                .stream()
+                .filter(teamMember -> TeamRole.from(teamMember.getRole()) == TeamRole.OWNER)
+                .count();
     }
 
     private String bearer(User user) {

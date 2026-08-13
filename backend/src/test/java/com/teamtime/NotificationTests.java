@@ -108,7 +108,7 @@ class NotificationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(1)))
                 .andExpect(jsonPath("$.content[0].title").value("Takıma eklendiniz"))
-                .andExpect(jsonPath("$.content[0].message").value("Frontend Takımı takımına MEMBER rolüyle eklendiniz."))
+                .andExpect(jsonPath("$.content[0].message").value("Frontend Takımı takımına Üye rolüyle eklendiniz."))
                 .andExpect(jsonPath("$.content[0].type").value("TEAM_MEMBER_ADDED"))
                 .andExpect(jsonPath("$.content[0].read").value(false))
                 .andExpect(jsonPath("$.content[0].relatedEntityId").value(teamId))
