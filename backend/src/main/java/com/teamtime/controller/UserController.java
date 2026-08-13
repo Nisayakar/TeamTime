@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.teamtime.dto.LoginRequest;
 import com.teamtime.dto.LoginResponse;
+import com.teamtime.dto.EmailChangeCodeRequest;
 import com.teamtime.dto.PasswordResetCodeRequest;
 import com.teamtime.dto.ProfileResponse;
 import com.teamtime.dto.RegisterCodeRequest;
@@ -14,6 +15,7 @@ import com.teamtime.dto.ResetPasswordRequest;
 import com.teamtime.dto.UpdatePasswordRequest;
 import com.teamtime.dto.UpdateProfileRequest;
 import com.teamtime.dto.UserSearchResponse;
+import com.teamtime.dto.VerifyEmailChangeRequest;
 import com.teamtime.dto.VerifyPasswordResetCodeRequest;
 import com.teamtime.dto.VerifyRegistrationRequest;
 import com.teamtime.service.UserService;
@@ -109,6 +111,36 @@ public class UserController {
         Long userId = (Long) authentication.getPrincipal();
 
         return ResponseEntity.ok(userService.updateProfile(userId, request));
+    }
+
+    @PostMapping("/profile/email/request-code")
+    public ResponseEntity<String> requestEmailChangeCode(
+            Authentication authentication,
+            @Valid @RequestBody EmailChangeCodeRequest request
+    ) {
+        Long userId = (Long) authentication.getPrincipal();
+
+        return ResponseEntity.ok(userService.requestEmailChangeCode(userId, request));
+    }
+
+    @PostMapping("/profile/email/resend-code")
+    public ResponseEntity<String> resendEmailChangeCode(
+            Authentication authentication,
+            @Valid @RequestBody EmailChangeCodeRequest request
+    ) {
+        Long userId = (Long) authentication.getPrincipal();
+
+        return ResponseEntity.ok(userService.resendEmailChangeCode(userId, request));
+    }
+
+    @PostMapping("/profile/email/verify")
+    public ResponseEntity<ProfileResponse> verifyEmailChange(
+            Authentication authentication,
+            @Valid @RequestBody VerifyEmailChangeRequest request
+    ) {
+        Long userId = (Long) authentication.getPrincipal();
+
+        return ResponseEntity.ok(userService.verifyEmailChange(userId, request));
     }
 
     @PutMapping("/profile/password")

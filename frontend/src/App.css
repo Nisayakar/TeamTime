@@ -3158,6 +3158,44 @@ button:focus-visible {
   margin-top: 4px;
 }
 
+.profile-email-change-trigger {
+  align-self: flex-start;
+}
+
+.profile-email-change-panel {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--tt-border);
+  border-radius: 8px;
+  background: var(--tt-surface-secondary);
+}
+
+[data-theme="dark"] .profile-email-change-panel {
+  background: color-mix(in srgb, var(--tt-surface) 84%, white 4%);
+}
+
+.profile-email-change-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.profile-email-change-copy,
+.profile-email-resend p {
+  margin: 0;
+  color: var(--tt-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.profile-email-resend {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+}
+
 .profile-settings-block,
 .profile-danger-zone {
   display: flex;
@@ -3264,6 +3302,8 @@ button:focus-visible {
   }
 
   .profile-page .stacked-form .button,
+  .profile-email-change-actions .button,
+  .profile-email-resend .button,
   .profile-danger-zone .button {
     width: 100%;
   }

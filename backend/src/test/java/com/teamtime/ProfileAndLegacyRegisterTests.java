@@ -1,7 +1,9 @@
 package com.teamtime;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -11,10 +13,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.teamtime.entity.User;
+import com.teamtime.entity.EmailChangeRequest;
+import com.teamtime.repository.EmailChangeRequestRepository;
 import com.teamtime.repository.PendingRegistrationRepository;
 import com.teamtime.repository.UserRepository;
 import com.teamtime.security.JwtService;
 import com.teamtime.service.VerificationCodeGenerator;
+import com.teamtime.service.VerificationCodeHashService;
+
+import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +60,12 @@ class ProfileAndLegacyRegisterTests {
     private PendingRegistrationRepository pendingRegistrationRepository;
 
     @Autowired
+    private EmailChangeRequestRepository emailChangeRequestRepository;
+
+    @Autowired
+    private VerificationCodeHashService verificationCodeHashService;
+
+    @Autowired
     private JwtService jwtService;
 
     @Autowired
@@ -69,8 +82,10 @@ class ProfileAndLegacyRegisterTests {
 
     @BeforeEach
     void setUp() {
+        emailChangeRequestRepository.deleteAll();
         pendingRegistrationRepository.deleteAll();
         userRepository.deleteAll();
+        reset(verificationCodeGenerator, javaMailSender);
         when(verificationCodeGenerator.generateSixDigitCode()).thenReturn("123456");
         doNothing().when(javaMailSender).send(any(SimpleMailMessage.class));
 
@@ -107,7 +122,7 @@ class ProfileAndLegacyRegisterTests {
     }
 
     @Test
-    void duplicateProfileEmailReturnsConflict() throws Exception {
+    void profileUpdateCannotChangeEmailDirectly() throws Exception {
         mockMvc.perform(put("/api/profile")
                         .header(AUTHORIZATION, bearer(owner))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -115,11 +130,31 @@ class ProfileAndLegacyRegisterTests {
                                 {
                                   "name": "Ayşe",
                                   "surname": "Demir",
-                                  "email": "mehmet@example.com"
+                                  "email": "owner-updated@example.com"
                                 }
                                 """))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value("Bu email adresi ile kayıtlı bir kullanıcı zaten var"));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("E-posta adresi doğrulama kodu ile değiştirilmelidir"));
+
+        User unchangedOwner = userRepository.findById(owner.getId()).orElseThrow();
+        assertThat(unchangedOwner.getEmail()).isEqualTo("ayse@example.com");
+    }
+
+    @Test
+    void profileUpdateStillUpdatesNameAndSurname() throws Exception {
+        mockMvc.perform(put("/api/profile")
+                        .header(AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Ayşe Nur",
+                                  "surname": "Yılmaz"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Ayşe Nur"))
+                .andExpect(jsonPath("$.surname").value("Yılmaz"))
+                .andExpect(jsonPath("$.email").value("ayse@example.com"));
     }
 
     @Test
@@ -176,11 +211,240 @@ class ProfileAndLegacyRegisterTests {
                                   "email": "owner-updated@example.com"
                                 }
                                 """.formatted(otherUser.getId())))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(owner.getId()));
+                .andExpect(status().isBadRequest());
 
         User unchangedOtherUser = userRepository.findById(otherUser.getId()).orElseThrow();
-        org.assertj.core.api.Assertions.assertThat(unchangedOtherUser.getEmail()).isEqualTo("mehmet@example.com");
+        assertThat(unchangedOtherUser.getEmail()).isEqualTo("mehmet@example.com");
+        User unchangedOwner = userRepository.findById(owner.getId()).orElseThrow();
+        assertThat(unchangedOwner.getEmail()).isEqualTo("ayse@example.com");
+    }
+
+    @Test
+    void authenticatedUserCanRequestEmailChangeCode() throws Exception {
+        mockMvc.perform(post("/api/profile/email/request-code")
+                        .header(AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "new@example.com"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Doğrulama kodu yeni e-posta adresinize gönderildi"));
+
+        EmailChangeRequest request = emailChangeRequestRepository
+                .findByUserIdAndNewEmailIgnoreCase(owner.getId(), "new@example.com")
+                .orElseThrow();
+
+        assertThat(request.getVerificationCodeHash()).isNotEqualTo("123456");
+        assertThat(verificationCodeHashService.matches("new@example.com", "123456", request.getVerificationCodeHash())).isTrue();
+        assertThat(userRepository.findById(owner.getId()).orElseThrow().getEmail()).isEqualTo("ayse@example.com");
+    }
+
+    @Test
+    void emailChangeInvalidSameAndDuplicateEmailsAreRejected() throws Exception {
+        mockMvc.perform(post("/api/profile/email/request-code")
+                        .header(AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "not-email"
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post("/api/profile/email/request-code")
+                        .header(AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "AYSE@example.com"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Mevcut e-posta adresinizden farklı bir e-posta girin"));
+
+        mockMvc.perform(post("/api/profile/email/request-code")
+                        .header(AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "mehmet@example.com"
+                                }
+                                """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Bu email adresi ile kayıtlı bir kullanıcı zaten var"));
+    }
+
+    @Test
+    void successfulEmailChangeVerifyUpdatesUserAndDeletesPending() throws Exception {
+        requestEmailChange("new@example.com");
+
+        mockMvc.perform(post("/api/profile/email/verify")
+                        .header(AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "new@example.com",
+                                  "code": "123456"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("new@example.com"));
+
+        assertThat(userRepository.findById(owner.getId()).orElseThrow().getEmail()).isEqualTo("new@example.com");
+        assertThat(emailChangeRequestRepository.findByUserIdAndNewEmailIgnoreCase(owner.getId(), "new@example.com")).isEmpty();
+    }
+
+    @Test
+    void emailChangeSupportsLeadingZeroCode() throws Exception {
+        when(verificationCodeGenerator.generateSixDigitCode()).thenReturn("004271");
+        requestEmailChange("zero@example.com");
+
+        mockMvc.perform(post("/api/profile/email/verify")
+                        .header(AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "zero@example.com",
+                                  "code": "004271"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("zero@example.com"));
+    }
+
+    @Test
+    void wrongEmailChangeCodeIncrementsAttemptsAndBlocksAfterFiveFailures() throws Exception {
+        requestEmailChange("new@example.com");
+
+        for (int i = 0; i < 5; i++) {
+            mockMvc.perform(post("/api/profile/email/verify")
+                            .header(AUTHORIZATION, bearer(owner))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "email": "new@example.com",
+                                      "code": "000000"
+                                    }
+                                    """))
+                    .andExpect(status().isBadRequest());
+        }
+
+        EmailChangeRequest request = emailChangeRequestRepository
+                .findByUserIdAndNewEmailIgnoreCase(owner.getId(), "new@example.com")
+                .orElseThrow();
+        assertThat(request.getFailedAttempts()).isEqualTo(5);
+
+        mockMvc.perform(post("/api/profile/email/verify")
+                        .header(AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "new@example.com",
+                                  "code": "123456"
+                                }
+                                """))
+                .andExpect(status().isTooManyRequests());
+
+        assertThat(userRepository.findById(owner.getId()).orElseThrow().getEmail()).isEqualTo("ayse@example.com");
+    }
+
+    @Test
+    void expiredEmailChangeCodeIsRejected() throws Exception {
+        requestEmailChange("new@example.com");
+        EmailChangeRequest request = emailChangeRequestRepository
+                .findByUserIdAndNewEmailIgnoreCase(owner.getId(), "new@example.com")
+                .orElseThrow();
+        request.setExpiresAt(Instant.now().minusSeconds(1));
+        emailChangeRequestRepository.save(request);
+
+        mockMvc.perform(post("/api/profile/email/verify")
+                        .header(AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "new@example.com",
+                                  "code": "123456"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Doğrulama kodunun süresi doldu"));
+
+        assertThat(userRepository.findById(owner.getId()).orElseThrow().getEmail()).isEqualTo("ayse@example.com");
+    }
+
+    @Test
+    void emailChangeResendCooldownAndInvalidationAreEnforced() throws Exception {
+        when(verificationCodeGenerator.generateSixDigitCode()).thenReturn("111111", "222222");
+        requestEmailChange("new@example.com");
+
+        mockMvc.perform(post("/api/profile/email/resend-code")
+                        .header(AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "new@example.com"
+                                }
+                                """))
+                .andExpect(status().isTooManyRequests());
+
+        EmailChangeRequest request = emailChangeRequestRepository
+                .findByUserIdAndNewEmailIgnoreCase(owner.getId(), "new@example.com")
+                .orElseThrow();
+        request.setResendAvailableAt(Instant.now().minusSeconds(1));
+        emailChangeRequestRepository.save(request);
+
+        mockMvc.perform(post("/api/profile/email/resend-code")
+                        .header(AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "new@example.com"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/profile/email/verify")
+                        .header(AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "new@example.com",
+                                  "code": "111111"
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post("/api/profile/email/verify")
+                        .header(AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "new@example.com",
+                                  "code": "222222"
+                                }
+                                """))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void otherUserCannotVerifyEmailChangeRequest() throws Exception {
+        requestEmailChange("new@example.com");
+
+        mockMvc.perform(post("/api/profile/email/verify")
+                        .header(AUTHORIZATION, bearer(otherUser))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "new@example.com",
+                                  "code": "123456"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Doğrulama kodu geçersiz"));
+
+        assertThat(userRepository.findById(owner.getId()).orElseThrow().getEmail()).isEqualTo("ayse@example.com");
     }
 
     @Test
@@ -198,8 +462,20 @@ class ProfileAndLegacyRegisterTests {
                 .andExpect(status().isOk())
                 .andExpect(content().string("Doğrulama kodu e-posta adresinize gönderildi"));
 
-        org.assertj.core.api.Assertions.assertThat(userRepository.existsByEmailIgnoreCase("legacy@example.com")).isFalse();
-        org.assertj.core.api.Assertions.assertThat(pendingRegistrationRepository.findByEmail("legacy@example.com")).isPresent();
+        assertThat(userRepository.existsByEmailIgnoreCase("legacy@example.com")).isFalse();
+        assertThat(pendingRegistrationRepository.findByEmail("legacy@example.com")).isPresent();
+    }
+
+    private void requestEmailChange(String email) throws Exception {
+        mockMvc.perform(post("/api/profile/email/request-code")
+                        .header(AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "%s"
+                                }
+                                """.formatted(email)))
+                .andExpect(status().isOk());
     }
 
     private String bearer(User user) {

@@ -78,4 +78,32 @@ public class EmailVerificationMailService {
             throw new EmailDeliveryException("Şifre sıfırlama e-postası gönderilemedi", exception);
         }
     }
+
+    public void sendEmailChangeCode(String to, String code) {
+        if (senderEmail == null || senderEmail.isBlank()) {
+            throw new MailConfigurationException("E-posta gönderici hesabı yapılandırılmamış");
+        }
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(senderEmail);
+        message.setTo(to);
+        message.setSubject("TeamTime e-posta değişikliği doğrulama kodunuz");
+        message.setText("""
+                Merhaba,
+
+                TeamTime hesabınızın e-posta adresini değiştirmek için doğrulama kodunuz:
+
+                %s
+
+                Bu kod 10 dakika boyunca geçerlidir.
+
+                Bu işlemi siz başlatmadıysanız bu e-postayı yok sayabilirsiniz.
+                """.formatted(code));
+
+        try {
+            mailSender.send(message);
+        } catch (MailException exception) {
+            throw new EmailDeliveryException("E-posta değişikliği doğrulama kodu gönderilemedi", exception);
+        }
+    }
 }

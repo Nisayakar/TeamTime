@@ -11,7 +11,6 @@ public class UpdateProfileRequest {
     @NotBlank(message = "Soyad boş bırakılamaz")
     private String surname;
 
-    @NotBlank(message = "Email boş bırakılamaz")
     @Email(message = "Email formatı doğru olmalı")
     private String email;
 

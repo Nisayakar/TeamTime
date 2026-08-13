@@ -6,11 +6,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.teamtime.dto.RegisterCodeRequest;
 import com.teamtime.dto.RegisterRequest;
+import com.teamtime.dto.EmailChangeCodeRequest;
 import com.teamtime.dto.PasswordResetCodeRequest;
 import com.teamtime.dto.ResendRegistrationCodeRequest;
 import com.teamtime.dto.ResetPasswordRequest;
+import com.teamtime.dto.VerifyEmailChangeRequest;
 import com.teamtime.dto.VerifyRegistrationRequest;
 import com.teamtime.dto.VerifyPasswordResetCodeRequest;
+import com.teamtime.entity.EmailChangeRequest;
 import com.teamtime.entity.PendingRegistration;
 import com.teamtime.entity.PasswordResetRequest;
 import com.teamtime.entity.Project;
@@ -23,6 +26,7 @@ import com.teamtime.exception.TooManyVerificationAttemptsException;
 import com.teamtime.exception.VerificationCodeException;
 import com.teamtime.repository.PendingRegistrationRepository;
 import com.teamtime.repository.PasswordResetRequestRepository;
+import com.teamtime.repository.EmailChangeRequestRepository;
 import com.teamtime.repository.ProjectRepository;
 import com.teamtime.repository.TaskRepository;
 import com.teamtime.repository.TeamMemberRepository;
@@ -57,6 +61,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PendingRegistrationRepository pendingRegistrationRepository;
     private final PasswordResetRequestRepository passwordResetRequestRepository;
+    private final EmailChangeRequestRepository emailChangeRequestRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final VerificationCodeGenerator verificationCodeGenerator;
@@ -72,6 +77,7 @@ public class UserService {
             UserRepository userRepository,
             PendingRegistrationRepository pendingRegistrationRepository,
             PasswordResetRequestRepository passwordResetRequestRepository,
+            EmailChangeRequestRepository emailChangeRequestRepository,
             JwtService jwtService,
             PasswordEncoder passwordEncoder,
             VerificationCodeGenerator verificationCodeGenerator,
@@ -86,6 +92,7 @@ public class UserService {
         this.userRepository = userRepository;
         this.pendingRegistrationRepository = pendingRegistrationRepository;
         this.passwordResetRequestRepository = passwordResetRequestRepository;
+        this.emailChangeRequestRepository = emailChangeRequestRepository;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
         this.verificationCodeGenerator = verificationCodeGenerator;
@@ -340,19 +347,95 @@ public class UserService {
         return toProfileResponse(user);
     }
 
+    @Transactional
     public ProfileResponse updateProfile(Long userId, UpdateProfileRequest request) {
         User user = findUserById(userId);
-        String email = request.getEmail().trim();
 
-        if (!user.getEmail().equalsIgnoreCase(email) && userRepository.existsByEmailIgnoreCase(email)) {
-            throw new DuplicateEmailException("Bu email adresi ile kayıtlı bir kullanıcı zaten var");
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            String requestedEmail = normalizeEmail(request.getEmail());
+
+            if (!user.getEmail().equalsIgnoreCase(requestedEmail)) {
+                throw new IllegalArgumentException("E-posta adresi doğrulama kodu ile değiştirilmelidir");
+            }
         }
 
         user.setName(request.getName().trim());
         user.setSurname(request.getSurname().trim());
-        user.setEmail(email);
 
         User updatedUser = userRepository.save(user);
+
+        return toProfileResponse(updatedUser);
+    }
+
+    @Transactional
+    public String requestEmailChangeCode(Long userId, EmailChangeCodeRequest request) {
+        User user = findUserById(userId);
+        String newEmail = validateNewEmail(user, request.getEmail());
+        Instant now = Instant.now();
+
+        EmailChangeRequest emailChangeRequest = emailChangeRequestRepository
+                .findByUserIdAndNewEmailIgnoreCase(userId, newEmail)
+                .orElseGet(EmailChangeRequest::new);
+
+        if (emailChangeRequest.getId() != null && emailChangeRequest.getResendAvailableAt().isAfter(now)) {
+            throw new ResendCooldownException("Yeni doğrulama kodu istemek için lütfen bekleyin");
+        }
+
+        String code = verificationCodeGenerator.generateSixDigitCode();
+        emailChangeRequest.setUser(user);
+        emailChangeRequest.setNewEmail(newEmail);
+        updateEmailChangeCode(emailChangeRequest, newEmail, code);
+
+        emailChangeRequestRepository.save(emailChangeRequest);
+        emailVerificationMailService.sendEmailChangeCode(newEmail, code);
+
+        return "Doğrulama kodu yeni e-posta adresinize gönderildi";
+    }
+
+    @Transactional
+    public String resendEmailChangeCode(Long userId, EmailChangeCodeRequest request) {
+        User user = findUserById(userId);
+        String newEmail = validateNewEmail(user, request.getEmail());
+        EmailChangeRequest emailChangeRequest = findEmailChangeRequest(userId, newEmail);
+        Instant now = Instant.now();
+
+        if (emailChangeRequest.getResendAvailableAt().isAfter(now)) {
+            throw new ResendCooldownException("Yeni doğrulama kodu istemek için lütfen bekleyin");
+        }
+
+        String code = verificationCodeGenerator.generateSixDigitCode();
+        updateEmailChangeCode(emailChangeRequest, newEmail, code);
+
+        emailChangeRequestRepository.save(emailChangeRequest);
+        emailVerificationMailService.sendEmailChangeCode(newEmail, code);
+
+        return "Doğrulama kodu yeni e-posta adresinize gönderildi";
+    }
+
+    @Transactional(noRollbackFor = VerificationCodeException.class)
+    public ProfileResponse verifyEmailChange(Long userId, VerifyEmailChangeRequest request) {
+        User user = findUserById(userId);
+        String newEmail = validateNewEmail(user, request.getEmail());
+        EmailChangeRequest emailChangeRequest = findEmailChangeRequest(userId, newEmail);
+        Instant now = Instant.now();
+
+        if (emailChangeRequest.getFailedAttempts() >= MAX_FAILED_ATTEMPTS) {
+            throw new TooManyVerificationAttemptsException("Çok fazla hatalı doğrulama denemesi yapıldı");
+        }
+
+        if (emailChangeRequest.getExpiresAt().isBefore(now)) {
+            throw new VerificationCodeException("Doğrulama kodunun süresi doldu");
+        }
+
+        if (!verificationCodeHashService.matches(newEmail, request.getCode(), emailChangeRequest.getVerificationCodeHash())) {
+            emailChangeRequest.setFailedAttempts(emailChangeRequest.getFailedAttempts() + 1);
+            emailChangeRequestRepository.save(emailChangeRequest);
+            throw new VerificationCodeException("Doğrulama kodu geçersiz");
+        }
+
+        user.setEmail(newEmail);
+        User updatedUser = userRepository.save(user);
+        emailChangeRequestRepository.delete(emailChangeRequest);
 
         return toProfileResponse(updatedUser);
     }
@@ -378,6 +461,7 @@ public class UserService {
         notificationRepository.deleteByRecipientId(userId);
         passwordResetRequestRepository.deleteByEmail(email);
         pendingRegistrationRepository.deleteByEmail(email);
+        emailChangeRequestRepository.deleteByUserId(userId);
 
         handleOwnedTeamsBeforeAccountDeletion(user);
         transferRemainingTeamProjectsCreatedBy(user);
@@ -512,6 +596,34 @@ public class UserService {
         resetRequest.setFailedAttempts(0);
         resetRequest.setResendAvailableAt(now.plus(RESEND_COOLDOWN_SECONDS, ChronoUnit.SECONDS));
         resetRequest.setVerified(false);
+    }
+
+    private void updateEmailChangeCode(EmailChangeRequest emailChangeRequest, String newEmail, String code) {
+        Instant now = Instant.now();
+        emailChangeRequest.setVerificationCodeHash(verificationCodeHashService.hash(newEmail, code));
+        emailChangeRequest.setExpiresAt(now.plus(CODE_EXPIRATION_MINUTES, ChronoUnit.MINUTES));
+        emailChangeRequest.setFailedAttempts(0);
+        emailChangeRequest.setResendAvailableAt(now.plus(RESEND_COOLDOWN_SECONDS, ChronoUnit.SECONDS));
+    }
+
+    private EmailChangeRequest findEmailChangeRequest(Long userId, String newEmail) {
+        return emailChangeRequestRepository
+                .findByUserIdAndNewEmailIgnoreCase(userId, newEmail)
+                .orElseThrow(() -> new VerificationCodeException("Doğrulama kodu geçersiz"));
+    }
+
+    private String validateNewEmail(User user, String email) {
+        String newEmail = normalizeEmail(email);
+
+        if (user.getEmail().equalsIgnoreCase(newEmail)) {
+            throw new IllegalArgumentException("Mevcut e-posta adresinizden farklı bir e-posta girin");
+        }
+
+        if (userRepository.existsByEmailIgnoreCase(newEmail)) {
+            throw new DuplicateEmailException("Bu email adresi ile kayıtlı bir kullanıcı zaten var");
+        }
+
+        return newEmail;
     }
 
     private PasswordResetRequest findPasswordResetRequest(String email) {
