@@ -111,7 +111,9 @@ public class TaskService {
     }
 
     public List<TaskResponse> getUpcomingTasks(Long userId) {
-        return taskRepository.findUpcomingAccessibleTasks(userId, LocalDate.now(), PageRequest.of(0, 5))
+        LocalDate today = LocalDate.now();
+
+        return taskRepository.findUpcomingAccessibleTasks(userId, today, today.plusDays(7), PageRequest.of(0, 5))
                 .stream()
                 .map(this::convertToResponse)
                 .toList();

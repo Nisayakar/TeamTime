@@ -96,22 +96,31 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             left join task.project.team team
             left join TeamMember membership on membership.team = team and membership.user.id = :userId
             where ((task.project.team is null and task.project.user.id = :userId)
-               or membership.id is not null)
+              or membership.id is not null)
               and task.status <> 'TAMAMLANDI'
               and task.dueDate > :today
+              and task.dueDate <= :upcomingEndDate
             """)
-    long countAccessibleUpcomingTasks(@Param("userId") Long userId, @Param("today") LocalDate today);
+    long countAccessibleUpcomingTasks(
+            @Param("userId") Long userId,
+            @Param("today") LocalDate today,
+            @Param("upcomingEndDate") LocalDate upcomingEndDate);
 
     @Query("""
-            select distinct task
+            select task
             from Task task
-            left join fetch task.project project
+            join fetch task.project project
             left join fetch project.team team
-            left join TeamMember membership on membership.team = team and membership.user.id = :userId
-            where ((task.project.team is null and task.project.user.id = :userId)
-               or membership.id is not null)
+            where ((project.team is null and project.user.id = :userId)
+              or exists (
+                  select 1
+                  from TeamMember membership
+                  where membership.team = project.team
+                    and membership.user.id = :userId
+              ))
               and task.status <> 'TAMAMLANDI'
-              and task.dueDate >= :today
+              and task.dueDate > :today
+              and task.dueDate <= :upcomingEndDate
             order by task.dueDate asc,
                 case task.priority
                     when com.teamtime.entity.TaskPriority.URGENT then 4
@@ -122,6 +131,10 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
                 end desc,
                 task.createdAt desc
             """)
-    List<Task> findUpcomingAccessibleTasks(@Param("userId") Long userId, @Param("today") LocalDate today, Pageable pageable);
+    List<Task> findUpcomingAccessibleTasks(
+            @Param("userId") Long userId,
+            @Param("today") LocalDate today,
+            @Param("upcomingEndDate") LocalDate upcomingEndDate,
+            Pageable pageable);
 
 }

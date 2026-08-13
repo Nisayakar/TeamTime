@@ -68,7 +68,13 @@ function Dashboard() {
         setUpcomingTasksError("");
 
         apiFetch("/tasks/upcoming")
-            .then(response => response.json() as Promise<Task[]>)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Yaklaşan görevler yüklenemedi.");
+                }
+
+                return response.json() as Promise<Task[]>;
+            })
             .then(data => {
                 setUpcomingTasks(Array.isArray(data) ? data : []);
             })

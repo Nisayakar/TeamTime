@@ -24,6 +24,33 @@ describe("Dashboard", () => {
         expect(screen.getByText("Upcoming two")).toBeInTheDocument();
     });
 
+    it("renders a high-priority in-progress task returned by the upcoming endpoint", async () => {
+        setStoredUser();
+        vi.stubGlobal("fetch", dashboardFetchMock({
+            upcomingTasks: [
+                {
+                    id: 1,
+                    title: "Frontend Düzenlenecek",
+                    description: "Frontend",
+                    status: "DEVAM_EDIYOR",
+                    priority: "HIGH",
+                    dueDate: "2026-08-15",
+                    createdAt: "2026-08-13T10:00:00",
+                    completedAt: null,
+                    overdue: false,
+                    projectId: 1,
+                    projectName: "TeamTime"
+                }
+            ]
+        }));
+
+        renderWithRouter(<Dashboard />);
+
+        expect(await screen.findByText("Frontend Düzenlenecek")).toBeInTheDocument();
+        expect(screen.queryByText("Yaklaşan göreviniz bulunmuyor.")).not.toBeInTheDocument();
+    });
+
+
     it("navigates from a project-linked upcoming task", async () => {
         const user = userEvent.setup();
         setStoredUser();
@@ -66,6 +93,16 @@ describe("Dashboard", () => {
         expect(await screen.findByText("Yaklaşan görevler yüklenemedi.")).toBeInTheDocument();
         expect(screen.queryByText("[object Object]")).not.toBeInTheDocument();
     });
+
+    it("shows feedback instead of the empty state when upcoming endpoint returns an error response", async () => {
+        setStoredUser();
+        vi.stubGlobal("fetch", dashboardFetchMock({ upcomingStatusError: true }));
+
+        renderWithRouter(<Dashboard />);
+
+        expect(await screen.findByText("Yaklaşan görevler yüklenemedi.")).toBeInTheDocument();
+        expect(screen.queryByText("Yaklaşan göreviniz bulunmuyor.")).not.toBeInTheDocument();
+    });
 });
 
 function dashboardFetchMock(options: {
@@ -73,6 +110,7 @@ function dashboardFetchMock(options: {
     recentTasks?: unknown[];
     recentProjects?: unknown[];
     upcomingError?: boolean;
+    upcomingStatusError?: boolean;
 } = {}) {
     return vi.fn<typeof fetch>((input: RequestInfo | URL) => {
         const url = String(input);
@@ -99,6 +137,13 @@ function dashboardFetchMock(options: {
         if (url.includes("/tasks/upcoming")) {
             if (options.upcomingError) {
                 return Promise.reject(new Error("Yaklaşan görevler yüklenemedi."));
+            }
+
+            if (options.upcomingStatusError) {
+                return Promise.resolve(mockJsonResponse(
+                    { message: "Veritabanı hatası" },
+                    { status: 500 }
+                ));
             }
 
             return Promise.resolve(mockJsonResponse(options.upcomingTasks ?? [

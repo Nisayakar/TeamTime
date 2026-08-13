@@ -59,6 +59,7 @@ function ProjectDetails() {
     const filteredTasks = useMemo(() => {
         const normalizedSearch = taskSearch.trim().toLocaleLowerCase("tr-TR");
         const today = getLocalDateValue();
+        const upcomingEndDate = addDaysToDateValue(today, 7);
 
         return tasks
             .filter(task => {
@@ -85,7 +86,10 @@ function ProjectDetails() {
                 }
 
                 if (dueDateFilter === "UPCOMING") {
-                    return task.dueDate !== null && task.dueDate > today && task.status !== "TAMAMLANDI";
+                    return task.dueDate !== null
+                        && task.dueDate > today
+                        && task.dueDate <= upcomingEndDate
+                        && task.status !== "TAMAMLANDI";
                 }
 
                 return task.dueDate === null;
@@ -640,6 +644,14 @@ function ProjectDetails() {
 function getLocalDateValue() {
     const now = new Date();
     const offsetDate = new Date(now.getTime() - now.getTimezoneOffset() * 60_000);
+    return offsetDate.toISOString().slice(0, 10);
+}
+
+function addDaysToDateValue(value: string, days: number) {
+    const [year, month, day] = value.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+    date.setDate(date.getDate() + days);
+    const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
     return offsetDate.toISOString().slice(0, 10);
 }
 

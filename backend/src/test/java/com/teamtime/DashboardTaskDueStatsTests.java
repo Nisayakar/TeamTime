@@ -95,15 +95,19 @@ class DashboardTaskDueStatsTests {
         saveTask("Overdue", personalProject, "BEKLIYOR", TaskPriority.HIGH, today.minusDays(1), 1);
         saveTask("Completed Past Due", personalProject, "TAMAMLANDI", TaskPriority.URGENT, today.minusDays(2), 2);
         saveTask("Due Today", personalProject, "DEVAM_EDIYOR", TaskPriority.MEDIUM, today, 3);
-        saveTask("Upcoming", personalProject, "BEKLIYOR", TaskPriority.LOW, today.plusDays(1), 4);
-        saveTask("No Date", personalProject, "BEKLIYOR", TaskPriority.LOW, null, 5);
+        saveTask("Completed Today", personalProject, "TAMAMLANDI", TaskPriority.URGENT, today, 4);
+        saveTask("Upcoming Tomorrow", personalProject, "BEKLIYOR", TaskPriority.LOW, today.plusDays(1), 5);
+        saveTask("Upcoming Boundary", personalProject, "DEVAM_EDIYOR", TaskPriority.MEDIUM, today.plusDays(7), 6);
+        saveTask("Past Window", personalProject, "BEKLIYOR", TaskPriority.LOW, today.plusDays(8), 7);
+        saveTask("Completed Upcoming", personalProject, "TAMAMLANDI", TaskPriority.URGENT, today.plusDays(1), 8);
+        saveTask("No Date", personalProject, "BEKLIYOR", TaskPriority.LOW, null, 9);
 
         mockMvc.perform(get("/api/dashboard")
                         .header(AUTHORIZATION, bearer(owner)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.overdueTaskCount").value(1))
                 .andExpect(jsonPath("$.dueTodayTaskCount").value(1))
-                .andExpect(jsonPath("$.upcomingTaskCount").value(1));
+                .andExpect(jsonPath("$.upcomingTaskCount").value(2));
     }
 
     @Test
@@ -192,47 +196,104 @@ class DashboardTaskDueStatsTests {
     @Test
     void upcomingEndpointOrdersByDueDatePriorityAndCreatedAt() throws Exception {
         LocalDate today = LocalDate.now();
-        saveTask("Tomorrow Low", personalProject, "BEKLIYOR", TaskPriority.LOW, today.plusDays(1), 1);
-        saveTask("Today High Old", personalProject, "BEKLIYOR", TaskPriority.HIGH, today, 2);
-        saveTask("Today Urgent", personalProject, "BEKLIYOR", TaskPriority.URGENT, today, 3);
-        saveTask("Today High New", personalProject, "BEKLIYOR", TaskPriority.HIGH, today, 4);
+        saveTask("Today Urgent", personalProject, "BEKLIYOR", TaskPriority.URGENT, today, 1);
+        saveTask("Tomorrow Low", personalProject, "BEKLIYOR", TaskPriority.LOW, today.plusDays(1), 2);
+        saveTask("Tomorrow High Old", personalProject, "BEKLIYOR", TaskPriority.HIGH, today.plusDays(1), 3);
+        saveTask("Tomorrow Urgent", personalProject, "BEKLIYOR", TaskPriority.URGENT, today.plusDays(1), 4);
+        saveTask("Tomorrow High New", personalProject, "BEKLIYOR", TaskPriority.HIGH, today.plusDays(1), 5);
 
         mockMvc.perform(get("/api/tasks/upcoming")
                         .header(AUTHORIZATION, bearer(owner)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(4)))
-                .andExpect(jsonPath("$[0].title").value("Today Urgent"))
-                .andExpect(jsonPath("$[1].title").value("Today High New"))
-                .andExpect(jsonPath("$[2].title").value("Today High Old"))
+                .andExpect(jsonPath("$[0].title").value("Tomorrow Urgent"))
+                .andExpect(jsonPath("$[1].title").value("Tomorrow High New"))
+                .andExpect(jsonPath("$[2].title").value("Tomorrow High Old"))
                 .andExpect(jsonPath("$[3].title").value("Tomorrow Low"));
     }
 
     @Test
-    void upcomingEndpointExcludesCompletedTasksAndEnforcesLimit() throws Exception {
+    void upcomingEndpointUsesSevenDayWindowExcludesCompletedTasksAndEnforcesLimit() throws Exception {
         LocalDate today = LocalDate.now();
         saveTask("Completed Today", personalProject, "TAMAMLANDI", TaskPriority.URGENT, today, 1);
+        saveTask("Today Not Upcoming", personalProject, "BEKLIYOR", TaskPriority.URGENT, today, 2);
+        saveTask("Completed Tomorrow", personalProject, "TAMAMLANDI", TaskPriority.URGENT, today.plusDays(1), 3);
+        saveTask("Eight Days Out", personalProject, "BEKLIYOR", TaskPriority.URGENT, today.plusDays(8), 4);
 
         for (int index = 0; index < 6; index++) {
-            saveTask("Upcoming " + index, personalProject, "BEKLIYOR", TaskPriority.MEDIUM, today.plusDays(index), index + 2);
+            saveTask("Upcoming " + index, personalProject, "BEKLIYOR", TaskPriority.MEDIUM, today.plusDays(index + 1), index + 5);
         }
 
         mockMvc.perform(get("/api/tasks/upcoming")
                         .header(AUTHORIZATION, bearer(owner)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(5)))
-                .andExpect(jsonPath("$[0].title").value("Upcoming 0"));
+                .andExpect(jsonPath("$[0].title").value("Upcoming 0"))
+                .andExpect(jsonPath("$[?(@.title == 'Today Not Upcoming')]", hasSize(0)))
+                .andExpect(jsonPath("$[?(@.title == 'Completed Tomorrow')]", hasSize(0)))
+                .andExpect(jsonPath("$[?(@.title == 'Eight Days Out')]", hasSize(0)));
     }
 
     @Test
     void upcomingEndpointIncludesProjectSummaryFields() throws Exception {
         LocalDate today = LocalDate.now();
-        saveTask("Project Linked", personalProject, "BEKLIYOR", TaskPriority.MEDIUM, today, 1);
+        saveTask("Project Linked", personalProject, "BEKLIYOR", TaskPriority.MEDIUM, today.plusDays(1), 1);
 
         mockMvc.perform(get("/api/tasks/upcoming")
                         .header(AUTHORIZATION, bearer(owner)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].projectId").value(personalProject.getId()))
                 .andExpect(jsonPath("$[0].projectName").value("Personal Dashboard Project"));
+    }
+
+    @Test
+    void upcomingEndpointIncludesAccessiblePersonalAndTeamTasksOnly() throws Exception {
+        LocalDate today = LocalDate.now();
+        User admin = userRepository.save(new User(null, "Dashboard", "Admin", "dashboard-admin@example.com", "password"));
+
+        Team ownerTeam = saveTeam("Upcoming Owner Team");
+        addTeamMember(ownerTeam, owner, TeamRole.OWNER);
+        Project ownerTeamProject = saveProject("Owner Team Project", owner, ownerTeam);
+
+        Team adminTeam = saveTeam("Upcoming Admin Team");
+        addTeamMember(adminTeam, outsider, TeamRole.OWNER);
+        addTeamMember(adminTeam, admin, TeamRole.ADMIN);
+        Project adminTeamProject = saveProject("Admin Team Project", outsider, adminTeam);
+
+        Team memberTeam = saveTeam("Upcoming Member Team");
+        addTeamMember(memberTeam, outsider, TeamRole.OWNER);
+        addTeamMember(memberTeam, member, TeamRole.MEMBER);
+        Project memberTeamProject = saveProject("Member Team Project", outsider, memberTeam);
+
+        Team inaccessibleTeam = saveTeam("Upcoming Private Team");
+        addTeamMember(inaccessibleTeam, outsider, TeamRole.OWNER);
+        Project inaccessibleTeamProject = saveProject("Inaccessible Team Project", outsider, inaccessibleTeam);
+
+        saveTask("Personal Plus Two", personalProject, "DEVAM_EDIYOR", TaskPriority.HIGH, today.plusDays(2), 1);
+        saveTask("Owner Team Plus Two", ownerTeamProject, "DEVAM_EDIYOR", TaskPriority.HIGH, today.plusDays(2), 2);
+        saveTask("Admin Team Plus Two", adminTeamProject, "DEVAM_EDIYOR", TaskPriority.HIGH, today.plusDays(2), 3);
+        saveTask("Member Team Plus Two", memberTeamProject, "DEVAM_EDIYOR", TaskPriority.HIGH, today.plusDays(2), 4);
+        saveTask("Inaccessible Plus Two", inaccessibleTeamProject, "DEVAM_EDIYOR", TaskPriority.HIGH, today.plusDays(2), 5);
+
+        mockMvc.perform(get("/api/tasks/upcoming")
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[?(@.title == 'Personal Plus Two')]", hasSize(1)))
+                .andExpect(jsonPath("$[?(@.title == 'Owner Team Plus Two')]", hasSize(1)))
+                .andExpect(jsonPath("$[?(@.title == 'Inaccessible Plus Two')]", hasSize(0)));
+
+        mockMvc.perform(get("/api/tasks/upcoming")
+                        .header(AUTHORIZATION, bearer(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[?(@.title == 'Admin Team Plus Two')]", hasSize(1)));
+
+        mockMvc.perform(get("/api/tasks/upcoming")
+                        .header(AUTHORIZATION, bearer(member)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[?(@.title == 'Member Team Plus Two')]", hasSize(1)));
     }
 
     private Project saveProject(String name, User user, Team team) {

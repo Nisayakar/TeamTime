@@ -33,9 +33,10 @@ public class DashboardService {
         long inProgressTaskCount = taskRepository.countAccessibleTasksByStatus(userId, "DEVAM_EDIYOR");
         long teamCount = teamMemberRepository.countDistinctTeamsForUser(userId);
         LocalDate today = LocalDate.now();
+        LocalDate upcomingEndDate = today.plusDays(7);
         long overdueTaskCount = taskRepository.countAccessibleOverdueTasks(userId, today);
         long dueTodayTaskCount = taskRepository.countAccessibleDueTodayTasks(userId, today);
-        long upcomingTaskCount = taskRepository.countAccessibleUpcomingTasks(userId, today);
+        long upcomingTaskCount = taskRepository.countAccessibleUpcomingTasks(userId, today, upcomingEndDate);
 
         return new DashboardDataResponse(
                 projectCount,
