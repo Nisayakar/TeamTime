@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch, getStoredUser } from "../api";
-import { useToast } from "../context/toast";
+import InlineFeedback, { type InlineFeedbackType } from "../components/ui/InlineFeedback";
 import type { ProjectRequest } from "../types/project";
 import { canManageTeamProjects, getTeamRoleLabel, type Team, type TeamMember, type TeamRole } from "../types/team";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
@@ -16,7 +16,6 @@ type ManageableTeam = Team & {
 }
 
 function CreateProject() {
-    const { showToast } = useToast();
     const [projectName, setProjectName] = useState("");
     const [projectDescription, setProjectDescription] = useState("");
     const [startDate, setStartDate] = useState("");
@@ -26,6 +25,8 @@ function CreateProject() {
     const [teams, setTeams] = useState<ManageableTeam[]>([]);
     const [loadingTeams, setLoadingTeams] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [teamFeedback, setTeamFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
+    const [formFeedback, setFormFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
 
     const selectedTeamIdNumber = useMemo(() => {
         if (selectedTeamId === "") {
@@ -94,20 +95,18 @@ function CreateProject() {
 
             const manageableTeams: ManageableTeam[] = teamsWithRoles.filter((team): team is ManageableTeam => team !== null);
             setTeams(manageableTeams);
+            setTeamFeedback(null);
 
             if (manageableTeams.length > 0) {
                 setSelectedTeamId(String(manageableTeams[0].id));
             }
         } catch (error) {
-            showToast({
-                type: "error",
-                message: getErrorMessage(error, "Takımlar yüklenemedi")
-            });
+            setTeamFeedback({ type: "error", message: getErrorMessage(error, "Takımlar yüklenemedi") });
             setTeams([]);
         } finally {
             setLoadingTeams(false);
         }
-    }, [getCurrentUserId, showToast]);
+    }, [getCurrentUserId]);
 
     useEffect(() => {
         loadManageableTeams();
@@ -121,10 +120,7 @@ function CreateProject() {
         }
 
         if (projectMode === "team" && selectedTeamIdNumber === null) {
-            showToast({
-                type: "warning",
-                message: "Lütfen proje için bir takım seçin"
-            });
+            setFormFeedback({ type: "warning", message: "Lütfen proje için bir takım seçin" });
             return;
         }
 
@@ -137,6 +133,7 @@ function CreateProject() {
         };
 
         setSubmitting(true);
+        setFormFeedback(null);
 
         try {
             const response = await apiFetch("/projects", {
@@ -145,23 +142,14 @@ function CreateProject() {
             });
 
             if (!response.ok) {
-                showToast({
-                    type: "error",
-                    message: await parseApiError(response, "Proje oluşturulamadı")
-                });
+                setFormFeedback({ type: "error", message: await parseApiError(response, "Proje oluşturulamadı") });
                 return;
             }
 
             const data = await response.text();
-            showToast({
-                type: "success",
-                message: data || "Proje başarıyla oluşturuldu."
-            });
+            setFormFeedback({ type: "success", message: data || "Proje başarıyla oluşturuldu." });
         } catch {
-            showToast({
-                type: "error",
-                message: "Sunucuya bağlanılamadı"
-            });
+            setFormFeedback({ type: "error", message: "Sunucuya bağlanılamadı" });
         } finally {
             setSubmitting(false);
         }
@@ -202,6 +190,8 @@ function CreateProject() {
                             {
                                 loadingTeams ? (
                                     <p className="empty-state app-empty-state">Takımlar yükleniyor...</p>
+                                ) : teamFeedback ? (
+                                    <InlineFeedback type={teamFeedback.type} message={teamFeedback.message} />
                                 ) : teams.length === 0 ? (
                                     <p className="empty-state app-empty-state">Proje oluşturabileceğiniz yönetilebilir takım bulunmuyor.</p>
                                 ) : (
@@ -243,6 +233,7 @@ function CreateProject() {
                 >
                     {submitting ? "Oluşturuluyor..." : "Proje Oluştur"}
                 </button>
+                {formFeedback && <InlineFeedback type={formFeedback.type} message={formFeedback.message} />}
             </form>
         </main>
     );

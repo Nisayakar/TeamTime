@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ConfirmModal from "../components/ConfirmModal";
 import { apiFetch, getStoredUser } from "../api";
-import { useToast } from "../context/toast";
+import InlineFeedback, { type InlineFeedbackType } from "../components/ui/InlineFeedback";
 import type { TeamRole } from "../types/team";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
 import { navigateForInitialLoadError } from "../utils/routeErrors";
@@ -24,7 +24,6 @@ type StoredUser = {
 }
 
 function Teams() {
-    const { showToast } = useToast();
     const [teams, setTeams] = useState<Team[]>([]);
     const [rolesByTeamId, setRolesByTeamId] = useState<Record<number, TeamRole | undefined>>({});
     const [name, setName] = useState("");
@@ -34,6 +33,10 @@ function Teams() {
     const [editDescription, setEditDescription] = useState("");
     const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
     const [deletingTeam, setDeletingTeam] = useState(false);
+    const [sectionFeedback, setSectionFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
+    const [createFeedback, setCreateFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
+    const [editFeedback, setEditFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
+    const [deleteFeedback, setDeleteFeedback] = useState("");
     const navigate = useNavigate();
 
     const getCurrentUserId = useCallback(() => {
@@ -91,10 +94,7 @@ function Teams() {
                     return;
                 }
 
-                showToast({
-                    type: "error",
-                    message: await parseApiError(response, "Takımlar yüklenemedi")
-                });
+                setSectionFeedback({ type: "error", message: await parseApiError(response, "Takımlar yüklenemedi") });
                 return;
             }
 
@@ -102,16 +102,14 @@ function Teams() {
             const loadedTeams = Array.isArray(data) ? data as Team[] : [];
 
             setTeams(loadedTeams);
+            setSectionFeedback(null);
             await loadCurrentUserRoles(loadedTeams);
         } catch {
-            showToast({
-                type: "error",
-                message: "Sunucuya bağlanılamadı"
-            });
+            setSectionFeedback({ type: "error", message: "Sunucuya bağlanılamadı" });
             setTeams([]);
             setRolesByTeamId({});
         }
-    }, [loadCurrentUserRoles, navigate, showToast]);
+    }, [loadCurrentUserRoles, navigate]);
 
     useEffect(() => {
         getTeams();
@@ -119,6 +117,7 @@ function Teams() {
 
     async function createTeam(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
+        setCreateFeedback(null);
 
         try {
             const response = await apiFetch("/teams", {
@@ -130,10 +129,7 @@ function Teams() {
             });
 
             if (!response.ok) {
-                showToast({
-                    type: "error",
-                    message: await parseApiError(response, "Takım oluşturulamadı")
-                });
+                setCreateFeedback({ type: "error", message: await parseApiError(response, "Takım oluşturulamadı") });
                 return;
             }
 
@@ -143,15 +139,9 @@ function Teams() {
             setName("");
             setDescription("");
             await loadCurrentUserRoles([...teams, createdTeam]);
-            showToast({
-                type: "success",
-                message: "Takım başarıyla oluşturuldu."
-            });
+            setCreateFeedback({ type: "success", message: "Takım başarıyla oluşturuldu." });
         } catch {
-            showToast({
-                type: "error",
-                message: "Sunucuya bağlanılamadı"
-            });
+            setCreateFeedback({ type: "error", message: "Sunucuya bağlanılamadı" });
         }
     }
 
@@ -168,6 +158,8 @@ function Teams() {
     }
 
     async function updateTeam(team: Team) {
+        setEditFeedback(null);
+
         const response = await apiFetch(`/teams/${team.id}`, {
             method: "PUT",
             body: JSON.stringify({
@@ -178,10 +170,7 @@ function Teams() {
         });
 
         if (!response.ok) {
-            showToast({
-                type: "error",
-                message: await parseApiError(response, "Takım güncellenemedi")
-            });
+            setEditFeedback({ type: "error", message: await parseApiError(response, "Takım güncellenemedi") });
             return;
         }
 
@@ -194,10 +183,7 @@ function Teams() {
         );
 
         cancelEdit();
-        showToast({
-            type: "success",
-            message: "Takım başarıyla güncellendi."
-        });
+        setSectionFeedback({ type: "success", message: "Takım başarıyla güncellendi." });
     }
 
     async function confirmDeleteTeam() {
@@ -213,24 +199,15 @@ function Teams() {
             });
 
             if (!response.ok) {
-                showToast({
-                    type: "error",
-                    message: await parseApiError(response, "Takım silinemedi")
-                });
+                setDeleteFeedback(await parseApiError(response, "Takım silinemedi"));
                 return;
             }
 
             setTeams(currentTeams => currentTeams.filter(team => team.id !== teamToDelete.id));
-            showToast({
-                type: "success",
-                message: "Takım başarıyla silindi."
-            });
+            setSectionFeedback({ type: "success", message: "Takım başarıyla silindi." });
             setTeamToDelete(null);
         } catch (error) {
-            showToast({
-                type: "error",
-                message: getErrorMessage(error, "Takım silinemedi")
-            });
+            setDeleteFeedback(getErrorMessage(error, "Takım silinemedi"));
         } finally {
             setDeletingTeam(false);
         }
@@ -275,10 +252,12 @@ function Teams() {
 
                     <button className="button button-primary" type="submit">Takım Oluştur</button>
                 </form>
+                {createFeedback && <InlineFeedback type={createFeedback.type} message={createFeedback.message} />}
             </section>
+            {sectionFeedback && <InlineFeedback type={sectionFeedback.type} message={sectionFeedback.message} />}
 
             {
-                teams.length === 0 ? (
+                sectionFeedback?.type === "error" ? null : teams.length === 0 ? (
                     <p className="empty-state app-empty-state">Henüz takım yok</p>
                 ) : (
                     <section className="cards-grid teams-grid">
@@ -309,6 +288,7 @@ function Teams() {
                                                         Vazgeç
                                                     </button>
                                                 </div>
+                                                {editFeedback && <InlineFeedback type={editFeedback.type} message={editFeedback.message} />}
                                             </div>
                                         ) : (
                                             <>
@@ -335,7 +315,13 @@ function Teams() {
 
                                                     {
                                                         rolesByTeamId[team.id] === "OWNER" && (
-                                                            <button className="button button-danger" onClick={() => setTeamToDelete(team)}>
+                                                            <button
+                                                                className="button button-danger"
+                                                                onClick={() => {
+                                                                    setDeleteFeedback("");
+                                                                    setTeamToDelete(team);
+                                                                }}
+                                                            >
                                                                 Sil
                                                             </button>
                                                         )
@@ -357,8 +343,12 @@ function Teams() {
                 confirmLabel={deletingTeam ? "Siliniyor" : "Sil"}
                 variant="danger"
                 loading={deletingTeam}
+                errorMessage={deleteFeedback}
                 onConfirm={confirmDeleteTeam}
-                onCancel={() => setTeamToDelete(null)}
+                onCancel={() => {
+                    setDeleteFeedback("");
+                    setTeamToDelete(null);
+                }}
             />
         </main>
     );

@@ -2,7 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ConfirmModal from "../components/ConfirmModal";
 import { apiFetch, getStoredUser } from "../api";
-import { useToast } from "../context/toast";
+import InlineFeedback, { type InlineFeedbackType } from "../components/ui/InlineFeedback";
 import type { Project } from "../types/project";
 import type { Task, TaskPriority, TaskStatus } from "../types/task";
 import { canManageTeamProjects, type TeamMember, type TeamRole } from "../types/team";
@@ -21,7 +21,6 @@ type SortOption = "NEWEST" | "OLDEST" | "DUE_DATE_ASC" | "PRIORITY_DESC" | "PRIO
 function ProjectDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { showToast } = useToast();
 
     const [project, setProject] = useState<Project | null>(null);
     const [tasks, setTasks] = useState<Task[]>([]);
@@ -42,6 +41,10 @@ function ProjectDetails() {
     const [sortOption, setSortOption] = useState<SortOption>("NEWEST");
     const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
     const [deletingTask, setDeletingTask] = useState(false);
+    const [projectFeedback, setProjectFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
+    const [taskFormFeedback, setTaskFormFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
+    const [taskListFeedback, setTaskListFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
+    const [deleteFeedback, setDeleteFeedback] = useState("");
 
     const canMutateTasks = project
         ? !project.teamProject || canManageTeamProjects(currentTeamRole)
@@ -147,20 +150,18 @@ function ProjectDetails() {
 
             const data: Project = await response.json();
             setProject(data);
+            setProjectFeedback(null);
 
             if (data.teamProject && data.teamId !== null) {
                 await loadTeamRole(data.teamId);
             }
         } catch (error) {
             setProject(null);
-            showToast({
-                type: "error",
-                message: getErrorMessage(error, "Proje yüklenemedi")
-            });
+            setProjectFeedback({ type: "error", message: getErrorMessage(error, "Proje yüklenemedi") });
         } finally {
             setLoadingProject(false);
         }
-    }, [id, loadTeamRole, navigate, showToast]);
+    }, [id, loadTeamRole, navigate]);
 
     const getTasks = useCallback(async () => {
         if (!id) {
@@ -179,16 +180,14 @@ function ProjectDetails() {
 
             const data: unknown = await response.json();
             setTasks(Array.isArray(data) ? data : []);
+            setTaskListFeedback(null);
         } catch (error) {
             setTasks([]);
-            showToast({
-                type: "error",
-                message: getErrorMessage(error, "Görevler yüklenemedi")
-            });
+            setTaskListFeedback({ type: "error", message: getErrorMessage(error, "Görevler yüklenemedi") });
         } finally {
             setLoadingTasks(false);
         }
-    }, [id, showToast]);
+    }, [id]);
 
     useEffect(() => {
         loadProject();
@@ -197,12 +196,12 @@ function ProjectDetails() {
 
     async function saveTask() {
         if (!canMutateTasks) {
-            showToast({ type: "warning", message: "Bu işlem için yetkiniz yok" });
+            setTaskFormFeedback({ type: "warning", message: "Bu işlem için yetkiniz yok" });
             return;
         }
 
         if (title.trim() === "") {
-            showToast({ type: "warning", message: "Görev başlığı boş olamaz" });
+            setTaskFormFeedback({ type: "warning", message: "Görev başlığı boş olamaz" });
             return;
         }
 
@@ -218,6 +217,7 @@ function ProjectDetails() {
         const method = editId ? "PUT" : "POST";
 
         setSavingTask(true);
+        setTaskFormFeedback(null);
 
         try {
             const response = await apiFetch(url, {
@@ -230,17 +230,11 @@ function ProjectDetails() {
             }
 
             await response.text();
-            showToast({
-                type: "success",
-                message: editId ? "Görev başarıyla güncellendi." : "Görev başarıyla oluşturuldu."
-            });
+            setTaskFormFeedback({ type: "success", message: editId ? "Görev başarıyla güncellendi." : "Görev başarıyla oluşturuldu." });
             clearForm();
             getTasks();
         } catch (error) {
-            showToast({
-                type: "error",
-                message: getErrorMessage(error, "Görev kaydedilemedi")
-            });
+            setTaskFormFeedback({ type: "error", message: getErrorMessage(error, "Görev kaydedilemedi") });
         } finally {
             setSavingTask(false);
         }
@@ -248,7 +242,7 @@ function ProjectDetails() {
 
     async function confirmDeleteTask() {
         if (!canMutateTasks) {
-            showToast({ type: "warning", message: "Bu işlem için yetkiniz yok" });
+            setDeleteFeedback("Bu işlem için yetkiniz yok");
             return;
         }
 
@@ -264,25 +258,16 @@ function ProjectDetails() {
             });
 
             if (!response.ok) {
-                showToast({
-                    type: "error",
-                    message: await parseApiError(response, "Görev silinemedi")
-                });
+                setDeleteFeedback(await parseApiError(response, "Görev silinemedi"));
                 return;
             }
 
             const data = await response.text();
-            showToast({
-                type: "success",
-                message: data || "Görev başarıyla silindi."
-            });
+            setTaskListFeedback({ type: "success", message: data || "Görev başarıyla silindi." });
             setTaskToDelete(null);
             getTasks();
         } catch (error) {
-            showToast({
-                type: "error",
-                message: getErrorMessage(error, "Görev silinemedi")
-            });
+            setDeleteFeedback(getErrorMessage(error, "Görev silinemedi"));
         } finally {
             setDeletingTask(false);
         }
@@ -405,6 +390,7 @@ function ProjectDetails() {
                     <p>{loadingProject ? "Proje bilgileri yükleniyor..." : getProjectScopeLabel()}</p>
                 </div>
             </section>
+            {projectFeedback && <InlineFeedback type={projectFeedback.type} message={projectFeedback.message} />}
 
             <section className="content-grid two-columns">
                 {
@@ -467,6 +453,7 @@ function ProjectDetails() {
                                         Temizle
                                     </button>
                                 </div>
+                                {taskFormFeedback && <InlineFeedback type={taskFormFeedback.type} message={taskFormFeedback.message} />}
                             </div>
                         </div>
                     ) : (
@@ -572,17 +559,21 @@ function ProjectDetails() {
                     {
                         loadingTasks ? (
                             <p className="empty-state app-empty-state">Görevler yükleniyor...</p>
+                        ) : taskListFeedback?.type === "error" ? (
+                            <InlineFeedback type={taskListFeedback.type} message={taskListFeedback.message} />
                         ) : tasks.length === 0 ? (
                             <p className="empty-state app-empty-state">Henüz görev bulunmuyor.</p>
                         ) : filteredTasks.length === 0 ? (
                             <p className="empty-state app-empty-state">Seçilen kriterlere uygun görev bulunamadı.</p>
                         ) : (
-                            filteredTasks.map(task => (
-                                <div className="task-card" key={task.id}>
-                                    <div>
-                                        <h3>{task.title}</h3>
-                                        <p>{task.description}</p>
-                                    </div>
+                            <>
+                                {taskListFeedback && <InlineFeedback type={taskListFeedback.type} message={taskListFeedback.message} />}
+                                {filteredTasks.map(task => (
+                                    <div className="task-card" key={task.id}>
+                                        <div>
+                                            <h3>{task.title}</h3>
+                                            <p>{task.description}</p>
+                                        </div>
 
                                     <span className={getStatusClass(task.status)}>
                                         {getStatusLabel(task.status)}
@@ -609,14 +600,21 @@ function ProjectDetails() {
                                                     Düzenle
                                                 </button>
 
-                                                <button className="button button-danger" onClick={() => setTaskToDelete(task)}>
+                                                <button
+                                                    className="button button-danger"
+                                                    onClick={() => {
+                                                        setDeleteFeedback("");
+                                                        setTaskToDelete(task);
+                                                    }}
+                                                >
                                                     Sil
                                                 </button>
                                             </div>
                                         )
                                     }
-                                </div>
-                            ))
+                                    </div>
+                                ))}
+                            </>
                         )
                     }
                 </div>
@@ -628,8 +626,12 @@ function ProjectDetails() {
                 confirmLabel={deletingTask ? "Siliniyor" : "Sil"}
                 variant="danger"
                 loading={deletingTask}
+                errorMessage={deleteFeedback}
                 onConfirm={confirmDeleteTask}
-                onCancel={() => setTaskToDelete(null)}
+                onCancel={() => {
+                    setDeleteFeedback("");
+                    setTaskToDelete(null);
+                }}
             />
         </main>
     );

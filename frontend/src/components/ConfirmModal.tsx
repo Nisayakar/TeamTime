@@ -8,6 +8,7 @@ export type ConfirmModalProps = {
     cancelLabel?: string;
     variant?: "danger" | "warning";
     loading?: boolean;
+    errorMessage?: string;
     onConfirm: () => void | Promise<void>;
     onCancel: () => void;
 };
@@ -20,6 +21,7 @@ function ConfirmModal({
     cancelLabel = "İptal",
     variant = "danger",
     loading = false,
+    errorMessage = "",
     onConfirm,
     onCancel
 }: ConfirmModalProps) {
@@ -132,6 +134,15 @@ function ConfirmModal({
                     <h2 id={titleId}>{title}</h2>
                     <p id={messageId}>{message}</p>
                 </div>
+                {
+                    errorMessage && (
+                        <div className="inline-feedback inline-feedback-error confirm-modal-feedback" role="alert">
+                            <span className="inline-feedback-marker" aria-hidden="true" />
+                            <span className="inline-feedback-label">Hata</span>
+                            <span>{errorMessage}</span>
+                        </div>
+                    )
+                }
                 <div className="confirm-modal-actions">
                     <button className="button button-secondary" type="button" onClick={onCancel} disabled={loading}>
                         {cancelLabel}

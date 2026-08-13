@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { apiFetch } from "../api";
-import { useToast } from "../context/toast";
 import { parseApiError } from "../utils/apiError";
 
 type ForgotPasswordStep = "email" | "code" | "password";
@@ -13,7 +12,6 @@ const RESEND_SECONDS = 60;
 const NEUTRAL_REQUEST_MESSAGE = "Eğer bu e-posta adresiyle kayıtlı bir hesap varsa şifre sıfırlama kodu gönderildi.";
 
 function ForgotPassword() {
-    const { showToast } = useToast();
     const navigate = useNavigate();
     const codeInputRef = useRef<HTMLInputElement>(null);
 
@@ -279,13 +277,6 @@ function ForgotPassword() {
     function showMessage(nextMessage: string, nextMessageType: MessageType) {
         setMessage(nextMessage);
         setMessageType(nextMessageType);
-
-        if (nextMessage) {
-            showToast({
-                type: nextMessageType,
-                message: nextMessage
-            });
-        }
     }
 
     function formatCountdown(seconds: number) {

@@ -91,7 +91,9 @@ describe("Login page", () => {
         await user.type(screen.getByPlaceholderText("Şifre"), "wrong-password");
         await user.click(screen.getByRole("button", { name: "Giriş Yap" }));
 
-        expect(await screen.findAllByText("E-posta veya şifre hatalı")).toHaveLength(2);
+        expect(await screen.findAllByText("E-posta veya şifre hatalı")).toHaveLength(1);
+        expect(screen.getByRole("alert")).toHaveTextContent("E-posta veya şifre hatalı");
+        expect(document.querySelector(".toast-container")).toBeEmptyDOMElement();
     });
 
     it("opens forgot-password page from the login link", async () => {

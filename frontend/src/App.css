@@ -875,6 +875,10 @@ body:has(.auth-page) .app-navbar-public .nav-links-public .nav-cta {
   flex-wrap: wrap;
 }
 
+.confirm-modal-feedback {
+  margin-top: 2px;
+}
+
 .confirm-modal-actions .button {
   min-width: 108px;
 }
@@ -1858,16 +1862,66 @@ button:focus-visible {
 }
 
 .message-box {
-  position: fixed;
-  top: 86px;
-  right: 22px;
-  z-index: 30;
-  max-width: min(360px, calc(100% - 32px));
+  width: 100%;
   padding: 13px 15px;
+  border: 1px solid rgba(242, 163, 180, 0.22);
   border-radius: 13px;
-  background: #0a192f;
+  background: rgba(10, 25, 47, 0.72);
   color: #ffffff;
-  box-shadow: var(--shadow);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.message-success {
+  border-color: rgba(34, 197, 94, 0.28);
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.message-error {
+  border-color: rgba(239, 68, 68, 0.32);
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.message-info {
+  border-color: rgba(197, 192, 255, 0.28);
+  background: rgba(197, 192, 255, 0.12);
+}
+
+.inline-feedback {
+  display: block;
+  width: 100%;
+  padding: 2px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--tt-text-secondary, rgba(248, 250, 252, 0.72));
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.inline-feedback-marker {
+  display: none;
+}
+
+.inline-feedback-label {
+  display: none;
+}
+
+.inline-feedback-success {
+  color: var(--tt-success, #16a34a);
+}
+
+.inline-feedback-error {
+  color: var(--tt-danger, #ef4444);
+}
+
+.inline-feedback-warning {
+  color: var(--tt-warning, #f59e0b);
+}
+
+.inline-feedback-info {
+  color: var(--tt-info, #0ea5e9);
 }
 
 .team-profile,

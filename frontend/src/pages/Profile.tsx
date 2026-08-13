@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { apiFetch, clearAuth, updateStoredUser } from "../api";
 import { useToast } from "../context/toast";
 import { ThemeSwitcher } from "../components/ui/ThemeSwitcher";
+import InlineFeedback, { type InlineFeedbackType } from "../components/ui/InlineFeedback";
 import ConfirmModal from "../components/ConfirmModal";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
 import { navigateForInitialLoadError } from "../utils/routeErrors";
@@ -27,6 +28,9 @@ function Profile() {
     const [savingPassword, setSavingPassword] = useState(false);
     const [deletingAccount, setDeletingAccount] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [profileFeedback, setProfileFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
+    const [passwordFeedback, setPasswordFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
+    const [deleteFeedback, setDeleteFeedback] = useState("");
 
     useEffect(() => {
         async function loadProfile() {
@@ -63,6 +67,12 @@ function Profile() {
             return;
         }
 
+        if (name.trim() === "" || surname.trim() === "" || email.trim() === "") {
+            setProfileFeedback({ type: "error", message: "Ad, soyad ve e-mail alanları boş bırakılamaz." });
+            return;
+        }
+
+        setProfileFeedback(null);
         setSavingProfile(true);
 
         try {
@@ -83,15 +93,9 @@ function Profile() {
 
             setUser(updatedUser);
             updateStoredUser(updatedUser);
-            showToast({
-                type: "success",
-                message: "Profil bilgileri güncellendi."
-            });
+            setProfileFeedback({ type: "success", message: "Profil bilgileriniz güncellendi." });
         } catch (error) {
-            showToast({
-                type: "error",
-                message: getErrorMessage(error, "Profil güncellenemedi")
-            });
+            setProfileFeedback({ type: "error", message: getErrorMessage(error, "Profil güncellenemedi") });
         } finally {
             setSavingProfile(false);
         }
@@ -102,6 +106,12 @@ function Profile() {
             return;
         }
 
+        if (oldPassword.trim() === "" || newPassword.trim() === "") {
+            setPasswordFeedback({ type: "error", message: "Eski şifre ve yeni şifre alanları boş bırakılamaz." });
+            return;
+        }
+
+        setPasswordFeedback(null);
         setSavingPassword(true);
 
         try {
@@ -121,15 +131,9 @@ function Profile() {
 
             setOldPassword("");
             setNewPassword("");
-            showToast({
-                type: "success",
-                message: data || "Şifre başarıyla güncellendi."
-            });
+            setPasswordFeedback({ type: "success", message: data || "Şifreniz başarıyla güncellendi." });
         } catch (error) {
-            showToast({
-                type: "error",
-                message: getErrorMessage(error, "Şifre güncellenemedi")
-            });
+            setPasswordFeedback({ type: "error", message: getErrorMessage(error, "Şifre güncellenemedi") });
         } finally {
             setSavingPassword(false);
         }
@@ -152,23 +156,17 @@ function Profile() {
             }
 
             clearAuth();
-            showToast({
-                type: "success",
-                message: "Hesabınız silindi."
-            });
             setDeleteModalOpen(false);
             navigate("/login", { replace: true });
         } catch (error) {
-            showToast({
-                type: "error",
-                message: getErrorMessage(error, "Hesap silinemedi")
-            });
+            setDeleteFeedback(getErrorMessage(error, "Hesap silinemedi"));
         } finally {
             setDeletingAccount(false);
         }
     }
 
     function openDeleteModal() {
+        setDeleteFeedback("");
         setDeleteModalOpen(true);
     }
 
@@ -236,6 +234,7 @@ function Profile() {
                         <button className="button button-primary" onClick={updateProfile} disabled={savingProfile}>
                             {savingProfile ? "Güncelleniyor..." : "Profil Bilgilerini Güncelle"}
                         </button>
+                        {profileFeedback && <InlineFeedback type={profileFeedback.type} message={profileFeedback.message} />}
                     </div>
 
                 </div>
@@ -285,6 +284,7 @@ function Profile() {
                         <button className="button button-primary" onClick={updatePassword} disabled={savingPassword}>
                             {savingPassword ? "Güncelleniyor..." : "Şifreyi Güncelle"}
                         </button>
+                        {passwordFeedback && <InlineFeedback type={passwordFeedback.type} message={passwordFeedback.message} />}
 
                         <div className="profile-danger-zone">
                             <div>
@@ -307,6 +307,7 @@ function Profile() {
                 confirmLabel="Hesabımı Kalıcı Olarak Sil"
                 variant="danger"
                 loading={deletingAccount}
+                errorMessage={deleteFeedback}
                 onCancel={closeDeleteModal}
                 onConfirm={deleteAccount}
             />

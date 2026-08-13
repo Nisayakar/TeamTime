@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import ConfirmModal from "../components/ConfirmModal";
 import { apiFetch, getStoredUser } from "../api";
-import { useToast } from "../context/toast";
+import InlineFeedback, { type InlineFeedbackType } from "../components/ui/InlineFeedback";
 import type { Project } from "../types/project";
 import { canManageTeamProjects, type TeamMember, type TeamRole } from "../types/team";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
@@ -14,12 +14,13 @@ type StoredUser = {
 }
 
 function Projects() {
-    const { showToast } = useToast();
     const [projects, setProjects] = useState<Project[]>([]);
     const [teamRoles, setTeamRoles] = useState<Record<number, TeamRole | undefined>>({});
     const [loading, setLoading] = useState(true);
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
     const [deletingProject, setDeletingProject] = useState(false);
+    const [sectionFeedback, setSectionFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
+    const [deleteFeedback, setDeleteFeedback] = useState("");
     const navigate = useNavigate();
 
     const getCurrentUserId = useCallback(() => {
@@ -89,18 +90,16 @@ function Projects() {
             const data: unknown = await response.json();
             const accessibleProjects: Project[] = Array.isArray(data) ? data : [];
             setProjects(accessibleProjects);
+            setSectionFeedback(null);
             await loadTeamRoles(accessibleProjects);
         } catch (error) {
-            showToast({
-                type: "error",
-                message: getErrorMessage(error, "Projeler yüklenemedi")
-            });
+            setSectionFeedback({ type: "error", message: getErrorMessage(error, "Projeler yüklenemedi") });
             setProjects([]);
             setTeamRoles({});
         } finally {
             setLoading(false);
         }
-    }, [loadTeamRoles, navigate, showToast]);
+    }, [loadTeamRoles, navigate]);
 
     useEffect(() => {
         loadProjects();
@@ -131,25 +130,16 @@ function Projects() {
             });
 
             if (!response.ok) {
-                showToast({
-                    type: "error",
-                    message: await parseApiError(response, "Proje silinemedi")
-                });
+                setDeleteFeedback(await parseApiError(response, "Proje silinemedi"));
                 return;
             }
 
             const data = await response.text();
-            showToast({
-                type: "success",
-                message: data || "Proje başarıyla silindi."
-            });
+            setSectionFeedback({ type: "success", message: data || "Proje başarıyla silindi." });
             setProjects(currentProjects => currentProjects.filter(project => project.id !== projectToDelete.id));
             setProjectToDelete(null);
         } catch (error) {
-            showToast({
-                type: "error",
-                message: getErrorMessage(error, "Proje silinemedi")
-            });
+            setDeleteFeedback(getErrorMessage(error, "Proje silinemedi"));
         } finally {
             setDeletingProject(false);
         }
@@ -168,10 +158,15 @@ function Projects() {
                     <button className="button button-primary">Yeni Proje</button>
                 </Link>
             </section>
+            {sectionFeedback && sectionFeedback.type !== "error" && (
+                <InlineFeedback type={sectionFeedback.type} message={sectionFeedback.message} />
+            )}
 
             {
                 loading ? (
                     <p className="empty-state projects-empty-state">Projeler yükleniyor...</p>
+                ) : sectionFeedback?.type === "error" ? (
+                    <InlineFeedback type={sectionFeedback.type} message={sectionFeedback.message} />
                 ) : projects.length === 0 ? (
                     <p className="empty-state projects-empty-state">Henüz erişebileceğiniz proje yok.</p>
                 ) : (
@@ -219,7 +214,10 @@ function Projects() {
 
                                                     <button
                                                         className="button button-danger"
-                                                        onClick={() => setProjectToDelete(project)}
+                                                        onClick={() => {
+                                                            setDeleteFeedback("");
+                                                            setProjectToDelete(project);
+                                                        }}
                                                     >
                                                         Sil
                                                     </button>
@@ -240,8 +238,12 @@ function Projects() {
                 confirmLabel={deletingProject ? "Siliniyor" : "Sil"}
                 variant="danger"
                 loading={deletingProject}
+                errorMessage={deleteFeedback}
                 onConfirm={confirmDeleteProject}
-                onCancel={() => setProjectToDelete(null)}
+                onCancel={() => {
+                    setDeleteFeedback("");
+                    setProjectToDelete(null);
+                }}
             />
         </main>
     );

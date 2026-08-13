@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ConfirmModal from "../components/ConfirmModal";
 import { apiFetch, getStoredUser } from "../api";
-import { useToast } from "../context/toast";
+import InlineFeedback, { type InlineFeedbackType } from "../components/ui/InlineFeedback";
 import { getTeamRoleLabel, type TeamRole } from "../types/team";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
 import { navigateForInitialLoadError } from "../utils/routeErrors";
@@ -37,7 +37,6 @@ type StoredUser = {
 function TeamDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { showToast } = useToast();
 
     const [team, setTeam] = useState<Team | null>(null);
     const [members, setMembers] = useState<TeamMember[]>([]);
@@ -47,6 +46,8 @@ function TeamDetails() {
     const [role, setRole] = useState<TeamRole>("MEMBER");
     const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null);
     const [removingMember, setRemovingMember] = useState(false);
+    const [memberFeedback, setMemberFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
+    const [removeFeedback, setRemoveFeedback] = useState("");
 
     useEffect(() => {
         const query = userSearch.trim();
@@ -183,15 +184,16 @@ function TeamDetails() {
         event.preventDefault();
 
         if (!canManageMembers) {
-            showToast({ type: "warning", message: "Bu işlem için yetkiniz yok" });
+            setMemberFeedback({ type: "warning", message: "Bu işlem için yetkiniz yok" });
             return;
         }
 
         if (!selectedUser) {
-            showToast({ type: "warning", message: "Lütfen bir kullanıcı seçin" });
+            setMemberFeedback({ type: "warning", message: "Lütfen bir kullanıcı seçin" });
             return;
         }
 
+        setMemberFeedback(null);
         const roleToSubmit: TeamRole = currentUserRole === "OWNER" ? role : "MEMBER";
 
         apiFetch(`/teams/${id}/members`, {
@@ -217,13 +219,10 @@ function TeamDetails() {
                 setUserSearch("");
                 setUserResults([]);
                 setRole("MEMBER");
-                showToast({ type: "success", message: "Üye takıma eklendi." });
+                setMemberFeedback({ type: "success", message: "Üye takıma eklendi." });
             })
             .catch(error => {
-                showToast({
-                    type: "error",
-                    message: getErrorMessage(error, "Üye eklenemedi")
-                });
+                setMemberFeedback({ type: "error", message: getErrorMessage(error, "Üye eklenemedi") });
             });
     }
 
@@ -252,24 +251,15 @@ function TeamDetails() {
             });
 
             if (!response.ok) {
-                showToast({
-                    type: "error",
-                    message: await parseApiError(response, "Üye çıkarılamadı")
-                });
+                setRemoveFeedback(await parseApiError(response, "Üye çıkarılamadı"));
                 return;
             }
 
             setMembers(currentMembers => currentMembers.filter(currentMember => currentMember.id !== memberToRemove.id));
-            showToast({
-                type: "success",
-                message: "Üye takımdan çıkarıldı."
-            });
+            setMemberFeedback({ type: "success", message: "Üye takımdan çıkarıldı." });
             setMemberToRemove(null);
         } catch (error) {
-            showToast({
-                type: "error",
-                message: getErrorMessage(error, "Üye çıkarılamadı")
-            });
+            setRemoveFeedback(getErrorMessage(error, "Üye çıkarılamadı"));
         } finally {
             setRemovingMember(false);
         }
@@ -354,6 +344,7 @@ function TeamDetails() {
                                 </select>
 
                                 <button className="button button-primary button-full" type="submit">Üye Ekle</button>
+                                {memberFeedback && <InlineFeedback type={memberFeedback.type} message={memberFeedback.message} />}
                             </form>
                         </div>
                     )
@@ -385,7 +376,13 @@ function TeamDetails() {
 
                                     {
                                         canRemoveMember(member) && (
-                                            <button className="button button-danger" onClick={() => setMemberToRemove(member)}>
+                                            <button
+                                                className="button button-danger"
+                                                onClick={() => {
+                                                    setRemoveFeedback("");
+                                                    setMemberToRemove(member);
+                                                }}
+                                            >
                                                 Çıkar
                                             </button>
                                         )
@@ -403,8 +400,12 @@ function TeamDetails() {
                 confirmLabel={removingMember ? "Çıkarılıyor" : "Çıkar"}
                 variant="danger"
                 loading={removingMember}
+                errorMessage={removeFeedback}
                 onConfirm={confirmRemoveMember}
-                onCancel={() => setMemberToRemove(null)}
+                onCancel={() => {
+                    setRemoveFeedback("");
+                    setMemberToRemove(null);
+                }}
             />
         </main>
     );

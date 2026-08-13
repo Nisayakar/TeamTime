@@ -30,6 +30,8 @@ describe("Profile", () => {
             email: "aysenur@example.com"
         });
         expect(localStorage.getItem("user")).toBe(JSON.stringify(profile("Ayşe Nur", "Demir", "aysenur@example.com")));
+        expect(await screen.findByText("Profil bilgileriniz güncellendi.")).toBeInTheDocument();
+        expect(document.querySelector(".toast-container")).toBeEmptyDOMElement();
     });
 
     it("shows duplicate email errors safely", async () => {
@@ -77,6 +79,7 @@ describe("Profile", () => {
         await user.click(screen.getByRole("button", { name: "Şifreyi Güncelle" }));
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+        expect(await screen.findByText("Şifre başarıyla güncellendi")).toBeInTheDocument();
         expect(localStorage.getItem("user")).not.toContain("old-secret");
         expect(localStorage.getItem("user")).not.toContain("new-secret");
         expect(localStorage.getItem("token") ?? "").not.toContain("new-secret");
@@ -195,7 +198,7 @@ describe("Profile", () => {
         await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     });
 
-    it("keeps the deletion modal open after an error and shows the parsed toast message", async () => {
+    it("keeps the deletion modal open after an error and shows the parsed modal message", async () => {
         const user = userEvent.setup();
         const fetchMock = vi.fn<typeof fetch>()
             .mockResolvedValueOnce(mockJsonResponse(profile()))

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch, getStoredUser } from "../api";
-import { useToast } from "../context/toast";
+import InlineFeedback, { type InlineFeedbackType } from "../components/ui/InlineFeedback";
 import type { Project, ProjectRequest } from "../types/project";
 import { canManageTeamProjects, type TeamMember, type TeamRole } from "../types/team";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
@@ -14,7 +14,6 @@ type StoredUser = {
 function EditProject() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { showToast } = useToast();
 
     const [project, setProject] = useState<Project | null>(null);
     const [projectName, setProjectName] = useState("");
@@ -24,6 +23,8 @@ function EditProject() {
     const [currentTeamRole, setCurrentTeamRole] = useState<TeamRole | undefined>();
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [loadFeedback, setLoadFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
+    const [formFeedback, setFormFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
 
     const canUpdateProject = project
         ? !project.teamProject || canManageTeamProjects(currentTeamRole)
@@ -85,6 +86,7 @@ function EditProject() {
 
             const data: Project = await response.json();
             setProject(data);
+            setLoadFeedback(null);
             setProjectName(data.projectName || "");
             setDescription(data.description || "");
             setStartDate(data.startDate || "");
@@ -94,15 +96,12 @@ function EditProject() {
                 await loadTeamRole(data.teamId);
             }
         } catch (error) {
-            showToast({
-                type: "error",
-                message: getErrorMessage(error, "Proje yüklenemedi")
-            });
+            setLoadFeedback({ type: "error", message: getErrorMessage(error, "Proje yüklenemedi") });
             setProject(null);
         } finally {
             setLoading(false);
         }
-    }, [id, loadTeamRole, navigate, showToast]);
+    }, [id, loadTeamRole, navigate]);
 
     useEffect(() => {
         loadProject();
@@ -124,6 +123,7 @@ function EditProject() {
         };
 
         setSubmitting(true);
+        setFormFeedback(null);
 
         try {
             const response = await apiFetch(`/projects/${id}`, {
@@ -132,24 +132,15 @@ function EditProject() {
             });
 
             if (!response.ok) {
-                showToast({
-                    type: "error",
-                    message: await parseApiError(response, "Proje güncellenemedi")
-                });
+                setFormFeedback({ type: "error", message: await parseApiError(response, "Proje güncellenemedi") });
                 return;
             }
 
             const data = await response.text();
-            showToast({
-                type: "success",
-                message: data || "Proje başarıyla güncellendi."
-            });
+            setFormFeedback({ type: "success", message: data || "Proje başarıyla güncellendi." });
             navigate("/projects");
         } catch {
-            showToast({
-                type: "error",
-                message: "Sunucuya bağlanılamadı"
-            });
+            setFormFeedback({ type: "error", message: "Sunucuya bağlanılamadı" });
         } finally {
             setSubmitting(false);
         }
@@ -168,6 +159,8 @@ function EditProject() {
             {
                 loading ? (
                     <p className="empty-state app-empty-state">Proje yükleniyor...</p>
+                ) : loadFeedback ? (
+                    <InlineFeedback type={loadFeedback.type} message={loadFeedback.message} />
                 ) : !project ? (
                     <p className="empty-state app-empty-state">Proje bulunamadı.</p>
                 ) : (
@@ -223,6 +216,7 @@ function EditProject() {
                                 <p className="empty-state app-empty-state">Bu takım projesini düzenleme yetkiniz yok.</p>
                             )
                         }
+                        {formFeedback && <InlineFeedback type={formFeedback.type} message={formFeedback.message} />}
                     </form>
                 )
             }
