@@ -2,11 +2,13 @@ package com.teamtime.service;
 
 import com.teamtime.dto.TaskRequest;
 import com.teamtime.dto.TaskResponse;
+import com.teamtime.entity.AssignmentStatus;
 import com.teamtime.entity.Project;
 import com.teamtime.entity.Task;
 import com.teamtime.entity.TeamMember;
 import com.teamtime.entity.TeamRole;
 import com.teamtime.entity.TaskPriority;
+import com.teamtime.exception.ConflictException;
 import com.teamtime.exception.ResourceNotFoundException;
 import com.teamtime.repository.ProjectRepository;
 import com.teamtime.repository.TaskRepository;
@@ -182,6 +184,82 @@ public class TaskService {
 
     }
 
+    @Transactional
+    public TaskResponse assignTask(Long taskId, Long assignedUserId, Long currentUserId) {
+        Task task = requireTask(taskId);
+        Project project = task.getProject();
+
+        requireTeamTaskMutationAccess(project, currentUserId);
+
+        TeamMember targetMembership = teamMemberRepository.findByTeamIdAndUserId(project.getTeam().getId(), assignedUserId)
+                .orElseThrow(() -> new AccessDeniedException("Atanacak kullanıcı bu takımın üyesi değil"));
+
+        task.setAssignedUser(targetMembership.getUser());
+        task.setAssignmentStatus(AssignmentStatus.PENDING);
+        task.setRejectionReason(null);
+        task.setAssignedAt(LocalDateTime.now());
+        task.setRespondedAt(null);
+
+        Task savedTask = taskRepository.save(task);
+        notificationService.notifyTaskAssigned(targetMembership.getUser(), savedTask.getId(), savedTask.getTitle());
+
+        return convertToResponse(savedTask);
+    }
+
+    @Transactional
+    public TaskResponse removeTaskAssignee(Long taskId, Long currentUserId) {
+        Task task = requireTask(taskId);
+
+        requireTeamTaskMutationAccess(task.getProject(), currentUserId);
+
+        task.setAssignedUser(null);
+        task.setAssignmentStatus(AssignmentStatus.UNASSIGNED);
+        task.setRejectionReason(null);
+        task.setAssignedAt(null);
+        task.setRespondedAt(null);
+
+        return convertToResponse(taskRepository.save(task));
+    }
+
+    @Transactional
+    public TaskResponse acceptAssignment(Long taskId, Long currentUserId) {
+        Task task = requireTask(taskId);
+
+        requireAssignedPendingTask(task, currentUserId);
+        task.setAssignmentStatus(AssignmentStatus.ACCEPTED);
+        task.setRejectionReason(null);
+        task.setRespondedAt(LocalDateTime.now());
+
+        Task savedTask = taskRepository.save(task);
+        notificationService.notifyTaskAssignmentAccepted(
+                savedTask.getProject().getTeam(),
+                savedTask.getId(),
+                savedTask.getTitle(),
+                currentUserId);
+
+        return convertToResponse(savedTask);
+    }
+
+    @Transactional
+    public TaskResponse rejectAssignment(Long taskId, String reason, Long currentUserId) {
+        Task task = requireTask(taskId);
+        String normalizedReason = normalizeRejectionReason(reason);
+
+        requireAssignedPendingTask(task, currentUserId);
+        task.setAssignmentStatus(AssignmentStatus.REJECTED);
+        task.setRejectionReason(normalizedReason);
+        task.setRespondedAt(LocalDateTime.now());
+
+        Task savedTask = taskRepository.save(task);
+        notificationService.notifyTaskAssignmentRejected(
+                savedTask.getProject().getTeam(),
+                savedTask.getId(),
+                savedTask.getTitle(),
+                currentUserId);
+
+        return convertToResponse(savedTask);
+    }
+
     private void requireTaskViewAccess(Project project, Long userId) {
         if (project.getTeam() == null) {
             if (!project.getUser().getId().equals(userId)) {
@@ -207,6 +285,35 @@ public class TaskService {
 
         if (role != TeamRole.OWNER && role != TeamRole.ADMIN) {
             throw new AccessDeniedException("Takım projesindeki görevleri yönetme yetkiniz yok");
+        }
+    }
+
+    private void requireTeamTaskMutationAccess(Project project, Long userId) {
+        if (project.getTeam() == null) {
+            throw new IllegalArgumentException("Kişisel projelerde görev ataması yapılamaz");
+        }
+
+        requireTaskMutationAccess(project, userId);
+    }
+
+    private Task requireTask(Long taskId) {
+        return taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Görev bulunamadı veya bu görev için yetkiniz yok"));
+    }
+
+    private void requireAssignedPendingTask(Task task, Long currentUserId) {
+        Project project = task.getProject();
+
+        if (project.getTeam() == null) {
+            throw new IllegalArgumentException("Kişisel projelerde görev ataması yapılamaz");
+        }
+
+        if (task.getAssignedUser() == null || !task.getAssignedUser().getId().equals(currentUserId)) {
+            throw new AccessDeniedException("Bu görev size atanmamış");
+        }
+
+        if (task.getAssignmentStatus() != AssignmentStatus.PENDING) {
+            throw new ConflictException("Bu görev ataması yanıt beklemiyor");
         }
     }
 
@@ -243,6 +350,20 @@ public class TaskService {
         }
     }
 
+    private String normalizeRejectionReason(String reason) {
+        String normalizedReason = reason == null ? "" : reason.trim();
+
+        if (normalizedReason.isBlank()) {
+            throw new IllegalArgumentException("Mazeret zorunludur");
+        }
+
+        if (normalizedReason.length() > 500) {
+            throw new IllegalArgumentException("Mazeret en fazla 500 karakter olabilir");
+        }
+
+        return normalizedReason;
+    }
+
     private void updateCompletedAt(Task task) {
         if ("TAMAMLANDI".equals(task.getStatus())) {
             if (task.getCompletedAt() == null) {
@@ -256,6 +377,8 @@ public class TaskService {
     }
 
     private TaskResponse convertToResponse(Task task) {
+        var assignedUser = task.getAssignedUser();
+
         return new TaskResponse(
                 task.getId(),
                 task.getTitle(),
@@ -267,7 +390,13 @@ public class TaskService {
                 task.getCompletedAt(),
                 isOverdue(task),
                 task.getProject() != null ? task.getProject().getId() : null,
-                task.getProject() != null ? task.getProject().getProjectName() : null);
+                task.getProject() != null ? task.getProject().getProjectName() : null,
+                assignedUser != null ? assignedUser.getId() : null,
+                assignedUser != null ? "%s %s".formatted(assignedUser.getName(), assignedUser.getSurname()).trim() : null,
+                task.getAssignmentStatus(),
+                task.getRejectionReason(),
+                task.getAssignedAt(),
+                task.getRespondedAt());
     }
 
     private boolean isOverdue(Task task) {

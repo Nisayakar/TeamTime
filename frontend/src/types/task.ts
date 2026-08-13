@@ -9,6 +9,12 @@ export type TaskPriority =
     | "HIGH"
     | "URGENT";
 
+export type AssignmentStatus =
+    | "UNASSIGNED"
+    | "PENDING"
+    | "ACCEPTED"
+    | "REJECTED";
+
 export type Task = {
     id: number;
     title: string;
@@ -21,4 +27,10 @@ export type Task = {
     overdue: boolean;
     projectId: number | null;
     projectName: string | null;
+    assignedUserId: number | null;
+    assignedUserName: string | null;
+    assignmentStatus: AssignmentStatus;
+    rejectionReason: string | null;
+    assignedAt: string | null;
+    respondedAt: string | null;
 };

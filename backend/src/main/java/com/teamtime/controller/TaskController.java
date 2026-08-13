@@ -1,5 +1,7 @@
 package com.teamtime.controller;
 
+import com.teamtime.dto.AssignTaskRequest;
+import com.teamtime.dto.RejectTaskAssignmentRequest;
 import com.teamtime.dto.TaskRequest;
 import com.teamtime.dto.TaskResponse;
 import com.teamtime.service.TaskService;
@@ -84,6 +86,44 @@ public class TaskController {
 
         return "Görev silindi";
 
+    }
+
+    @PutMapping("/{id}/assignee")
+    public TaskResponse assignTask(
+            @PathVariable Long id,
+            @Valid @RequestBody AssignTaskRequest request,
+            Authentication authentication) {
+
+        Long userId = (Long) authentication.getPrincipal();
+        return taskService.assignTask(id, request.getUserId(), userId);
+    }
+
+    @DeleteMapping("/{id}/assignee")
+    public TaskResponse removeTaskAssignee(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        Long userId = (Long) authentication.getPrincipal();
+        return taskService.removeTaskAssignee(id, userId);
+    }
+
+    @PostMapping("/{id}/assignment/accept")
+    public TaskResponse acceptAssignment(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        Long userId = (Long) authentication.getPrincipal();
+        return taskService.acceptAssignment(id, userId);
+    }
+
+    @PostMapping("/{id}/assignment/reject")
+    public TaskResponse rejectAssignment(
+            @PathVariable Long id,
+            @Valid @RequestBody RejectTaskAssignmentRequest request,
+            Authentication authentication) {
+
+        Long userId = (Long) authentication.getPrincipal();
+        return taskService.rejectAssignment(id, request.getReason(), userId);
     }
 
 }

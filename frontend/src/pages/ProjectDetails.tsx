@@ -4,13 +4,20 @@ import ConfirmModal from "../components/ConfirmModal";
 import { apiFetch, getStoredUser } from "../api";
 import InlineFeedback, { type InlineFeedbackType } from "../components/ui/InlineFeedback";
 import type { Project } from "../types/project";
-import type { Task, TaskPriority, TaskStatus } from "../types/task";
+import type { AssignmentStatus, Task, TaskPriority, TaskStatus } from "../types/task";
 import { canManageTeamProjects, type TeamMember, type TeamRole } from "../types/team";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
 import { navigateForInitialLoadError } from "../utils/routeErrors";
 
 type StoredUser = {
     id: number;
+}
+
+type RejectAssignmentState = {
+    task: Task;
+    reason: string;
+    error: string;
+    submitting: boolean;
 }
 
 type StatusFilter = "ALL" | TaskStatus;
@@ -29,9 +36,12 @@ function ProjectDetails() {
     const [status, setStatus] = useState<TaskStatus>("BEKLIYOR");
     const [priority, setPriority] = useState<TaskPriority>("MEDIUM");
     const [dueDate, setDueDate] = useState("");
+    const [assignedUserId, setAssignedUserId] = useState("");
     const [editId, setEditId] = useState<number | null>(null);
     const [savingTask, setSavingTask] = useState(false);
     const [currentTeamRole, setCurrentTeamRole] = useState<TeamRole | undefined>();
+    const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+    const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
     const [loadingProject, setLoadingProject] = useState(true);
     const [loadingTasks, setLoadingTasks] = useState(true);
     const [taskSearch, setTaskSearch] = useState("");
@@ -40,6 +50,8 @@ function ProjectDetails() {
     const [dueDateFilter, setDueDateFilter] = useState<DueDateFilter>("ALL");
     const [sortOption, setSortOption] = useState<SortOption>("NEWEST");
     const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+    const [assignmentActionTaskId, setAssignmentActionTaskId] = useState<number | null>(null);
+    const [rejectAssignment, setRejectAssignment] = useState<RejectAssignmentState | null>(null);
     const [deletingTask, setDeletingTask] = useState(false);
     const [projectFeedback, setProjectFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
     const [taskFormFeedback, setTaskFormFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
@@ -49,6 +61,7 @@ function ProjectDetails() {
     const canMutateTasks = project
         ? !project.teamProject || canManageTeamProjects(currentTeamRole)
         : false;
+    const canAssignTasks = Boolean(project?.teamProject && canManageTeamProjects(currentTeamRole));
 
     const hasActiveTaskFilters = taskSearch.trim() !== ""
         || statusFilter !== "ALL"
@@ -118,6 +131,7 @@ function ProjectDetails() {
 
         if (currentUserId === null) {
             setCurrentTeamRole(undefined);
+            setTeamMembers([]);
             return;
         }
 
@@ -125,11 +139,13 @@ function ProjectDetails() {
 
         if (!response.ok) {
             setCurrentTeamRole(undefined);
+            setTeamMembers([]);
             return;
         }
 
         const data: unknown = await response.json();
         const members: TeamMember[] = Array.isArray(data) ? data : [];
+        setTeamMembers(members);
         setCurrentTeamRole(members.find(member => member.userId === currentUserId)?.role);
     }, [getCurrentUserId]);
 
@@ -158,6 +174,9 @@ function ProjectDetails() {
 
             if (data.teamProject && data.teamId !== null) {
                 await loadTeamRole(data.teamId);
+            } else {
+                setCurrentTeamRole(undefined);
+                setTeamMembers([]);
             }
         } catch (error) {
             setProject(null);
@@ -194,9 +213,10 @@ function ProjectDetails() {
     }, [id]);
 
     useEffect(() => {
+        setCurrentUserId(getCurrentUserId());
         loadProject();
         getTasks();
-    }, [getTasks, loadProject]);
+    }, [getCurrentUserId, getTasks, loadProject]);
 
     async function saveTask() {
         if (!canMutateTasks) {
@@ -233,7 +253,12 @@ function ProjectDetails() {
                 throw new Error(await parseApiError(response, "Görev kaydedilemedi"));
             }
 
-            await response.text();
+            const savedTask = await response.json() as Task;
+
+            if (canAssignTasks) {
+                await syncTaskAssignee(savedTask.id);
+            }
+
             setTaskFormFeedback({ type: "success", message: editId ? "Görev başarıyla güncellendi." : "Görev başarıyla oluşturuldu." });
             clearForm();
             getTasks();
@@ -277,6 +302,95 @@ function ProjectDetails() {
         }
     }
 
+    async function acceptTaskAssignment(task: Task) {
+        setAssignmentActionTaskId(task.id);
+        setTaskListFeedback(null);
+
+        try {
+            const response = await apiFetch(`/tasks/${task.id}/assignment/accept`, {
+                method: "POST"
+            });
+
+            if (!response.ok) {
+                throw new Error(await parseApiError(response, "Görev ataması kabul edilemedi"));
+            }
+
+            setTaskListFeedback({ type: "success", message: "Görev ataması kabul edildi." });
+            getTasks();
+        } catch (error) {
+            setTaskListFeedback({ type: "error", message: getErrorMessage(error, "Görev ataması kabul edilemedi") });
+        } finally {
+            setAssignmentActionTaskId(null);
+        }
+    }
+
+    async function submitRejectAssignment() {
+        if (!rejectAssignment || rejectAssignment.submitting) {
+            return;
+        }
+
+        const reason = rejectAssignment.reason.trim();
+
+        if (reason === "") {
+            setRejectAssignment({ ...rejectAssignment, error: "Mazeret zorunludur" });
+            return;
+        }
+
+        if (reason.length > 500) {
+            setRejectAssignment({ ...rejectAssignment, error: "Mazeret en fazla 500 karakter olabilir" });
+            return;
+        }
+
+        setRejectAssignment({ ...rejectAssignment, submitting: true, error: "" });
+        setTaskListFeedback(null);
+
+        try {
+            const response = await apiFetch(`/tasks/${rejectAssignment.task.id}/assignment/reject`, {
+                method: "POST",
+                body: JSON.stringify({ reason })
+            });
+
+            if (!response.ok) {
+                throw new Error(await parseApiError(response, "Görev ataması reddedilemedi"));
+            }
+
+            setTaskListFeedback({ type: "success", message: "Görev ataması reddedildi." });
+            setRejectAssignment(null);
+            getTasks();
+        } catch (error) {
+            setRejectAssignment({
+                ...rejectAssignment,
+                submitting: false,
+                error: getErrorMessage(error, "Görev ataması reddedilemedi")
+            });
+        }
+    }
+
+    async function syncTaskAssignee(taskId: number) {
+        const trimmedAssignee = assignedUserId.trim();
+
+        if (trimmedAssignee === "") {
+            const response = await apiFetch(`/tasks/${taskId}/assignee`, {
+                method: "DELETE"
+            });
+
+            if (!response.ok) {
+                throw new Error(await parseApiError(response, "Görev ataması güncellenemedi"));
+            }
+
+            return;
+        }
+
+        const response = await apiFetch(`/tasks/${taskId}/assignee`, {
+            method: "PUT",
+            body: JSON.stringify({ userId: Number(trimmedAssignee) })
+        });
+
+        if (!response.ok) {
+            throw new Error(await parseApiError(response, "Görev ataması güncellenemedi"));
+        }
+    }
+
     function editTask(task: Task) {
         if (!canMutateTasks) {
             return;
@@ -288,6 +402,7 @@ function ProjectDetails() {
         setStatus(task.status);
         setPriority(task.priority);
         setDueDate(task.dueDate || "");
+        setAssignedUserId(task.assignedUserId ? String(task.assignedUserId) : "");
     }
 
     function clearForm() {
@@ -296,6 +411,7 @@ function ProjectDetails() {
         setStatus("BEKLIYOR");
         setPriority("MEDIUM");
         setDueDate("");
+        setAssignedUserId("");
         setEditId(null);
     }
 
@@ -361,6 +477,49 @@ function ProjectDetails() {
         }
 
         return "badge badge-blue";
+    }
+
+    function getAssignmentStatusLabel(assignmentStatus: AssignmentStatus) {
+        if (assignmentStatus === "PENDING") {
+            return "Atama Bekliyor";
+        }
+
+        if (assignmentStatus === "ACCEPTED") {
+            return "Kabul Edildi";
+        }
+
+        if (assignmentStatus === "REJECTED") {
+            return "Reddedildi";
+        }
+
+        return "Atanmamış";
+    }
+
+    function getAssignmentStatusClass(assignmentStatus: AssignmentStatus) {
+        if (assignmentStatus === "ACCEPTED") {
+            return "badge badge-green";
+        }
+
+        if (assignmentStatus === "REJECTED") {
+            return "badge badge-warning";
+        }
+
+        if (assignmentStatus === "PENDING") {
+            return "badge badge-purple";
+        }
+
+        return "badge badge-blue";
+    }
+
+    function canRespondToAssignment(task: Task) {
+        return task.assignmentStatus === "PENDING"
+            && task.assignedUserId !== null
+            && task.assignedUserId === currentUserId;
+    }
+
+    function shouldShowRejectionReason(task: Task) {
+        return task.assignmentStatus === "REJECTED"
+            && (canAssignTasks || task.assignedUserId === currentUserId);
     }
 
     function formatDate(value: string | null) {
@@ -447,6 +606,26 @@ function ProjectDetails() {
                                     value={dueDate}
                                     onChange={(e) => setDueDate(e.target.value)}
                                 />
+
+                                {
+                                    canAssignTasks && (
+                                        <>
+                                            <label htmlFor="task-assignee">Atanan Kişi</label>
+                                            <select
+                                                id="task-assignee"
+                                                value={assignedUserId}
+                                                onChange={(e) => setAssignedUserId(e.target.value)}
+                                            >
+                                                <option value="">Atanmamış</option>
+                                                {teamMembers.map(member => (
+                                                    <option key={member.userId} value={member.userId}>
+                                                        {member.userName}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </>
+                                    )
+                                }
 
                                 <div className="button-row">
                                     <button className="button button-primary" onClick={saveTask} disabled={savingTask}>
@@ -598,6 +777,55 @@ function ProjectDetails() {
                                     </div>
 
                                     {
+                                        project?.teamProject && (
+                                            <div className="task-assignment-block">
+                                                <div className="task-meta-row">
+                                                    <span className="badge badge-blue">
+                                                        Atanan: {task.assignedUserName || "Atanmamış"}
+                                                    </span>
+                                                    <span className={getAssignmentStatusClass(task.assignmentStatus)}>
+                                                        {getAssignmentStatusLabel(task.assignmentStatus)}
+                                                    </span>
+                                                </div>
+                                                {
+                                                    shouldShowRejectionReason(task) && task.rejectionReason && (
+                                                        <p className="task-assignment-reason">
+                                                            Mazeret: {task.rejectionReason}
+                                                        </p>
+                                                    )
+                                                }
+                                                {
+                                                    canRespondToAssignment(task) && (
+                                                        <div className="button-row task-assignment-actions">
+                                                            <button
+                                                                className="button button-primary"
+                                                                type="button"
+                                                                disabled={assignmentActionTaskId === task.id}
+                                                                onClick={() => acceptTaskAssignment(task)}
+                                                            >
+                                                                {assignmentActionTaskId === task.id ? "İşleniyor..." : "Kabul Et"}
+                                                            </button>
+                                                            <button
+                                                                className="button button-secondary"
+                                                                type="button"
+                                                                disabled={assignmentActionTaskId === task.id}
+                                                                onClick={() => setRejectAssignment({
+                                                                    task,
+                                                                    reason: "",
+                                                                    error: "",
+                                                                    submitting: false
+                                                                })}
+                                                            >
+                                                                Reddet
+                                                            </button>
+                                                        </div>
+                                                    )
+                                                }
+                                            </div>
+                                        )
+                                    }
+
+                                    {
                                         canMutateTasks && (
                                             <div className="button-row">
                                                 <button className="button button-secondary" onClick={() => editTask(task)}>
@@ -637,6 +865,58 @@ function ProjectDetails() {
                     setTaskToDelete(null);
                 }}
             />
+            {
+                rejectAssignment && (
+                    <div className="confirm-modal-backdrop" role="presentation">
+                        <div
+                            className="confirm-modal task-reject-modal"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="reject-assignment-title"
+                        >
+                            <h2 id="reject-assignment-title">Görevi reddet</h2>
+                            <p>Bu görevi neden kabul edemediğinizi belirtin.</p>
+
+                            <label htmlFor="reject-assignment-reason">Mazeret</label>
+                            <textarea
+                                id="reject-assignment-reason"
+                                maxLength={500}
+                                value={rejectAssignment.reason}
+                                onChange={(event) => setRejectAssignment({
+                                    ...rejectAssignment,
+                                    reason: event.target.value,
+                                    error: ""
+                                })}
+                                placeholder="Mazeret"
+                            />
+                            <span className="form-helper">{rejectAssignment.reason.length}/500</span>
+
+                            {rejectAssignment.error && (
+                                <InlineFeedback type="error" message={rejectAssignment.error} />
+                            )}
+
+                            <div className="button-row">
+                                <button
+                                    className="button button-secondary"
+                                    type="button"
+                                    disabled={rejectAssignment.submitting}
+                                    onClick={() => setRejectAssignment(null)}
+                                >
+                                    İptal
+                                </button>
+                                <button
+                                    className="button button-danger"
+                                    type="button"
+                                    disabled={rejectAssignment.submitting}
+                                    onClick={submitRejectAssignment}
+                                >
+                                    {rejectAssignment.submitting ? "Reddediliyor..." : "Görevi Reddet"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
         </main>
     );
 }

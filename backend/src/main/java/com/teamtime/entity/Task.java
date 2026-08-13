@@ -32,6 +32,20 @@ public class Task {
     @JoinColumn(name = "project_id")
     private Project project;
 
+    @ManyToOne
+    @JoinColumn(name = "assigned_user_id")
+    private User assignedUser;
+
+    @Enumerated(EnumType.STRING)
+    private AssignmentStatus assignmentStatus = AssignmentStatus.UNASSIGNED;
+
+    @Column(length = 500)
+    private String rejectionReason;
+
+    private LocalDateTime assignedAt;
+
+    private LocalDateTime respondedAt;
+
     public Task() {
     }
 
@@ -51,6 +65,10 @@ public class Task {
 
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
+        }
+
+        if (assignmentStatus == null) {
+            assignmentStatus = AssignmentStatus.UNASSIGNED;
         }
     }
 
@@ -128,5 +146,49 @@ public class Task {
 
     public void setProject(Project project) {
         this.project = project;
+    }
+
+    public User getAssignedUser() {
+        return assignedUser;
+    }
+
+    public void setAssignedUser(User assignedUser) {
+        this.assignedUser = assignedUser;
+    }
+
+    public AssignmentStatus getAssignmentStatus() {
+        if (assignmentStatus == null) {
+            return AssignmentStatus.UNASSIGNED;
+        }
+
+        return assignmentStatus;
+    }
+
+    public void setAssignmentStatus(AssignmentStatus assignmentStatus) {
+        this.assignmentStatus = assignmentStatus;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
+    }
+
+    public LocalDateTime getAssignedAt() {
+        return assignedAt;
+    }
+
+    public void setAssignedAt(LocalDateTime assignedAt) {
+        this.assignedAt = assignedAt;
+    }
+
+    public LocalDateTime getRespondedAt() {
+        return respondedAt;
+    }
+
+    public void setRespondedAt(LocalDateTime respondedAt) {
+        this.respondedAt = respondedAt;
     }
 }

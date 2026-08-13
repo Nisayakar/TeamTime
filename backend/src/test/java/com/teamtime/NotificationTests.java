@@ -2,6 +2,8 @@ package com.teamtime;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -34,6 +36,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -95,6 +99,57 @@ class NotificationTests {
         admin = userRepository.save(new User(null, "Admin", "User", "notification-admin@example.com", "password"));
         member = userRepository.save(new User(null, "Member", "User", "notification-member@example.com", "password"));
         outsider = userRepository.save(new User(null, "Outsider", "User", "notification-outsider@example.com", "password"));
+    }
+
+    @Test
+    void assignmentNotificationTypesPersist() {
+        createNotification(member, NotificationType.TASK_ASSIGNED, "Task assigned");
+        createNotification(member, NotificationType.TASK_ASSIGNMENT_ACCEPTED, "Assignment accepted");
+        createNotification(member, NotificationType.TASK_ASSIGNMENT_REJECTED, "Assignment rejected");
+
+        List<NotificationType> persistedTypes = notificationRepository.findAll()
+                .stream()
+                .map(Notification::getType)
+                .toList();
+
+        assertEquals(3, persistedTypes.size());
+        assertTrue(persistedTypes.contains(NotificationType.TASK_ASSIGNED));
+        assertTrue(persistedTypes.contains(NotificationType.TASK_ASSIGNMENT_ACCEPTED));
+        assertTrue(persistedTypes.contains(NotificationType.TASK_ASSIGNMENT_REJECTED));
+    }
+
+    @Test
+    void existingNotificationTypesContinueToPersist() {
+        createNotification(member, NotificationType.TEAM_MEMBER_ADDED, "Team member added");
+        createNotification(member, NotificationType.TEAM_MEMBER_REMOVED, "Team member removed");
+        createNotification(member, NotificationType.TEAM_PROJECT_CREATED, "Team project created");
+        createNotification(member, NotificationType.TEAM_TASK_CREATED, "Team task created");
+
+        List<NotificationType> persistedTypes = notificationRepository.findAll()
+                .stream()
+                .map(Notification::getType)
+                .toList();
+
+        assertEquals(4, persistedTypes.size());
+        assertTrue(persistedTypes.contains(NotificationType.TEAM_MEMBER_ADDED));
+        assertTrue(persistedTypes.contains(NotificationType.TEAM_MEMBER_REMOVED));
+        assertTrue(persistedTypes.contains(NotificationType.TEAM_PROJECT_CREATED));
+        assertTrue(persistedTypes.contains(NotificationType.TEAM_TASK_CREATED));
+    }
+
+    @Test
+    void allNotificationTypesPersist() {
+        for (NotificationType type : NotificationType.values()) {
+            createNotification(member, type, type.name());
+        }
+
+        List<NotificationType> persistedTypes = notificationRepository.findAll()
+                .stream()
+                .map(Notification::getType)
+                .toList();
+
+        assertEquals(NotificationType.values().length, persistedTypes.size());
+        assertTrue(persistedTypes.containsAll(Arrays.asList(NotificationType.values())));
     }
 
     @Test
@@ -461,6 +516,18 @@ class NotificationTests {
         notification.setRelatedEntityId(1L);
         notification.setRelatedEntityType("TEAM");
         notificationRepository.save(notification);
+    }
+
+    private void createNotification(User recipient, NotificationType type, String title) {
+        Notification notification = new Notification();
+        notification.setRecipient(recipient);
+        notification.setTitle(title);
+        notification.setMessage(title + " message");
+        notification.setType(type);
+        notification.setRead(false);
+        notification.setRelatedEntityId(1L);
+        notification.setRelatedEntityType("TASK");
+        notificationRepository.saveAndFlush(notification);
     }
 
     private Project latestAccessibleProject(User actor) {

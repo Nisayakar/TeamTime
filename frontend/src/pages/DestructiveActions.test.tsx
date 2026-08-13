@@ -79,7 +79,13 @@ describe("destructive action confirmations", () => {
                     completedAt: null,
                     overdue: false,
                     projectId: 1,
-                    projectName: "Web Projesi"
+                    projectName: "Web Projesi",
+                    assignedUserId: null,
+                    assignedUserName: null,
+                    assignmentStatus: "UNASSIGNED",
+                    rejectionReason: null,
+                    assignedAt: null,
+                    respondedAt: null
                 }
             ]));
         }));

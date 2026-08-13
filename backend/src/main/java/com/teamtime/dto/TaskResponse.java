@@ -1,6 +1,7 @@
 package com.teamtime.dto;
 
 import com.teamtime.entity.TaskPriority;
+import com.teamtime.entity.AssignmentStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -18,6 +19,12 @@ public class TaskResponse {
     private boolean overdue;
     private Long projectId;
     private String projectName;
+    private Long assignedUserId;
+    private String assignedUserName;
+    private AssignmentStatus assignmentStatus;
+    private String rejectionReason;
+    private LocalDateTime assignedAt;
+    private LocalDateTime respondedAt;
 
     public TaskResponse() {
     }
@@ -55,11 +62,23 @@ public class TaskResponse {
             LocalDateTime completedAt,
             boolean overdue,
             Long projectId,
-            String projectName
+            String projectName,
+            Long assignedUserId,
+            String assignedUserName,
+            AssignmentStatus assignmentStatus,
+            String rejectionReason,
+            LocalDateTime assignedAt,
+            LocalDateTime respondedAt
     ) {
         this(id, title, description, status, priority, dueDate, createdAt, completedAt, overdue);
         this.projectId = projectId;
         this.projectName = projectName;
+        this.assignedUserId = assignedUserId;
+        this.assignedUserName = assignedUserName;
+        this.assignmentStatus = assignmentStatus;
+        this.rejectionReason = rejectionReason;
+        this.assignedAt = assignedAt;
+        this.respondedAt = respondedAt;
     }
 
     public Long getId() {
@@ -148,5 +167,53 @@ public class TaskResponse {
 
     public void setProjectName(String projectName) {
         this.projectName = projectName;
+    }
+
+    public Long getAssignedUserId() {
+        return assignedUserId;
+    }
+
+    public void setAssignedUserId(Long assignedUserId) {
+        this.assignedUserId = assignedUserId;
+    }
+
+    public String getAssignedUserName() {
+        return assignedUserName;
+    }
+
+    public void setAssignedUserName(String assignedUserName) {
+        this.assignedUserName = assignedUserName;
+    }
+
+    public AssignmentStatus getAssignmentStatus() {
+        return assignmentStatus;
+    }
+
+    public void setAssignmentStatus(AssignmentStatus assignmentStatus) {
+        this.assignmentStatus = assignmentStatus;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
+    }
+
+    public LocalDateTime getAssignedAt() {
+        return assignedAt;
+    }
+
+    public void setAssignedAt(LocalDateTime assignedAt) {
+        this.assignedAt = assignedAt;
+    }
+
+    public LocalDateTime getRespondedAt() {
+        return respondedAt;
+    }
+
+    public void setRespondedAt(LocalDateTime respondedAt) {
+        this.respondedAt = respondedAt;
     }
 }

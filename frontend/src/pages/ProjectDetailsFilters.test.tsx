@@ -168,7 +168,13 @@ function task(
         completedAt: null,
         overdue,
         projectId: 1,
-        projectName: "Web Project"
+        projectName: "Web Project",
+        assignedUserId: null,
+        assignedUserName: null,
+        assignmentStatus: "UNASSIGNED",
+        rejectionReason: null,
+        assignedAt: null,
+        respondedAt: null
     };
 }
 

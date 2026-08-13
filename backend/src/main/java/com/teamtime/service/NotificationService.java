@@ -112,6 +112,39 @@ public class NotificationService {
                         TASK_ENTITY));
     }
 
+    @Transactional
+    public void notifyTaskAssigned(User recipient, Long taskId, String taskTitle) {
+        createNotification(
+                recipient,
+                "Size yeni bir görev atandı",
+                "%s görevi size atandı.".formatted(taskTitle),
+                NotificationType.TASK_ASSIGNED,
+                taskId,
+                TASK_ENTITY);
+    }
+
+    @Transactional
+    public void notifyTaskAssignmentAccepted(Team team, Long taskId, String taskTitle, Long respondingUserId) {
+        notifyTaskManagers(
+                team,
+                taskId,
+                "Görev kabul edildi",
+                "%s görevi kabul edildi.".formatted(taskTitle),
+                NotificationType.TASK_ASSIGNMENT_ACCEPTED,
+                respondingUserId);
+    }
+
+    @Transactional
+    public void notifyTaskAssignmentRejected(Team team, Long taskId, String taskTitle, Long respondingUserId) {
+        notifyTaskManagers(
+                team,
+                taskId,
+                "Görev reddedildi",
+                "%s görevi reddedildi.".formatted(taskTitle),
+                NotificationType.TASK_ASSIGNMENT_REJECTED,
+                respondingUserId);
+    }
+
     public NotificationPageResponse getCurrentUserNotifications(Long currentUserId, int page, int size) {
         requireUser(currentUserId);
         validatePageRequest(page, size);
@@ -184,6 +217,30 @@ public class NotificationService {
             case "MEMBER" -> "Üye";
             default -> role;
         };
+    }
+
+    private void notifyTaskManagers(
+            Team team,
+            Long taskId,
+            String title,
+            String message,
+            NotificationType type,
+            Long respondingUserId
+    ) {
+        teamMemberRepository.findByTeamId(team.getId())
+                .stream()
+                .filter(member -> !member.getUser().getId().equals(respondingUserId))
+                .filter(member -> {
+                    String role = member.getRole() == null ? "" : member.getRole().trim().toUpperCase();
+                    return role.equals("OWNER") || role.equals("ADMIN");
+                })
+                .forEach(member -> createNotification(
+                        member.getUser(),
+                        title,
+                        message,
+                        type,
+                        taskId,
+                        TASK_ENTITY));
     }
 
     private NotificationResponse convertToResponse(Notification notification) {
