@@ -159,7 +159,7 @@ function CreateProject() {
     }
 
     return (
-        <main className="page-shell create-project-page">
+        <main className="page-shell glass-page">
             <section className="page-header app-page-header">
                 <div className="app-page-header-copy">
                     <span className="eyebrow">Proje</span>

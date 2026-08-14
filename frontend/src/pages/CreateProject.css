@@ -1,12 +1,12 @@
 /* C:\Projects\TeamTime\frontend\src\pages\CreateProject.css */
 
-.create-project-page {
+.glass-page {
     max-width: 1440px;
     margin: 0 auto;
     width: 100%;
 }
 
-.create-project-page form {
+.glass-page form {
     display: flex;
     flex-direction: column;
     gap: 48px; /* space-y-section-gap-large */
@@ -190,7 +190,7 @@
 }
 
 /* Modern inputs override for this page if they want blur */
-.create-project-page .ghost-input {
+.glass-page .ghost-input {
     background-color: rgba(255, 255, 255, 0.4);
     border: 1px solid rgba(115, 118, 133, 0.2);
     border-radius: 0.75rem;
@@ -201,30 +201,30 @@
     width: 100%;
     color: var(--tt-text);
 }
-[data-theme="dark"] .create-project-page .ghost-input {
+[data-theme="dark"] .glass-page .ghost-input {
     background-color: rgba(20, 23, 28, 0.6);
     border-color: rgba(255, 255, 255, 0.08);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     color-scheme: dark; /* Fixes datepicker calendar icon color */
 }
-.create-project-page .ghost-input:focus {
+.glass-page .ghost-input:focus {
     border-color: #0052cc;
     background-color: #ffffff;
     box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.1);
     outline: none;
 }
-[data-theme="dark"] .create-project-page .ghost-input:focus {
+[data-theme="dark"] .glass-page .ghost-input:focus {
     background-color: rgba(30, 34, 41, 0.8);
     border-color: #b2c5ff;
     box-shadow: 0 0 0 3px rgba(178, 197, 255, 0.1);
 }
 
 /* Fix dropdown options readability */
-.create-project-page .ghost-input option {
+.glass-page .ghost-input option {
     background-color: var(--tt-surface);
     color: var(--tt-text);
 }
-[data-theme="dark"] .create-project-page .ghost-input option {
+[data-theme="dark"] .glass-page .ghost-input option {
     background-color: var(--tt-surface);
     color: var(--tt-text-inverse, #f0f1f3);
 }

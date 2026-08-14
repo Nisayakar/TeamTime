@@ -6,6 +6,7 @@ import InlineFeedback, { type InlineFeedbackType } from "../components/ui/Inline
 import type { TeamRole } from "../types/team";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
 import { navigateForInitialLoadError } from "../utils/routeErrors";
+import "./CreateProject.css";
 
 type Team = {
     id: number;
@@ -214,7 +215,7 @@ function Teams() {
     }
 
     return (
-        <main className="page-shell app-page teams-page">
+        <main className="page-shell app-page teams-page glass-page">
             <section className="page-header app-page-header">
                 <div className="app-page-header-copy">
                     <span className="eyebrow">Takımlar</span>
@@ -223,126 +224,102 @@ function Teams() {
                 </div>
             </section>
 
-            <section className="form-section">
-                <div className="section-heading">
-                    <span className="eyebrow">Yeni takım</span>
-                    <h2>Takım oluştur</h2>
-                </div>
-
-                <form className="stacked-form" onSubmit={createTeam}>
-                    <label>Takım Adı</label>
-                    <input
-                        type="text"
-                        className="ghost-input"
-                        value={name}
-                        onChange={event => setName(event.target.value)}
-                        required
-                    />
-
-                    <label style={{ marginTop: "16px", display: "block" }}>Açıklama</label>
-                    <input
-                        type="text"
-                        className="ghost-input"
-                        value={description}
-                        onChange={event => setDescription(event.target.value)}
-                        required
-                    />
-
-                    <div style={{ marginTop: "24px" }}>
-                        <button className="button button-primary" type="submit">Takım Oluştur</button>
+            {/* Section 1: Takım Oluştur */}
+            <section className="glass-section glass-section-accent-primary">
+                <div className="glass-section-line primary"></div>
+                <div className="cp-section-flex">
+                    <div className="cp-section-left">
+                        <div className="cp-icon-circle cp-icon-primary">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                        </div>
+                        <div>
+                            <div className="cp-step-badge primary">Yeni Takım</div>
+                            <h2 className="cp-title text-on-surface dark:text-on-primary">Takım Oluştur</h2>
+                        </div>
                     </div>
-                </form>
-                {createFeedback && <InlineFeedback type={createFeedback.type} message={createFeedback.message} />}
+                    <div className="cp-section-right">
+                        <form onSubmit={createTeam}>
+                            <div className="cp-grid-2">
+                                <div className="cp-input-group">
+                                    <label>Takım Adı</label>
+                                    <input type="text" className="ghost-input" value={name} onChange={event => setName(event.target.value)} required />
+                                </div>
+                                <div className="cp-input-group">
+                                    <label>Açıklama</label>
+                                    <input type="text" className="ghost-input" value={description} onChange={event => setDescription(event.target.value)} required />
+                                </div>
+                            </div>
+                            <div className="cp-actions" style={{ marginTop: "24px", justifyContent: "flex-start" }}>
+                                <button className="cp-btn-gradient" type="submit">
+                                    Takım Oluştur
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ marginLeft: "8px" }}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                                </button>
+                            </div>
+                            {createFeedback && <div style={{marginTop: "16px"}}><InlineFeedback type={createFeedback.type} message={createFeedback.message} /></div>}
+                        </form>
+                    </div>
+                </div>
             </section>
             
-            <hr className="section-divider" style={{ margin: "32px 0" }} />
-            
-            {sectionFeedback && <InlineFeedback type={sectionFeedback.type} message={sectionFeedback.message} />}
+            {sectionFeedback && <div style={{marginTop: "16px", marginBottom: "16px"}}><InlineFeedback type={sectionFeedback.type} message={sectionFeedback.message} /></div>}
 
-            {
-                sectionFeedback?.type === "error" ? null : teams.length === 0 ? (
-                    <p className="empty-state app-empty-state">Henüz takım yok</p>
-                ) : (
-                    <div className="project-list teams-list">
-                        {
-                            teams.map(team => (
-                                <article className="project-row team-row" key={team.id}>
-                                    {
-                                        editingTeamId === team.id ? (
-                                            <div className="team-edit-form" style={{ width: "100%" }}>
-                                                <div className="stacked-form">
-                                                    <input
-                                                        type="text"
-                                                        className="ghost-input"
-                                                        value={editName}
-                                                        onChange={event => setEditName(event.target.value)}
-                                                    />
-
-                                                    <input
-                                                        type="text"
-                                                        className="ghost-input"
-                                                        style={{ marginTop: "8px" }}
-                                                        value={editDescription}
-                                                        onChange={event => setEditDescription(event.target.value)}
-                                                    />
-
-                                                    <div className="button-row" style={{ marginTop: "16px" }}>
-                                                        <button className="button button-primary" onClick={() => updateTeam(team)}>
-                                                            Kaydet
-                                                        </button>
-
-                                                        <button className="button button-secondary" onClick={cancelEdit}>
-                                                            Vazgeç
-                                                        </button>
+            {/* Section 2: Mevcut Takımlar */}
+            {sectionFeedback?.type !== "error" && (
+                <section className="glass-section glass-section-accent-secondary" style={{ marginTop: "32px" }}>
+                    <div className="glass-section-line secondary"></div>
+                    <div className="cp-section-flex">
+                        <div className="cp-section-left">
+                            <div className="cp-icon-circle cp-icon-secondary">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            </div>
+                            <div>
+                                <div className="cp-step-badge secondary">Liste</div>
+                                <h2 className="cp-title text-on-surface dark:text-on-primary">Mevcut Takımlar</h2>
+                            </div>
+                        </div>
+                        <div className="cp-section-right">
+                            {teams.length === 0 ? (
+                                <p className="empty-state app-empty-state">Henüz takım yok</p>
+                            ) : (
+                                <div className="cp-grid-2">
+                                    {teams.map(team => (
+                                        <div className="cp-radio-tile" style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "16px" }} key={team.id}>
+                                            {editingTeamId === team.id ? (
+                                                <div style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
+                                                    <input type="text" className="ghost-input" value={editName} onChange={event => setEditName(event.target.value)} />
+                                                    <input type="text" className="ghost-input" value={editDescription} onChange={event => setEditDescription(event.target.value)} />
+                                                    <div style={{ display: "flex", gap: "12px", marginTop: "8px" }}>
+                                                        <button type="button" className="cp-btn-gradient" style={{ padding: "8px 16px", flex: 1, minHeight: "36px" }} onClick={() => updateTeam(team)}>Kaydet</button>
+                                                        <button type="button" className="cp-btn-cancel" style={{ padding: "8px 16px", flex: 1, minHeight: "36px" }} onClick={cancelEdit}>Vazgeç</button>
                                                     </div>
                                                     {editFeedback && <InlineFeedback type={editFeedback.type} message={editFeedback.message} />}
                                                 </div>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <div className="project-row-main">
-                                                    <h3 style={{ fontSize: "16px", fontWeight: "600", color: "var(--text)", margin: 0 }}>{team.name}</h3>
-                                                    <p className="project-row-desc">{team.description}</p>
-                                                </div>
-
-                                                <div className="project-row-meta">
-                                                    <div className="button-row">
-                                                        <button className="button button-primary button-sm" onClick={() => navigate(`/teams/${team.id}`)}>
-                                                            Üyeleri Gör
-                                                        </button>
-
-                                                        {
-                                                            (rolesByTeamId[team.id] === "OWNER" || rolesByTeamId[team.id] === "ADMIN") && (
-                                                                <button className="button button-secondary button-sm" onClick={() => startEdit(team)}>
-                                                                    Düzenle
-                                                                </button>
-                                                            )
-                                                        }
-
-                                                        {
-                                                            rolesByTeamId[team.id] === "OWNER" && (
-                                                                <button
-                                                                    className="button button-danger button-sm"
-                                                                    onClick={() => {
-                                                                        setDeleteFeedback("");
-                                                                        setTeamToDelete(team);
-                                                                    }}
-                                                                >
-                                                                    Sil
-                                                                </button>
-                                                            )
-                                                        }
+                                            ) : (
+                                                <>
+                                                    <div>
+                                                        <h3 style={{ fontSize: "18px", fontWeight: "600", color: "var(--tt-text)", margin: "0 0 4px 0" }}>{team.name}</h3>
+                                                        <p style={{ fontSize: "14px", color: "var(--tt-text-secondary)", margin: 0 }}>{team.description}</p>
                                                     </div>
-                                                </div>
-                                            </>
-                                        )
-                                    }
-                                </article>
-                            ))
-                        }
+                                                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "auto" }}>
+                                                        <button type="button" className="cp-btn-gradient" style={{ padding: "6px 12px", fontSize: "13px", minHeight: "32px", flex: 1 }} onClick={() => navigate(`/teams/${team.id}`)}>Üyeleri Gör</button>
+                                                        {(rolesByTeamId[team.id] === "OWNER" || rolesByTeamId[team.id] === "ADMIN") && (
+                                                            <button type="button" className="cp-btn-cancel" style={{ padding: "6px 12px", fontSize: "13px", minHeight: "32px" }} onClick={() => startEdit(team)}>Düzenle</button>
+                                                        )}
+                                                        {rolesByTeamId[team.id] === "OWNER" && (
+                                                            <button type="button" className="cp-btn-cancel" style={{ padding: "6px 12px", fontSize: "13px", minHeight: "32px", color: "var(--tt-danger, #e11d48)" }} onClick={() => { setDeleteFeedback(""); setTeamToDelete(team); }}>Sil</button>
+                                                        )}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                )
-            }
+                </section>
+            )}
+
             <ConfirmModal
                 open={teamToDelete !== null}
                 title="Takımı sil"
