@@ -1,8 +1,9 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiFetch, getStoredUser } from "../api";
-import type { Task, TaskPriority, TaskStatus } from "../types/task";
-import { Badge, Button, EmptyState, LoadingState, StatCard, type BadgeVariant } from "../components/ui";
+import type { Task } from "../types/task";
+import { Badge, EmptyState, LoadingState } from "../components/ui";
+import "../dashboard-v2.css";
 
 type DashboardData = {
     projectCount: number;
@@ -36,13 +37,11 @@ type StoredUser = {
 function Dashboard() {
     const [user, setUser] = useState<StoredUser | null>(null);
     const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-    const [recentTasks, setRecentTasks] = useState<Task[]>([]);
     const [upcomingTasks, setUpcomingTasks] = useState<Task[]>([]);
     const [upcomingTasksLoading, setUpcomingTasksLoading] = useState(true);
     const [upcomingTasksError, setUpcomingTasksError] = useState("");
     const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
     const navigate = useNavigate();
-    const metricsReady = dashboardData !== null;
 
     useEffect(() => {
         setUser(getStoredUser());
@@ -56,13 +55,6 @@ function Dashboard() {
             });
     }, []);
 
-    useEffect(() => {
-        apiFetch("/tasks/recent")
-            .then(response => response.json())
-            .then(data => {
-                setRecentTasks(data);
-            });
-    }, []);
 
     useEffect(() => {
         setUpcomingTasksLoading(true);
@@ -95,349 +87,243 @@ function Dashboard() {
             });
     }, []);
 
+    const taskCount = dashboardData?.taskCount ?? 0;
+    const completedTaskCount = dashboardData?.completedTaskCount ?? 0;
+    const rawCompletionRate = taskCount === 0 ? 0 : Math.round((completedTaskCount / taskCount) * 100);
+    const completionRate = Math.min(100, Math.max(0, rawCompletionRate));
+
     return (
-        <main className="dashboard-page">
-            <header className="dashboard-header">
-                <div className="dashboard-header-content">
-                    <h1 className="dashboard-header-title">Hoş geldin, {user?.name ?? ""}</h1>
-                    <p className="dashboard-header-subtitle">
-                        {dashboardData
-                            ? `Bugün ${dashboardData.dueTodayTaskCount} görevin, ${dashboardData.upcomingTaskCount} yaklaşan görevin var.`
-                            : "Yükleniyor..."}
+        <main className="dashboard-v2-container">
+            <section className="dashboard-v2-welcome">
+                <div className="dashboard-v2-welcome-text">
+                    <h1 className="dashboard-v2-title">
+                        Hoş geldin, <span className="dashboard-v2-title-highlight">{user?.name ?? ""}</span>
+                    </h1>
+                    <p className="dashboard-v2-subtitle">
+                        Genel duruma hızlıca göz at. Bugün <strong className="dashboard-v2-subtitle-strong">{dashboardData?.dueTodayTaskCount ?? 0}</strong> görevin, <strong className="dashboard-v2-subtitle-strong">{dashboardData?.upcomingTaskCount ?? 0}</strong> yaklaşan görevin var.
                     </p>
                 </div>
-                <div className="dashboard-header-action">
-                    <Button variant="primary" size="lg" onClick={() => navigate("/create-project")}>
-                        Yeni Proje Oluştur
-                    </Button>
-                </div>
-            </header>
-
-            <section className="dashboard-stat-grid" aria-label="Genel istatistikler">
-                <MetricCardLink to="/projects" ariaLabel="Projeleri görüntüle" disabled={!metricsReady}>
-                    <StatCard
-                        label="Toplam Proje"
-                        value={dashboardData?.projectCount ?? 0}
-                        icon={<FolderIcon />}
-                        tone="primary"
-                        layout="top"
-                    />
-                </MetricCardLink>
-                <MetricCardLink to="/projects" ariaLabel="Projeler üzerinden görevleri görüntüle" disabled={!metricsReady}>
-                    <StatCard
-                        label="Toplam Görev"
-                        value={dashboardData?.taskCount ?? 0}
-                        icon={<TaskIcon />}
-                        tone="primary"
-                        layout="top"
-                    />
-                </MetricCardLink>
-                <MetricCardLink to="/teams" ariaLabel="Takımları görüntüle" disabled={!metricsReady}>
-                    <StatCard
-                        label="Takımlarım"
-                        value={dashboardData?.teamCount ?? 0}
-                        icon={<GroupIcon />}
-                        tone="primary"
-                        layout="top"
-                    />
-                </MetricCardLink>
-                <MetricCardLink to="/projects" ariaLabel="Tamamlanan görevleri projeler üzerinden görüntüle" disabled={!metricsReady}>
-                    <StatCard
-                        label="Tamamlanan"
-                        value={dashboardData?.completedTaskCount ?? 0}
-                        icon={<CheckIcon />}
-                        tone="success"
-                        layout="top"
-                    />
-                </MetricCardLink>
-                <MetricCardLink to="/projects" ariaLabel="Devam eden görevleri projeler üzerinden görüntüle" disabled={!metricsReady}>
-                    <StatCard
-                        label="Devam Eden"
-                        value={dashboardData?.inProgressTaskCount ?? 0}
-                        icon={<PlayIcon />}
-                        tone="warning"
-                        layout="top"
-                    />
-                </MetricCardLink>
-                <MetricCardLink to="/projects" ariaLabel="Gecikmiş görevleri projeler üzerinden görüntüle" disabled={!metricsReady}>
-                    <StatCard
-                        label="Gecikmiş Görevler"
-                        value={dashboardData?.overdueTaskCount ?? 0}
-                        icon={<WarningIcon />}
-                        tone="danger"
-                        layout="top"
-                        className={dashboardData && dashboardData.overdueTaskCount > 0 ? "is-overdue" : ""}
-                        hint={dashboardData && dashboardData.overdueTaskCount > 0 ? "görev acil" : undefined}
-                    />
-                </MetricCardLink>
-                <MetricCardLink to="/projects" ariaLabel="Bugün biten görevleri projeler üzerinden görüntüle" disabled={!metricsReady}>
-                    <StatCard
-                        label="Bugün Bitenler"
-                        value={dashboardData?.dueTodayTaskCount ?? 0}
-                        icon={<DotIcon />}
-                        tone="primary"
-                        layout="top"
-                    />
-                </MetricCardLink>
-                <MetricCardLink
-                    href="#dashboard-upcoming-tasks"
-                    ariaLabel="Yaklaşan görevler bölümüne git"
-                    disabled={!metricsReady}
-                    onAnchorNavigate={focusUpcomingTasksSection}
+                <button
+                    className="dashboard-v2-create-btn"
+                    onClick={() => navigate("/create-project")}
+                    type="button"
                 >
-                    <StatCard
-                        label="Yaklaşan Görevler"
-                        value={dashboardData?.upcomingTaskCount ?? 0}
-                        icon={<CalendarIcon />}
-                        tone="primary"
-                        layout="top"
-                    />
-                </MetricCardLink>
+                    <PlusIcon />
+                    Yeni Proje Oluştur
+                </button>
             </section>
 
-            <div className="dashboard-layout-grid">
-                <div className="dashboard-section dashboard-section-full">
-                    <div className="dashboard-section-header">
-                        <div className="dashboard-section-titles">
-                            <h2 className="dashboard-section-title">Son Projeler</h2>
+            <section className="dashboard-v2-stats-layout">
+                <div className="dashboard-v2-gauge-card">
+                    <div>
+                        <h2 className="dashboard-v2-gauge-header">İlerleme</h2>
+                        <div className="dashboard-v2-gauge-container">
+                            <div className="dashboard-v2-gauge-wrapper">
+                                <svg className="dashboard-v2-gauge-svg" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+                                    <circle className="dashboard-v2-gauge-track" cx="18" cy="18" fill="none" r="16" strokeWidth="2"></circle>
+                                    <circle 
+                                        className="dashboard-v2-gauge-progress" 
+                                        cx="18" 
+                                        cy="18" 
+                                        fill="none" 
+                                        r="16" 
+                                        strokeDasharray="100" 
+                                        strokeDashoffset={100 - completionRate} 
+                                        strokeLinecap="round" 
+                                        strokeWidth="2"
+                                    ></circle>
+                                </svg>
+                                <div className="dashboard-v2-gauge-content">
+                                    <span className="dashboard-v2-gauge-percent">{completionRate}%</span>
+                                    <CheckIcon />
+                                </div>
+                            </div>
                         </div>
-                        <a className="dashboard-section-link" href="#" onClick={e => { e.preventDefault(); navigate("/projects"); }}>
-                            Tümünü Gör
-                        </a>
+                        <p className="dashboard-v2-gauge-desc">Tüm görevlerinizdeki genel tamamlama oranınız.</p>
                     </div>
+                    <div className="dashboard-v2-gauge-footer">
+                        <span className="dashboard-v2-gauge-completed-val">{completedTaskCount}</span>
+                        <span className="dashboard-v2-gauge-completed-lbl">Tamamlanan Görevler</span>
+                    </div>
+                </div>
 
-                    {recentProjects.length === 0 ? (
-                        <EmptyState
-                            icon={<FolderIcon />}
-                            title="Henüz proje yok"
-                            message="Oluşturulan projeler burada görünecek."
-                            action={
-                                <Button variant="primary" onClick={() => navigate("/create-project")}>
-                                    Yeni Proje Oluştur
-                                </Button>
-                            }
-                        />
-                    ) : (
-                        <div className="dashboard-project-grid">
-                            {recentProjects.map(project => (
-                                <button
-                                    className="dashboard-project-card"
-                                    key={project.id}
-                                    type="button"
-                                    onClick={() => navigate(`/project/${project.id}`)}
-                                >
-                                    <div className="dashboard-project-card-header">
-                                        <span className="dashboard-project-card-title">{project.projectName}</span>
-                                        {project.teamProject ? (
-                                            <Badge variant="info">{project.teamName ?? "Takım"}</Badge>
-                                        ) : (
-                                            <Badge variant="neutral">Kişisel</Badge>
-                                        )}
-                                    </div>
-                                    {project.description && (
-                                        <p className="dashboard-project-card-desc">{project.description}</p>
+                <div className="dashboard-v2-status-grid">
+                    <button className="dashboard-v2-status-card" onClick={() => navigate("/projects")} type="button">
+                        <div className="dashboard-v2-status-card-header">
+                            <div className="dashboard-v2-status-icon-wrap info">
+                                <FolderIcon />
+                            </div>
+                            <div className="dashboard-v2-status-meta">
+                                <div>
+                                    <span className="dashboard-v2-status-meta-val">{dashboardData?.taskCount ?? 0}</span>
+                                    <span className="dashboard-v2-status-meta-lbl">Toplam Görev</span>
+                                </div>
+                                <div>
+                                    <span className="dashboard-v2-status-meta-val">{dashboardData?.teamCount ?? 0}</span>
+                                    <span className="dashboard-v2-status-meta-lbl">Takımlar</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <span className="dashboard-v2-status-main-val">{dashboardData?.projectCount ?? 0}</span>
+                            <span className="dashboard-v2-status-main-lbl">Aktif Proje</span>
+                        </div>
+                    </button>
+
+                    <button className="dashboard-v2-status-card" onClick={() => navigate("/projects")} type="button">
+                        <div className="dashboard-v2-status-card-header">
+                            <div className="dashboard-v2-status-icon-wrap warning">
+                                <PlayIcon />
+                            </div>
+                        </div>
+                        <div>
+                            <span className="dashboard-v2-status-main-val">{dashboardData?.inProgressTaskCount ?? 0}</span>
+                            <span className="dashboard-v2-status-main-lbl">Devam Eden Görevler</span>
+                        </div>
+                    </button>
+
+                    <button className="dashboard-v2-status-card" onClick={() => navigate("/projects")} type="button">
+                        <div className="dashboard-v2-status-card-header">
+                            <div className="dashboard-v2-status-icon-wrap danger">
+                                <WarningIcon />
+                            </div>
+                        </div>
+                        <div>
+                            <span className="dashboard-v2-status-main-val">{dashboardData?.overdueTaskCount ?? 0}</span>
+                            <span className="dashboard-v2-status-main-lbl">Gecikmiş Görevler</span>
+                        </div>
+                    </button>
+
+                    <button className="dashboard-v2-status-card" onClick={() => focusUpcomingTasksSection()} type="button">
+                        <div className="dashboard-v2-status-card-header">
+                            <div className="dashboard-v2-status-icon-wrap primary">
+                                <CalendarIcon />
+                            </div>
+                        </div>
+                        <div>
+                            <span className="dashboard-v2-status-main-val">{dashboardData?.upcomingTaskCount ?? 0}</span>
+                            <span className="dashboard-v2-status-main-lbl">Yaklaşan Görevler</span>
+                        </div>
+                    </button>
+                </div>
+            </section>
+
+            <section className="dashboard-v2-recent">
+                <div className="dashboard-v2-recent-header">
+                    <div>
+                        <h2 className="dashboard-v2-recent-title">Son Projeler</h2>
+                        <p className="dashboard-v2-recent-subtitle">En son üzerinde çalıştığınız projeler ve durumları.</p>
+                    </div>
+                    <Link className="dashboard-v2-recent-link" to="/projects">
+                        Tümünü Gör
+                        <ArrowForwardIcon />
+                    </Link>
+                </div>
+
+                {recentProjects.length === 0 ? (
+                    <div className="dashboard-v2-empty">
+                        <div className="dashboard-v2-empty-icon">
+                            <PhotoIcon />
+                        </div>
+                        <h3 className="dashboard-v2-empty-title">Henüz yeni bir proje bulunmuyor</h3>
+                        <p className="dashboard-v2-empty-message">Çalışmalarınıza başlamak için yeni bir proje oluşturun ve takımınızı davet edin.</p>
+                        <button className="dashboard-v2-create-btn" onClick={() => navigate("/create-project")} type="button">
+                            İlk projeni oluştur
+                        </button>
+                    </div>
+                ) : (
+                    <div className="dashboard-project-grid">
+                        {recentProjects.map(project => (
+                            <button
+                                className="dashboard-project-card"
+                                key={project.id}
+                                type="button"
+                                onClick={() => navigate(`/project/${project.id}`)}
+                            >
+                                <div className="dashboard-project-card-header">
+                                    <span className="dashboard-project-card-title">{project.projectName}</span>
+                                    {project.teamProject ? (
+                                        <Badge variant="info">{project.teamName ?? "Takım"}</Badge>
+                                    ) : (
+                                        <Badge variant="neutral">Kişisel</Badge>
                                     )}
-                                    <div className="dashboard-project-card-footer">
-                                        <span className="dashboard-project-date">
-                                            {formatDateRange(project.startDate, project.endDate)}
-                                        </span>
-                                    </div>
+                                </div>
+                                {project.description && (
+                                    <p className="dashboard-project-card-desc">{project.description}</p>
+                                )}
+                                <div className="dashboard-project-card-footer">
+                                    <span className="dashboard-project-date">
+                                        {formatDateRange(project.startDate, project.endDate)}
+                                    </span>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </section>
+
+            <div
+                className="dashboard-section"
+                id="dashboard-upcoming-tasks"
+                tabIndex={-1}
+            >
+                <div className="dashboard-section-header">
+                    <div className="dashboard-section-titles">
+                        <h2 className="dashboard-section-title">Yaklaşan Görevler Listesi</h2>
+                    </div>
+                </div>
+
+                {upcomingTasksLoading ? (
+                    <LoadingState message="Yaklaşan görevler yükleniyor..." />
+                ) : upcomingTasksError ? (
+                    <EmptyState
+                        icon={<WarningIcon />}
+                        title={upcomingTasksError}
+                    />
+                ) : upcomingTasks.length === 0 ? (
+                    <EmptyState
+                        icon={<CalendarIcon />}
+                        title="Yaklaşan göreviniz bulunmuyor."
+                        message="Önümüzdeki dönem için planlanmış göreviniz yok."
+                    />
+                ) : (
+                    <div className="dashboard-upcoming-list">
+                        {upcomingTasks.map(task => {
+                            const isUrgent = task.priority === "URGENT" || task.priority === "HIGH";
+                            const content = (
+                                <>
+                                    <span className="dashboard-upcoming-dot">
+                                        <span className={`dashboard-upcoming-dot-marker${isUrgent ? " is-urgent" : ""}`} />
+                                        <span className="dashboard-upcoming-item-title">{task.title}</span>
+                                    </span>
+                                    <span className={`dashboard-upcoming-item-date${isUrgent ? " is-urgent" : ""}`}>
+                                        {formatDate(task.dueDate)}
+                                    </span>
+                                </>
+                            );
+
+                            return task.projectId ? (
+                                <button
+                                    className="dashboard-upcoming-item is-clickable"
+                                    key={task.id}
+                                    type="button"
+                                    onClick={() => navigate(`/project/${task.projectId}`)}
+                                >
+                                    {content}
                                 </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                <div className="dashboard-section">
-                    <div className="dashboard-section-header">
-                        <div className="dashboard-section-titles">
-                            <h2 className="dashboard-section-title">Son Görevler</h2>
-                        </div>
+                            ) : (
+                                <div className="dashboard-upcoming-item" key={task.id}>
+                                    {content}
+                                </div>
+                            );
+                        })}
                     </div>
-
-                    {recentTasks.length === 0 ? (
-                        <EmptyState
-                            icon={<TaskIcon />}
-                            title="Henüz görev yok"
-                            message="Oluşturulan görevler burada görünecek."
-                        />
-                    ) : (
-                        <div className="dashboard-task-table-wrap">
-                            <table className="dashboard-task-table">
-                                <thead>
-                                    <tr>
-                                        <th>Görev Adı</th>
-                                        <th>Proje</th>
-                                        <th>Öncelik</th>
-                                        <th>Durum</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {recentTasks.map(task => (
-                                        <tr
-                                            key={task.id}
-                                            className={task.status === "TAMAMLANDI" ? "is-completed" : ""}
-                                            tabIndex={task.projectId ? 0 : -1}
-                                            onClick={() => task.projectId && navigate(`/project/${task.projectId}`)}
-                                            onKeyDown={e => {
-                                                if (task.projectId && (e.key === "Enter" || e.key === " ")) {
-                                                    e.preventDefault();
-                                                    navigate(`/project/${task.projectId}`);
-                                                }
-                                            }}
-                                        >
-                                            <td>
-                                                <div className="dashboard-task-title-cell">
-                                                    <span className={`dashboard-task-check${task.status === "TAMAMLANDI" ? " is-completed" : ""}`}>
-                                                        {task.status === "TAMAMLANDI" ? <CheckIcon size={12} /> : null}
-                                                    </span>
-                                                    <span className="dashboard-task-title">{task.title}</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span className="dashboard-task-project">
-                                                    {task.projectName ?? "—"}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <Badge variant={getPriorityBadgeVariant(task.priority)}>
-                                                    {getPriorityLabel(task.priority)}
-                                                </Badge>
-                                            </td>
-                                            <td>
-                                                <Badge variant={getStatusBadgeVariant(task.status)}>
-                                                    {getStatusLabel(task.status)}
-                                                </Badge>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
-
-                <div
-                    className="dashboard-section"
-                    id="dashboard-upcoming-tasks"
-                    tabIndex={-1}
-                >
-                    <div className="dashboard-section-header">
-                        <div className="dashboard-section-titles">
-                            <h2 className="dashboard-section-title">Yaklaşan Görevler</h2>
-                        </div>
-                    </div>
-
-                    {upcomingTasksLoading ? (
-                        <LoadingState message="Yaklaşan görevler yükleniyor..." />
-                    ) : upcomingTasksError ? (
-                        <EmptyState
-                            icon={<WarningIcon />}
-                            title={upcomingTasksError}
-                        />
-                    ) : upcomingTasks.length === 0 ? (
-                        <EmptyState
-                            icon={<CalendarIcon />}
-                            title="Yaklaşan göreviniz bulunmuyor."
-                            message="Önümüzdeki dönem için planlanmış göreviniz yok."
-                        />
-                    ) : (
-                        <div className="dashboard-upcoming-list">
-                            {upcomingTasks.map(task => {
-                                const isUrgent = task.priority === "URGENT" || task.priority === "HIGH";
-                                const content = (
-                                    <>
-                                        <span className="dashboard-upcoming-dot">
-                                            <span className={`dashboard-upcoming-dot-marker${isUrgent ? " is-urgent" : ""}`} />
-                                            <span className="dashboard-upcoming-item-title">{task.title}</span>
-                                        </span>
-                                        <span className={`dashboard-upcoming-item-date${isUrgent ? " is-urgent" : ""}`}>
-                                            {formatDate(task.dueDate)}
-                                        </span>
-                                    </>
-                                );
-
-                                return task.projectId ? (
-                                    <button
-                                        className="dashboard-upcoming-item is-clickable"
-                                        key={task.id}
-                                        type="button"
-                                        onClick={() => navigate(`/project/${task.projectId}`)}
-                                    >
-                                        {content}
-                                    </button>
-                                ) : (
-                                    <div className="dashboard-upcoming-item" key={task.id}>
-                                        {content}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
+                )}
             </div>
         </main>
     );
 }
 
-type MetricCardLinkProps = {
-    children: ReactNode;
-    ariaLabel: string;
-    disabled: boolean;
-    to?: string;
-    href?: string;
-    onAnchorNavigate?: () => void;
-};
-
-function MetricCardLink({
-    children,
-    ariaLabel,
-    disabled,
-    to,
-    href,
-    onAnchorNavigate
-}: MetricCardLinkProps) {
-    const content = (
-        <>
-            {children}
-            <span className="dashboard-stat-link-indicator" aria-hidden="true">
-                <ChevronRightIcon />
-            </span>
-        </>
-    );
-
-    if (disabled) {
-        return (
-            <div className="dashboard-stat-link is-disabled" aria-disabled="true">
-                {children}
-            </div>
-        );
-    }
-
-    if (to) {
-        return (
-            <Link className="dashboard-stat-link" to={to} aria-label={ariaLabel}>
-                {content}
-            </Link>
-        );
-    }
-
-    return (
-        <a
-            className="dashboard-stat-link"
-            href={href}
-            aria-label={ariaLabel}
-            onClick={event => {
-                if (onAnchorNavigate) {
-                    event.preventDefault();
-                    onAnchorNavigate();
-                }
-            }}
-        >
-            {content}
-        </a>
-    );
-}
 
 function focusUpcomingTasksSection() {
     const section = document.getElementById("dashboard-upcoming-tasks");
@@ -460,16 +346,13 @@ function FolderIcon() {
     return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>;
 }
 
-function TaskIcon() {
-    return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>;
-}
-
-function GroupIcon() {
-    return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>;
-}
 
 function CheckIcon({ size = 18 }: { size?: number }) {
     return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>;
+}
+
+function CalendarIcon() {
+    return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>;
 }
 
 function PlayIcon() {
@@ -480,68 +363,21 @@ function WarningIcon() {
     return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>;
 }
 
-function DotIcon() {
-    return <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="6" /></svg>;
+
+function ArrowForwardIcon() {
+    return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" /></svg>;
 }
 
-function CalendarIcon() {
-    return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>;
+function PlusIcon() {
+    return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>;
 }
 
-function ChevronRightIcon() {
-    return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6" /></svg>;
+function PhotoIcon() {
+    return <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>;
 }
 
 /* ---- Label/format helpers ---- */
 
-function getPriorityLabel(priority: TaskPriority) {
-    const labels: Record<TaskPriority, string> = {
-        LOW: "Düşük",
-        MEDIUM: "Orta",
-        HIGH: "Yüksek",
-        URGENT: "Acil"
-    };
-
-    return labels[priority];
-}
-
-function getPriorityBadgeVariant(priority: TaskPriority): BadgeVariant {
-    if (priority === "URGENT") {
-        return "danger";
-    }
-
-    if (priority === "HIGH") {
-        return "warning";
-    }
-
-    if (priority === "MEDIUM") {
-        return "info";
-    }
-
-    return "neutral";
-}
-
-function getStatusLabel(status: TaskStatus) {
-    const labels: Record<TaskStatus, string> = {
-        BEKLIYOR: "Bekliyor",
-        DEVAM_EDIYOR: "Devam Ediyor",
-        TAMAMLANDI: "Tamamlandı"
-    };
-
-    return labels[status];
-}
-
-function getStatusBadgeVariant(status: TaskStatus): BadgeVariant {
-    if (status === "TAMAMLANDI") {
-        return "success";
-    }
-
-    if (status === "DEVAM_EDIYOR") {
-        return "warning";
-    }
-
-    return "info";
-}
 
 function formatDate(value: string | null) {
     if (!value) {

@@ -1,6 +1,6 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { mockJsonResponse, renderWithRouter } from "../test/testUtils";
 import Dashboard from "./Dashboard";
@@ -29,15 +29,13 @@ describe("Dashboard", () => {
 
         renderWithRouter(<Dashboard />);
 
-        expect(await screen.findByRole("link", { name: "Projeleri görüntüle" })).toBeInTheDocument();
-        expect(screen.getByText("Toplam Proje")).toBeInTheDocument();
+        expect(await screen.findByText("İlerleme")).toBeInTheDocument();
+        expect(screen.getByText("Aktif Proje")).toBeInTheDocument();
         expect(screen.getByText("12")).toBeInTheDocument();
         expect(screen.getByText("Gecikmiş Görevler")).toBeInTheDocument();
-        expect(screen.getByText("3")).toBeInTheDocument();
-        expect(screen.getByText("Bugün Bitenler")).toBeInTheDocument();
-        expect(screen.getByText("4")).toBeInTheDocument();
-        expect(screen.getAllByText("Yaklaşan Görevler")).toHaveLength(2);
-        expect(screen.getByText("5")).toBeInTheDocument();
+        expect(screen.getAllByText("3")).not.toHaveLength(0);
+        expect(screen.getAllByText("Yaklaşan Görevler Listesi")).toHaveLength(1);
+        expect(screen.getAllByText("5")).not.toHaveLength(0);
         expect(screen.getByText("Upcoming one")).toBeInTheDocument();
         expect(screen.getByText("Upcoming two")).toBeInTheDocument();
     });
@@ -72,7 +70,6 @@ describe("Dashboard", () => {
         expect(screen.queryByText("Yaklaşan göreviniz bulunmuyor.")).not.toBeInTheDocument();
     });
 
-
     it("navigates from a project-linked upcoming task", async () => {
         const user = userEvent.setup();
         setStoredUser();
@@ -91,97 +88,6 @@ describe("Dashboard", () => {
         expect(screen.getByRole("heading", { name: "Project Detail" })).toBeInTheDocument();
     });
 
-    it("navigates from the project count metric to projects", async () => {
-        const user = userEvent.setup();
-        setStoredUser();
-        vi.stubGlobal("fetch", dashboardFetchMock());
-
-        renderWithRouter(
-            <Routes>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/projects" element={<h1>Projects Page</h1>} />
-            </Routes>,
-            { routerProps: { initialEntries: ["/dashboard"] } }
-        );
-
-        await user.click(await screen.findByRole("link", { name: "Projeleri görüntüle" }));
-
-        expect(screen.getByRole("heading", { name: "Projects Page" })).toBeInTheDocument();
-    });
-
-    it("navigates from the team count metric to teams", async () => {
-        const user = userEvent.setup();
-        setStoredUser();
-        vi.stubGlobal("fetch", dashboardFetchMock());
-
-        renderWithRouter(
-            <Routes>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/teams" element={<h1>Teams Page</h1>} />
-            </Routes>,
-            { routerProps: { initialEntries: ["/dashboard"] } }
-        );
-
-        await user.click(await screen.findByRole("link", { name: "Takımları görüntüle" }));
-
-        expect(screen.getByRole("heading", { name: "Teams Page" })).toBeInTheDocument();
-    });
-
-    it("supports keyboard navigation on metric links", async () => {
-        const user = userEvent.setup();
-        setStoredUser();
-        vi.stubGlobal("fetch", dashboardFetchMock());
-
-        renderWithRouter(
-            <Routes>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/projects" element={<h1>Projects Page</h1>} />
-            </Routes>,
-            { routerProps: { initialEntries: ["/dashboard"] } }
-        );
-
-        const projectMetric = await screen.findByRole("link", { name: "Projeleri görüntüle" });
-        projectMetric.focus();
-
-        expect(projectMetric).toHaveFocus();
-
-        await user.keyboard("{Enter}");
-
-        expect(screen.getByRole("heading", { name: "Projects Page" })).toBeInTheDocument();
-    });
-
-    it("keeps metric cards non-navigable while dashboard metrics are loading", () => {
-        setStoredUser();
-        vi.stubGlobal("fetch", dashboardFetchMock({ dashboardPending: true }));
-
-        renderWithRouter(<Dashboard />);
-
-        expect(screen.queryByRole("link", { name: "Projeleri görüntüle" })).not.toBeInTheDocument();
-        expect(screen.getByText("Toplam Proje")).toBeInTheDocument();
-    });
-
-    it("moves focus to the upcoming tasks section from the upcoming metric", async () => {
-        const user = userEvent.setup();
-        setStoredUser();
-        vi.stubGlobal("fetch", dashboardFetchMock());
-        const scrollIntoView = vi.fn();
-        Element.prototype.scrollIntoView = scrollIntoView;
-
-        renderWithRouter(
-            <Routes>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="*" element={<LocationProbe />} />
-            </Routes>,
-            { routerProps: { initialEntries: ["/dashboard"] } }
-        );
-
-        await user.click(await screen.findByRole("link", { name: "Yaklaşan görevler bölümüne git" }));
-
-        const upcomingSection = document.getElementById("dashboard-upcoming-tasks");
-        expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
-        expect(upcomingSection).toHaveFocus();
-    });
-
     it("renders empty states safely", async () => {
         setStoredUser();
         vi.stubGlobal("fetch", dashboardFetchMock({
@@ -193,8 +99,7 @@ describe("Dashboard", () => {
         renderWithRouter(<Dashboard />);
 
         expect(await screen.findByText("Yaklaşan göreviniz bulunmuyor.")).toBeInTheDocument();
-        expect(screen.getByText("Henüz görev yok")).toBeInTheDocument();
-        expect(screen.getByText("Henüz proje yok")).toBeInTheDocument();
+        expect(screen.getByText("Henüz yeni bir proje bulunmuyor")).toBeInTheDocument();
     });
 
     it("shows safe inline feedback for upcoming task API errors", async () => {
@@ -204,109 +109,112 @@ describe("Dashboard", () => {
         renderWithRouter(<Dashboard />);
 
         expect(await screen.findByText("Yaklaşan görevler yüklenemedi.")).toBeInTheDocument();
-        expect(screen.queryByText("[object Object]")).not.toBeInTheDocument();
+        expect(screen.queryByText("Yaklaşan göreviniz bulunmuyor.")).not.toBeInTheDocument();
     });
 
-    it("shows feedback instead of the empty state when upcoming endpoint returns an error response", async () => {
+    it("handles non-array response from upcoming tasks gracefully", async () => {
         setStoredUser();
-        vi.stubGlobal("fetch", dashboardFetchMock({ upcomingStatusError: true }));
+        vi.stubGlobal("fetch", dashboardFetchMock({ upcomingInvalid: true }));
 
         renderWithRouter(<Dashboard />);
 
-        expect(await screen.findByText("Yaklaşan görevler yüklenemedi.")).toBeInTheDocument();
-        expect(screen.queryByText("Yaklaşan göreviniz bulunmuyor.")).not.toBeInTheDocument();
+        expect(await screen.findByText("Yaklaşan göreviniz bulunmuyor.")).toBeInTheDocument();
+    });
+
+    it("calculates completion rate correctly", async () => {
+        setStoredUser();
+        vi.stubGlobal("fetch", dashboardFetchMock());
+
+        renderWithRouter(<Dashboard />);
+
+        // 4 completed out of 10 total = 40%
+        expect(await screen.findByText("40%")).toBeInTheDocument();
     });
 });
 
-function dashboardFetchMock(options: {
-    upcomingTasks?: unknown[];
-    recentTasks?: unknown[];
-    recentProjects?: unknown[];
-    upcomingError?: boolean;
-    upcomingStatusError?: boolean;
-    dashboardPending?: boolean;
-} = {}) {
-    return vi.fn<typeof fetch>((input: RequestInfo | URL) => {
-        const url = String(input);
+function setStoredUser() {
+    localStorage.setItem("user", JSON.stringify({
+        id: 1,
+        name: "Test",
+        surname: "User",
+        email: "test@example.com",
+        token: "fake-token"
+    }));
+}
 
-        if (url.includes("/dashboard")) {
-            if (options.dashboardPending) {
-                return new Promise<Response>(() => {});
-            }
-
-            return Promise.resolve(mockJsonResponse({
-                projectCount: 12,
-                taskCount: 20,
-                completedTaskCount: 8,
-                inProgressTaskCount: 6,
-                teamCount: 2,
-                overdueTaskCount: 3,
-                dueTodayTaskCount: 4,
-                upcomingTaskCount: 5
-            }));
-        }
-
-        if (url.includes("/tasks/recent")) {
-            return Promise.resolve(mockJsonResponse(options.recentTasks ?? [
-                task(3, "Recent task", null)
-            ]));
-        }
-
+function dashboardFetchMock(overrides?: {
+    upcomingTasks?: any[],
+    recentTasks?: any[],
+    recentProjects?: any[],
+    upcomingError?: boolean,
+    upcomingInvalid?: boolean
+}) {
+    return vi.fn().mockImplementation((url: string) => {
         if (url.includes("/tasks/upcoming")) {
-            if (options.upcomingError) {
-                return Promise.reject(new Error("Yaklaşan görevler yüklenemedi."));
-            }
-
-            if (options.upcomingStatusError) {
+            if (overrides?.upcomingError) {
                 return Promise.resolve(mockJsonResponse(
                     { message: "Veritabanı hatası" },
                     { status: 500 }
                 ));
             }
 
-            return Promise.resolve(mockJsonResponse(options.upcomingTasks ?? [
-                task(1, "Upcoming one", 42),
-                task(2, "Upcoming two", null)
-            ]));
+            if (overrides?.upcomingInvalid) {
+                return Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve({ data: "invalid array structure" })
+                });
+            }
+
+            return mockJsonResponse(overrides?.upcomingTasks || [
+                {
+                    id: 1,
+                    title: "Upcoming one",
+                    status: "BEKLIYOR",
+                    priority: "MEDIUM",
+                    dueDate: "2026-08-15",
+                    projectId: 1,
+                    projectName: "TeamTime"
+                },
+                {
+                    id: 2,
+                    title: "Upcoming two",
+                    status: "BEKLIYOR",
+                    priority: "LOW",
+                    dueDate: "2026-08-16",
+                    projectId: 2,
+                    projectName: "Other Project"
+                }
+            ]);
         }
 
-        return Promise.resolve(mockJsonResponse(options.recentProjects ?? [
-            { id: 1, projectName: "Recent Project", description: "Project description" }
-        ]));
+        if (url.includes("/dashboard")) {
+            return mockJsonResponse({
+                projectCount: 12,
+                taskCount: 10,
+                completedTaskCount: 4,
+                inProgressTaskCount: 2,
+                teamCount: 3,
+                overdueTaskCount: 3,
+                dueTodayTaskCount: 4,
+                upcomingTaskCount: 5
+            });
+        }
+
+        if (url.includes("/projects/recent")) {
+            return mockJsonResponse(overrides?.recentProjects || [
+                {
+                    id: 1,
+                    projectName: "TeamTime",
+                    description: "Proje yönetimi aracı",
+                    startDate: "2026-08-01",
+                    endDate: null,
+                    teamId: 1,
+                    teamName: "Team",
+                    teamProject: true
+                }
+            ]);
+        }
+
+        return mockJsonResponse({});
     });
-}
-
-function LocationProbe() {
-    const location = useLocation();
-    return <h1>{location.pathname}</h1>;
-}
-
-function task(id: number, title: string, projectId: number | null) {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split("T")[0];
-
-    return {
-        id,
-        title,
-        description: "Description",
-        status: "BEKLIYOR",
-        priority: "MEDIUM",
-        dueDate: tomorrowStr,
-        createdAt: "2026-08-03T10:00:00",
-        completedAt: null,
-        overdue: false,
-        projectId,
-        projectName: projectId ? "Linked Project" : null
-    };
-}
-
-function setStoredUser() {
-    localStorage.setItem("token", "valid-token");
-    localStorage.setItem("user", JSON.stringify({
-        id: 1,
-        name: "Ayşe",
-        surname: "Demir",
-        email: "ayse@example.com"
-    }));
 }
