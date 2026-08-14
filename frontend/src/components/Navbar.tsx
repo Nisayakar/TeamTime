@@ -525,6 +525,16 @@ function Navbar() {
                                 {
                                     isProfileMenuOpen && (
                                         <div className="app-navbar-profile-menu" role="menu" aria-label="Hesap menüsü">
+                                            <div className="app-navbar-profile-menu-header">
+                                                <div className="app-navbar-profile-menu-avatar">{userInitials}</div>
+                                                <div className="app-navbar-profile-menu-info">
+                                                    <span className="app-navbar-profile-menu-name">{userDisplayName}</span>
+                                                    {storedUser && 'email' in storedUser && typeof storedUser.email === 'string' && (
+                                                        <span className="app-navbar-profile-menu-email">{storedUser.email}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="app-navbar-profile-menu-divider" aria-hidden="true" />
                                             <Link
                                                 to="/profile"
                                                 className="app-navbar-profile-menu-item"

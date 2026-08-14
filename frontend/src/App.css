@@ -1111,14 +1111,14 @@ button:focus-visible {
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: #0a0c10;
-  box-shadow: var(--shadow);
+  background: var(--surface);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.32);
 }
 
 .autocomplete-option {
   width: 100%;
   padding: 11px 13px;
-  background: #0a0c10;
+  background: transparent;
   color: var(--text);
   font: inherit;
   text-align: left;
@@ -1126,7 +1126,7 @@ button:focus-visible {
 }
 
 .autocomplete-option:hover {
-  background: rgba(248, 250, 252, 0.08);
+  background: var(--surface-soft);
 }
 
 .selected-user {
@@ -2717,25 +2717,19 @@ button:focus-visible {
 
 .app-page-header {
   position: relative;
-  overflow: hidden;
-  align-items: flex-start;
-  margin-bottom: 22px;
-  padding: clamp(22px, 3vw, 34px);
-  border: 1px solid var(--tt-border);
-  border-radius: 24px;
-  background: var(--tt-surface);
-  box-shadow: 0 16px 36px rgba(23, 26, 33, 0.07);
-  backdrop-filter: none;
+  align-items: flex-end;
+  margin-bottom: 32px;
+  padding: 0 0 16px 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
 }
 
 .app-page-header::before {
-  position: absolute;
-  inset: 0;
-  content: "";
-  background:
-    linear-gradient(135deg, rgba(96, 165, 250, 0.10), transparent 42%),
-    radial-gradient(circle at 92% 12%, rgba(96, 165, 250, 0.14), transparent 30%);
-  pointer-events: none;
+  display: none;
 }
 
 .app-page-header > * {
@@ -2744,8 +2738,8 @@ button:focus-visible {
 }
 
 [data-theme="dark"] .app-page-header {
-  background: #111113;
-  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.36);
+  background: transparent;
+  box-shadow: none;
 }
 
 .app-page-header-copy {
@@ -5149,6 +5143,241 @@ button:focus-visible {
   .my-task-actions .ui-button {
     flex: 1 1 100%;
   }
+}/* Dashboard V2 Styles */
+
+/* --- PHASE 1 UI POLISH --- */
+.app-navbar-auth .app-navbar-profile-menu {
+  min-width: 240px;
+  padding: 8px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.app-navbar-profile-menu-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+}
+.app-navbar-profile-menu-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+.app-navbar-profile-menu-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.app-navbar-profile-menu-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.app-navbar-profile-menu-email {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.app-navbar-auth .app-navbar-profile-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+.app-navbar-auth .app-navbar-profile-menu-item:hover {
+  background: var(--surface-soft);
+}
+.app-navbar-auth .app-navbar-profile-menu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+.app-navbar-auth .app-navbar-profile-menu-item.is-danger {
+  color: var(--danger);
+}
+.app-navbar-auth .app-navbar-profile-menu-item.is-danger:hover {
+  background: var(--danger-soft);
 }
 
-/* Dashboard V2 Styles */
+/* Notification Menu Polish */
+.app-navbar-auth .notification-panel {
+  width: 360px;
+  border-radius: 16px;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.app-navbar-auth .notification-panel-header {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.app-navbar-auth .notification-panel-header strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+.app-navbar-auth .notification-list {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.app-navbar-auth .notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: transparent;
+  text-align: left;
+  border: 1px solid transparent;
+  transition: background 0.2s;
+}
+.app-navbar-auth .notification-item:hover {
+  background: var(--surface-soft);
+}
+.app-navbar-auth .notification-item.is-unread {
+  background: rgba(59, 130, 246, 0.04);
+}
+.app-navbar-auth .notification-item.is-unread:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+.app-navbar-auth .notification-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: transparent;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+.app-navbar-auth .notification-item.is-unread .notification-dot {
+  background: var(--primary);
+}
+.app-navbar-auth .notification-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.app-navbar-auth .notification-copy strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.app-navbar-auth .notification-copy span {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.app-navbar-auth .notification-copy time {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* --- APP SHELL UI POLISH --- */
+.app-shell .inline-feedback {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  width: 100%;
+  margin-top: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.app-shell .inline-feedback-success {
+  background: rgba(21, 128, 61, 0.1);
+  border-color: rgba(21, 128, 61, 0.2);
+  color: var(--success);
+}
+.app-shell .inline-feedback-error {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: var(--danger);
+}
+.app-shell .inline-feedback-warning {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.2);
+  color: var(--warning);
+}
+.app-shell .inline-feedback-info {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.2);
+  color: var(--primary);
+}
+.app-shell .inline-feedback-marker {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.app-shell .inline-feedback-label {
+  display: none;
+}
+
+/* ConfirmModal Polish */
+.confirm-modal {
+  padding: 24px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.24);
+  gap: 20px;
+}
+.confirm-modal-marker {
+  display: none;
+}
+.confirm-modal-copy {
+  padding-left: 0;
+  gap: 12px;
+}
+.confirm-modal-copy h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+.confirm-modal-copy p {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.confirm-modal-actions {
+  margin-top: 8px;
+}
+.confirm-modal .button {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  min-width: 120px;
+}
