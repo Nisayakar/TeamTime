@@ -412,14 +412,49 @@
 
 /* Navbar tweaks for aesthetic */
 .app-navbar {
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: 1rem 40px !important;
-    border-radius: 0 0 16px 16px;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0 max(40px, calc((100% - 1440px) / 2)) !important;
+    min-height: 72px;
+    border-radius: 0;
     background-color: var(--surface) !important;
     backdrop-filter: blur(12px);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05) !important;
+    box-shadow: none !important;
     border-bottom: 1px solid var(--border);
+}
+
+/* Navbar Grid Layout */
+@media (min-width: 1024px) {
+    .app-navbar {
+        display: grid !important;
+        grid-template-columns: 1fr auto 1fr !important;
+        align-items: center !important;
+    }
+    
+    .app-navbar .nav-content {
+        display: contents !important;
+    }
+    
+    .app-navbar .brand {
+        justify-self: start !important;
+    }
+    
+    .app-navbar .nav-links {
+        justify-self: center !important;
+    }
+    
+    .app-navbar .nav-user {
+        justify-self: end !important;
+    }
+}
+
+/* Logo Transparent & Clean */
+.brand {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
 }
 
 .brand-symbol {
@@ -427,6 +462,10 @@
     width: 36px;
     height: 36px;
     flex: 0 0 36px;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
 }
 
 .brand-wordmark {
@@ -434,9 +473,92 @@
     width: 110px;
 }
 
+/* Nav Links Container (Remove Pill) */
+.app-navbar .nav-links {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    gap: 0.5rem !important;
+}
+
+/* Nav Link Items */
+.app-navbar .nav-links a {
+    background: transparent !important;
+    border-bottom: 2px solid transparent !important;
+    border-radius: 0 !important;
+    padding: 24px 12px !important;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted) !important;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    box-shadow: none !important;
+}
+
+.app-navbar .nav-links a:hover {
+    color: var(--text) !important;
+    background: transparent !important;
+}
+
+.app-navbar .nav-links a.active {
+    color: var(--primary) !important;
+    border-bottom-color: var(--primary) !important;
+    background: transparent !important;
+}
+
+/* Nav User Actions */
+.app-navbar .nav-user {
+    gap: 1rem !important;
+}
+
+.app-navbar-profile-toggle {
+    background: transparent !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: none !important;
+    border-radius: 999px !important;
+    padding: 4px 12px 4px 4px !important; 
+    transition: border-color 0.2s;
+}
+
+.app-navbar-profile-toggle:hover {
+    border-color: var(--primary) !important;
+    background: transparent !important;
+}
+
+.app-navbar .notification-bell {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: var(--muted) !important;
+    min-height: auto !important;
+    padding: 8px !important;
+}
+
+.app-navbar .notification-bell:hover {
+    color: var(--text) !important;
+    background: transparent !important;
+}
+
+.app-navbar .button-ghost {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    font-weight: 600 !important;
+    padding: 8px !important;
+    color: var(--muted) !important;
+    min-height: auto !important;
+}
+
+.app-navbar .button-ghost:hover {
+    color: var(--danger) !important;
+    background: transparent !important;
+}
+
 @media (max-width: 768px) {
     .app-navbar {
-        padding: 1rem 16px !important;
-        border-radius: 0;
+        padding: 0 16px !important;
     }
 }
