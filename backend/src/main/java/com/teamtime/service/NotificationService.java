@@ -29,15 +29,18 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final TeamMemberRepository teamMemberRepository;
+    private final com.teamtime.repository.TaskRepository taskRepository;
 
     public NotificationService(
             NotificationRepository notificationRepository,
             UserRepository userRepository,
-            TeamMemberRepository teamMemberRepository
+            TeamMemberRepository teamMemberRepository,
+            com.teamtime.repository.TaskRepository taskRepository
     ) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
         this.teamMemberRepository = teamMemberRepository;
+        this.taskRepository = taskRepository;
     }
 
     @Transactional
@@ -158,9 +161,24 @@ public class NotificationService {
                 currentUserId,
                 PageRequest.of(page, size));
 
-        List<NotificationResponse> content = notifications.getContent()
-                .stream()
-                .map(this::convertToResponse)
+        List<Notification> notificationList = notifications.getContent();
+        
+        List<Long> taskIds = notificationList.stream()
+                .filter(n -> "TASK".equals(n.getRelatedEntityType()) && n.getRelatedEntityId() != null)
+                .map(Notification::getRelatedEntityId)
+                .distinct()
+                .toList();
+
+        java.util.Map<Long, Long> taskProjectIdMap = new java.util.HashMap<>();
+        if (!taskIds.isEmpty()) {
+            List<Object[]> mappings = taskRepository.findProjectIdsByTaskIds(taskIds);
+            for (Object[] mapping : mappings) {
+                taskProjectIdMap.put((Long) mapping[0], (Long) mapping[1]);
+            }
+        }
+
+        List<NotificationResponse> content = notificationList.stream()
+                .map(n -> convertToResponse(n, taskProjectIdMap))
                 .toList();
 
         return new NotificationPageResponse(
@@ -186,14 +204,29 @@ public class NotificationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Bildirim bulunamadı"));
 
         notification.setRead(true);
+        Notification saved = notificationRepository.save(notification);
 
-        return convertToResponse(notificationRepository.save(notification));
+        java.util.Map<Long, Long> taskProjectIdMap = new java.util.HashMap<>();
+        if ("TASK".equals(saved.getRelatedEntityType()) && saved.getRelatedEntityId() != null) {
+            List<Object[]> mappings = taskRepository.findProjectIdsByTaskIds(List.of(saved.getRelatedEntityId()));
+            if (!mappings.isEmpty()) {
+                taskProjectIdMap.put((Long) mappings.get(0)[0], (Long) mappings.get(0)[1]);
+            }
+        }
+
+        return convertToResponse(saved, taskProjectIdMap);
     }
 
     @Transactional
     public void markAllAsRead(Long currentUserId) {
         requireUser(currentUserId);
         notificationRepository.markAllAsReadForRecipient(currentUserId);
+    }
+
+    @Transactional
+    public void clearAllNotifications(Long currentUserId) {
+        requireUser(currentUserId);
+        notificationRepository.deleteByRecipientId(currentUserId);
     }
 
     private User requireUser(Long userId) {
@@ -248,7 +281,8 @@ public class NotificationService {
                         TASK_ENTITY));
     }
 
-    private NotificationResponse convertToResponse(Notification notification) {
+    private NotificationResponse convertToResponse(Notification notification, java.util.Map<Long, Long> taskProjectIdMap) {
+        String targetPath = computeTargetPath(notification, taskProjectIdMap);
         return new NotificationResponse(
                 notification.getId(),
                 notification.getTitle(),
@@ -257,6 +291,23 @@ public class NotificationService {
                 notification.isRead(),
                 notification.getCreatedAt(),
                 notification.getRelatedEntityId(),
-                notification.getRelatedEntityType());
+                notification.getRelatedEntityType(),
+                targetPath);
+    }
+
+    private String computeTargetPath(Notification notification, java.util.Map<Long, Long> taskProjectIdMap) {
+        if (notification.getRelatedEntityId() == null) {
+            return null;
+        }
+
+        return switch (notification.getType()) {
+            case TEAM_MEMBER_ADDED -> "/teams/" + notification.getRelatedEntityId();
+            case TEAM_MEMBER_REMOVED -> "/teams";
+            case TEAM_PROJECT_CREATED -> "/project/" + notification.getRelatedEntityId();
+            case TEAM_TASK_CREATED, TASK_ASSIGNED, TASK_ASSIGNMENT_ACCEPTED, TASK_ASSIGNMENT_REJECTED -> {
+                Long projectId = taskProjectIdMap.get(notification.getRelatedEntityId());
+                yield projectId != null ? "/project/" + projectId : null;
+            }
+        };
     }
 }

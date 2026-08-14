@@ -14,6 +14,7 @@ public class NotificationResponse {
     private LocalDateTime createdAt;
     private Long relatedEntityId;
     private String relatedEntityType;
+    private String targetPath;
 
     public NotificationResponse() {
     }
@@ -26,7 +27,8 @@ public class NotificationResponse {
             boolean read,
             LocalDateTime createdAt,
             Long relatedEntityId,
-            String relatedEntityType
+            String relatedEntityType,
+            String targetPath
     ) {
         this.id = id;
         this.title = title;
@@ -36,6 +38,7 @@ public class NotificationResponse {
         this.createdAt = createdAt;
         this.relatedEntityId = relatedEntityId;
         this.relatedEntityType = relatedEntityType;
+        this.targetPath = targetPath;
     }
 
     public Long getId() {
@@ -100,5 +103,13 @@ public class NotificationResponse {
 
     public void setRelatedEntityType(String relatedEntityType) {
         this.relatedEntityType = relatedEntityType;
+    }
+
+    public String getTargetPath() {
+        return targetPath;
+    }
+
+    public void setTargetPath(String targetPath) {
+        this.targetPath = targetPath;
     }
 }

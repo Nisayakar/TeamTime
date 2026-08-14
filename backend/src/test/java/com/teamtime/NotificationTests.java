@@ -167,7 +167,8 @@ class NotificationTests {
                 .andExpect(jsonPath("$.content[0].type").value("TEAM_MEMBER_ADDED"))
                 .andExpect(jsonPath("$.content[0].read").value(false))
                 .andExpect(jsonPath("$.content[0].relatedEntityId").value(teamId))
-                .andExpect(jsonPath("$.content[0].relatedEntityType").value("TEAM"));
+                .andExpect(jsonPath("$.content[0].relatedEntityType").value("TEAM"))
+                .andExpect(jsonPath("$.content[0].targetPath").value("/teams/" + teamId));
     }
 
     @Test
@@ -196,7 +197,8 @@ class NotificationTests {
                 .andExpect(jsonPath("$.content[0].title").value("Takımdan Çıkarıldınız"))
                 .andExpect(jsonPath("$.content[0].type").value("TEAM_MEMBER_REMOVED"))
                 .andExpect(jsonPath("$.content[0].relatedEntityId").value(teamId))
-                .andExpect(jsonPath("$.content[0].relatedEntityType").value("TEAM"));
+                .andExpect(jsonPath("$.content[0].relatedEntityType").value("TEAM"))
+                .andExpect(jsonPath("$.content[0].targetPath").value("/teams"));
     }
 
     @Test
@@ -212,7 +214,8 @@ class NotificationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].type").value("TEAM_PROJECT_CREATED"))
                 .andExpect(jsonPath("$.content[0].relatedEntityId").value(projectId))
-                .andExpect(jsonPath("$.content[0].relatedEntityType").value("PROJECT"));
+                .andExpect(jsonPath("$.content[0].relatedEntityType").value("PROJECT"))
+                .andExpect(jsonPath("$.content[0].targetPath").value("/project/" + projectId));
 
         mockMvc.perform(get("/api/notifications")
                 .header(AUTHORIZATION, bearer(admin)))
@@ -239,7 +242,8 @@ class NotificationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].type").value("TEAM_TASK_CREATED"))
                 .andExpect(jsonPath("$.content[0].relatedEntityId").value(taskId))
-                .andExpect(jsonPath("$.content[0].relatedEntityType").value("TASK"));
+                .andExpect(jsonPath("$.content[0].relatedEntityType").value("TASK"))
+                .andExpect(jsonPath("$.content[0].targetPath").value("/project/" + projectId));
 
         mockMvc.perform(get("/api/notifications")
                 .header(AUTHORIZATION, bearer(admin)))
@@ -414,6 +418,32 @@ class NotificationTests {
                         .header(AUTHORIZATION, bearer(admin)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.unreadCount").value(1));
+    }
+
+    @Test
+    void clearAllNotificationsDeletesOnlyCurrentUsersNotifications() throws Exception {
+        Long teamId = createTeam(owner, "Clear Team");
+        addMember(owner, teamId, member.getId(), TeamRole.MEMBER);
+        addMember(owner, teamId, admin.getId(), TeamRole.MEMBER);
+
+        mockMvc.perform(delete("/api/notifications")
+                        .header(AUTHORIZATION, bearer(member)))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/notifications")
+                        .header(AUTHORIZATION, bearer(member)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(0)));
+
+        mockMvc.perform(get("/api/notifications/unread-count")
+                        .header(AUTHORIZATION, bearer(member)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.unreadCount").value(0));
+
+        mockMvc.perform(get("/api/notifications")
+                        .header(AUTHORIZATION, bearer(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)));
     }
 
     private Long createTeam(User creator, String name) throws Exception {

@@ -15,6 +15,7 @@ export type NotificationItem = {
     createdAt: string;
     relatedEntityId: number | null;
     relatedEntityType: NotificationRelatedEntityType | null;
+    targetPath: string | null;
 };
 
 export type NotificationPage = {

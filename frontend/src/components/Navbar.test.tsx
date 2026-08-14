@@ -131,6 +131,7 @@ describe("Navbar notifications", () => {
         await user.click(await screen.findByRole("button", { name: /First/ }));
 
         await waitFor(() => expect(screen.getByText("1")).toBeInTheDocument());
+        await user.click(screen.getByRole("button", { name: /1 okunmamış bildirim/ }));
         await user.click(screen.getByRole("button", { name: "Tümünü okundu işaretle" }));
 
         await waitFor(() => expect(screen.queryByText("1")).not.toBeInTheDocument());
@@ -255,6 +256,7 @@ function notification(id: number, title: string, read = false): NotificationItem
         read,
         createdAt: "2026-08-03T10:00:00",
         relatedEntityId: null,
-        relatedEntityType: null
+        relatedEntityType: null,
+        targetPath: null
     };
 }

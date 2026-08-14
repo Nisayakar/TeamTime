@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { clearAuth, getStoredUser, isAuthenticated } from "../api";
 import { apiFetch } from "../api";
 import type { NotificationItem, NotificationPage } from "../types/notification";
+import ConfirmModal from "./ConfirmModal";
 
 type UnreadCountResponse = {
     unreadCount: number;
@@ -114,6 +115,7 @@ function Navbar() {
     const [notificationPage, setNotificationPage] = useState(0);
     const [isLastNotificationPage, setIsLastNotificationPage] = useState(true);
     const [notificationError, setNotificationError] = useState("");
+    const [isClearModalOpen, setIsClearModalOpen] = useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
@@ -143,6 +145,7 @@ function Navbar() {
         setNotificationPage(0);
         setIsLastNotificationPage(true);
         setNotificationError("");
+        setIsClearModalOpen(false);
     }
 
     useEffect(() => {
@@ -323,6 +326,22 @@ function Navbar() {
         }
     }
 
+    async function clearAllNotifications() {
+        try {
+            await apiFetch("/notifications", { method: "DELETE" });
+            setNotifications([]);
+            setUnreadCount(0);
+            setNotificationPage(0);
+            setIsLastNotificationPage(true);
+            setHasLoadedNotifications(true);
+            setIsClearModalOpen(false);
+            setNotificationError("");
+        } catch (error) {
+            setIsClearModalOpen(false);
+            setNotificationError(getSafeErrorMessage(error, "Bildirimler temizlenemedi."));
+        }
+    }
+
     async function openNotification(notification: NotificationItem) {
         const readSucceeded = notification.read || await markNotificationAsRead(notification);
 
@@ -330,11 +349,10 @@ function Navbar() {
             return;
         }
 
-        const destination = getNotificationDestination(notification);
+        setIsNotificationsOpen(false);
 
-        if (destination) {
-            setIsNotificationsOpen(false);
-            navigate(destination);
+        if (notification.targetPath) {
+            navigate(notification.targetPath);
         }
     }
 
@@ -412,17 +430,30 @@ function Navbar() {
                                         <div className="notification-panel" role="dialog" aria-label="Bildirimler">
                                             <div className="notification-panel-header">
                                                 <strong>Bildirimler</strong>
-                                                {
-                                                    unreadCount > 0 && (
-                                                        <button
-                                                            type="button"
-                                                            className="notification-read-all"
-                                                            onClick={markAllNotificationsAsRead}
-                                                        >
-                                                            Tümünü okundu işaretle
-                                                        </button>
-                                                    )
-                                                }
+                                                <div className="notification-panel-actions">
+                                                    {
+                                                        unreadCount > 0 && (
+                                                            <button
+                                                                type="button"
+                                                                className="notification-read-all"
+                                                                onClick={markAllNotificationsAsRead}
+                                                            >
+                                                                Tümünü okundu işaretle
+                                                            </button>
+                                                        )
+                                                    }
+                                                    {
+                                                        notifications.length > 0 && (
+                                                            <button
+                                                                type="button"
+                                                                className="notification-clear-all"
+                                                                onClick={() => setIsClearModalOpen(true)}
+                                                            >
+                                                                Bildirimleri Temizle
+                                                            </button>
+                                                        )
+                                                    }
+                                                </div>
                                             </div>
 
                                             {
@@ -527,6 +558,16 @@ function Navbar() {
                     </div>
                 )
             }
+
+            <ConfirmModal
+                open={isClearModalOpen}
+                title="Bildirimleri temizle"
+                message="Tüm bildirimlerinizi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+                confirmLabel="Tümünü Temizle"
+                cancelLabel="İptal"
+                onConfirm={clearAllNotifications}
+                onCancel={() => setIsClearModalOpen(false)}
+            />
         </nav>
     );
 }
@@ -587,22 +628,6 @@ function formatNotificationDate(value: string) {
         hour: "2-digit",
         minute: "2-digit"
     }).format(date);
-}
-
-function getNotificationDestination(notification: NotificationItem) {
-    if (!notification.relatedEntityId) {
-        return null;
-    }
-
-    if (notification.type === "TEAM_MEMBER_ADDED" && notification.relatedEntityType === "TEAM") {
-        return `/teams/${notification.relatedEntityId}`;
-    }
-
-    if (notification.type === "TEAM_PROJECT_CREATED" && notification.relatedEntityType === "PROJECT") {
-        return `/project/${notification.relatedEntityId}`;
-    }
-
-    return null;
 }
 
 export default Navbar;

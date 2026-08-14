@@ -155,4 +155,11 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             """)
     List<Task> findTasksAssignedToUser(@Param("userId") Long userId);
 
+    @Query("""
+            select task.id, task.project.id
+            from Task task
+            where task.id in :taskIds
+            """)
+    List<Object[]> findProjectIdsByTaskIds(@Param("taskIds") List<Long> taskIds);
+
 }

@@ -57,4 +57,11 @@ public class NotificationController {
         notificationService.markAllAsRead(currentUserId);
         return ResponseEntity.noContent().build();
     }
+
+    @org.springframework.web.bind.annotation.DeleteMapping
+    public ResponseEntity<Void> clearAllNotifications(Authentication authentication) {
+        Long currentUserId = (Long) authentication.getPrincipal();
+        notificationService.clearAllNotifications(currentUserId);
+        return ResponseEntity.noContent().build();
+    }
 }
