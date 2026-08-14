@@ -410,8 +410,8 @@
     color: #cbd5e1;
 }
 
-/* Navbar tweaks for aesthetic */
-.app-navbar {
+/* Navbar tweaks for aesthetic (Scoped to Auth only) */
+.app-navbar.app-navbar-auth {
     width: 100%;
     max-width: none;
     margin: 0;
@@ -426,38 +426,38 @@
 
 /* Navbar Grid Layout */
 @media (min-width: 1024px) {
-    .app-navbar {
+    .app-navbar.app-navbar-auth {
         display: grid !important;
         grid-template-columns: 1fr auto 1fr !important;
         align-items: center !important;
     }
     
-    .app-navbar .nav-content {
+    .app-navbar.app-navbar-auth .nav-content {
         display: contents !important;
     }
     
-    .app-navbar .brand {
+    .app-navbar.app-navbar-auth .brand {
         justify-self: start !important;
     }
     
-    .app-navbar .nav-links {
+    .app-navbar.app-navbar-auth .nav-links {
         justify-self: center !important;
     }
     
-    .app-navbar .nav-user {
+    .app-navbar.app-navbar-auth .nav-user {
         justify-self: end !important;
     }
 }
 
 /* Logo Transparent & Clean */
-.brand {
+.app-navbar.app-navbar-auth .brand {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
 }
 
-.brand-symbol {
+.app-navbar.app-navbar-auth .brand-symbol {
     opacity: 0.9;
     width: 36px;
     height: 36px;
@@ -468,13 +468,13 @@
     border-radius: 0 !important;
 }
 
-.brand-wordmark {
+.app-navbar.app-navbar-auth .brand-wordmark {
     font-size: 20px;
     width: 110px;
 }
 
 /* Nav Links Container (Remove Pill) */
-.app-navbar .nav-links {
+.app-navbar.app-navbar-auth .nav-links {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
@@ -484,7 +484,7 @@
 }
 
 /* Nav Link Items */
-.app-navbar .nav-links a {
+.app-navbar.app-navbar-auth .nav-links a {
     background: transparent !important;
     border-bottom: 2px solid transparent !important;
     border-radius: 0 !important;
@@ -498,23 +498,23 @@
     box-shadow: none !important;
 }
 
-.app-navbar .nav-links a:hover {
+.app-navbar.app-navbar-auth .nav-links a:hover {
     color: var(--text) !important;
     background: transparent !important;
 }
 
-.app-navbar .nav-links a.active {
+.app-navbar.app-navbar-auth .nav-links a.active {
     color: var(--primary) !important;
     border-bottom-color: var(--primary) !important;
     background: transparent !important;
 }
 
 /* Nav User Actions */
-.app-navbar .nav-user {
+.app-navbar.app-navbar-auth .nav-user {
     gap: 1rem !important;
 }
 
-.app-navbar-profile-toggle {
+.app-navbar.app-navbar-auth .app-navbar-profile-toggle {
     background: transparent !important;
     border: 1px solid var(--border) !important;
     box-shadow: none !important;
@@ -523,12 +523,12 @@
     transition: border-color 0.2s;
 }
 
-.app-navbar-profile-toggle:hover {
+.app-navbar.app-navbar-auth .app-navbar-profile-toggle:hover {
     border-color: var(--primary) !important;
     background: transparent !important;
 }
 
-.app-navbar .notification-bell {
+.app-navbar.app-navbar-auth .notification-bell {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
@@ -537,12 +537,12 @@
     padding: 8px !important;
 }
 
-.app-navbar .notification-bell:hover {
+.app-navbar.app-navbar-auth .notification-bell:hover {
     color: var(--text) !important;
     background: transparent !important;
 }
 
-.app-navbar .button-ghost {
+.app-navbar.app-navbar-auth .button-ghost {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
@@ -552,13 +552,13 @@
     min-height: auto !important;
 }
 
-.app-navbar .button-ghost:hover {
+.app-navbar.app-navbar-auth .button-ghost:hover {
     color: var(--danger) !important;
     background: transparent !important;
 }
 
 @media (max-width: 768px) {
-    .app-navbar {
+    .app-navbar.app-navbar-auth {
         padding: 0 16px !important;
     }
 }
