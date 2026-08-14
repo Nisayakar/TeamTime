@@ -208,7 +208,7 @@ public class TaskService {
         task.setRespondedAt(null);
 
         Task savedTask = taskRepository.save(task);
-        notificationService.notifyTaskAssigned(targetMembership.getUser(), savedTask.getId(), savedTask.getTitle());
+        notificationService.notifyTaskAssigned(targetMembership.getUser(), savedTask.getProject().getTeam(), savedTask.getId(), savedTask.getTitle());
 
         return convertToResponse(savedTask);
     }
@@ -238,10 +238,12 @@ public class TaskService {
         task.setRespondedAt(LocalDateTime.now());
 
         Task savedTask = taskRepository.save(task);
+        String responderName = "%s %s".formatted(savedTask.getAssignedUser().getName(), savedTask.getAssignedUser().getSurname()).trim();
         notificationService.notifyTaskAssignmentAccepted(
                 savedTask.getProject().getTeam(),
                 savedTask.getId(),
                 savedTask.getTitle(),
+                responderName,
                 currentUserId);
 
         return convertToResponse(savedTask);
@@ -258,10 +260,13 @@ public class TaskService {
         task.setRespondedAt(LocalDateTime.now());
 
         Task savedTask = taskRepository.save(task);
+        String responderName = "%s %s".formatted(savedTask.getAssignedUser().getName(), savedTask.getAssignedUser().getSurname()).trim();
         notificationService.notifyTaskAssignmentRejected(
                 savedTask.getProject().getTeam(),
                 savedTask.getId(),
                 savedTask.getTitle(),
+                responderName,
+                normalizedReason,
                 currentUserId);
 
         return convertToResponse(savedTask);

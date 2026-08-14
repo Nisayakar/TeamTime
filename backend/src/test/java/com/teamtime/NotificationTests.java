@@ -162,7 +162,7 @@ class NotificationTests {
                         .header(AUTHORIZATION, bearer(member)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(1)))
-                .andExpect(jsonPath("$.content[0].title").value("Takıma eklendiniz"))
+                .andExpect(jsonPath("$.content[0].title").value("Takıma Eklendiniz"))
                 .andExpect(jsonPath("$.content[0].message").value("Frontend Takımı takımına Üye rolüyle eklendiniz."))
                 .andExpect(jsonPath("$.content[0].type").value("TEAM_MEMBER_ADDED"))
                 .andExpect(jsonPath("$.content[0].read").value(false))
@@ -193,7 +193,7 @@ class NotificationTests {
                 .header(AUTHORIZATION, bearer(member)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(2)))
-                .andExpect(jsonPath("$.content[0].title").value("Takımdan çıkarıldınız"))
+                .andExpect(jsonPath("$.content[0].title").value("Takımdan Çıkarıldınız"))
                 .andExpect(jsonPath("$.content[0].type").value("TEAM_MEMBER_REMOVED"))
                 .andExpect(jsonPath("$.content[0].relatedEntityId").value(teamId))
                 .andExpect(jsonPath("$.content[0].relatedEntityType").value("TEAM"));

@@ -64,7 +64,7 @@ public class NotificationService {
     public void notifyTeamMemberAdded(User recipient, Team team, String role) {
         createNotification(
                 recipient,
-                "Takıma eklendiniz",
+                "Takıma Eklendiniz",
                 "%s takımına %s rolüyle eklendiniz.".formatted(team.getName(), roleLabel(role)),
                 NotificationType.TEAM_MEMBER_ADDED,
                 team.getId(),
@@ -75,7 +75,7 @@ public class NotificationService {
     public void notifyTeamMemberRemoved(User recipient, Team team) {
         createNotification(
                 recipient,
-                "Takımdan çıkarıldınız",
+                "Takımdan Çıkarıldınız",
                 "%s takımından çıkarıldınız.".formatted(team.getName()),
                 NotificationType.TEAM_MEMBER_REMOVED,
                 team.getId(),
@@ -113,34 +113,39 @@ public class NotificationService {
     }
 
     @Transactional
-    public void notifyTaskAssigned(User recipient, Long taskId, String taskTitle) {
+    public void notifyTaskAssigned(User recipient, Team team, Long taskId, String taskTitle) {
         createNotification(
                 recipient,
-                "Size yeni bir görev atandı",
-                "%s görevi size atandı.".formatted(taskTitle),
+                "Yeni Görev: %s".formatted(taskTitle),
+                "%s takımında size bir görev atandı.".formatted(team.getName()),
                 NotificationType.TASK_ASSIGNED,
                 taskId,
                 TASK_ENTITY);
     }
 
     @Transactional
-    public void notifyTaskAssignmentAccepted(Team team, Long taskId, String taskTitle, Long respondingUserId) {
+    public void notifyTaskAssignmentAccepted(Team team, Long taskId, String taskTitle, String responderName, Long respondingUserId) {
         notifyTaskManagers(
                 team,
                 taskId,
                 "Görev kabul edildi",
-                "%s görevi kabul edildi.".formatted(taskTitle),
+                "%s, %s görevini kabul etti.".formatted(responderName, taskTitle),
                 NotificationType.TASK_ASSIGNMENT_ACCEPTED,
                 respondingUserId);
     }
 
     @Transactional
-    public void notifyTaskAssignmentRejected(Team team, Long taskId, String taskTitle, Long respondingUserId) {
+    public void notifyTaskAssignmentRejected(Team team, Long taskId, String taskTitle, String responderName, String reason, Long respondingUserId) {
+        String baseMessage = "%s, %s görevini reddetti.".formatted(responderName, taskTitle);
+        String finalMessage = (reason != null && !reason.isBlank()) 
+                ? baseMessage + " Mazeret: " + (reason.length() > 100 ? reason.substring(0, 97) + "..." : reason) 
+                : baseMessage;
+
         notifyTaskManagers(
                 team,
                 taskId,
                 "Görev reddedildi",
-                "%s görevi reddedildi.".formatted(taskTitle),
+                finalMessage,
                 NotificationType.TASK_ASSIGNMENT_REJECTED,
                 respondingUserId);
     }

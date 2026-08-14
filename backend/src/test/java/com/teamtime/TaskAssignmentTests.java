@@ -279,6 +279,20 @@ class TaskAssignmentTests {
     }
 
     @Test
+    void myTasksIncludesPersonalTasksWithoutAssignment() throws Exception {
+        Long personalProjectId = projectRepository.save(project("Personal Project", owner, null)).getId();
+        Long personalTaskId = createTask(owner, personalProjectId, "Personal Task", "BEKLIYOR");
+
+        mockMvc.perform(get("/api/tasks/my")
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id").value(personalTaskId))
+                .andExpect(jsonPath("$[0].assignedUserId").value(nullValue()))
+                .andExpect(jsonPath("$[0].assignmentStatus").value("UNASSIGNED"));
+    }
+
+    @Test
     void myTasksExcludesUnassignedTasksAndTasksAssignedToOtherUsers() throws Exception {
         Long otherTaskId = createTask(owner, teamProjectId, "Other member task", "BEKLIYOR");
         assign(owner, otherTaskId, otherMember).andExpect(status().isOk());

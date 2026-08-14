@@ -125,12 +125,16 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             from Task task
             join fetch task.project project
             left join fetch project.team team
-            where task.assignedUser.id = :userId
-              and task.assignmentStatus in (
-                  com.teamtime.entity.AssignmentStatus.PENDING,
-                  com.teamtime.entity.AssignmentStatus.ACCEPTED,
-                  com.teamtime.entity.AssignmentStatus.REJECTED
-              )
+            where (
+                (project.team is null and project.user.id = :userId)
+                or
+                (project.team is not null and task.assignedUser.id = :userId
+                 and task.assignmentStatus in (
+                     com.teamtime.entity.AssignmentStatus.PENDING,
+                     com.teamtime.entity.AssignmentStatus.ACCEPTED,
+                     com.teamtime.entity.AssignmentStatus.REJECTED
+                 ))
+            )
             order by
                 case task.assignmentStatus
                     when com.teamtime.entity.AssignmentStatus.PENDING then 0
