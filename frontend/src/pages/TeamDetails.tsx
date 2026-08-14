@@ -377,7 +377,7 @@ function TeamDetails() {
             <section className="content-grid two-columns">
                 {
                     canManageMembers && (
-                        <div className="panel">
+                        <section className="form-section" style={{ padding: "24px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "16px" }}>
                             <div className="section-heading">
                                 <span className="eyebrow">Üyelik</span>
                                 <h2>Yeni Üye Ekle</h2>
@@ -387,6 +387,7 @@ function TeamDetails() {
                                 <div className="autocomplete-field">
                                     <label>Kullanıcı Ara</label>
                                     <input
+                                        className="ghost-input"
                                         aria-label="Kullanıcı Ara"
                                         type="text"
                                         value={userSearch}
@@ -423,8 +424,9 @@ function TeamDetails() {
                                     }
                                 </div>
 
-                                <label>Rol</label>
+                                <label style={{ marginTop: "16px", display: "block" }}>Rol</label>
                                 <select
+                                    className="ghost-input"
                                     aria-label="Rol"
                                     value={currentUserRole === "OWNER" ? role : "MEMBER"}
                                     onChange={event => setRole(event.target.value as TeamRole)}
@@ -439,14 +441,16 @@ function TeamDetails() {
                                     }
                                 </select>
 
-                                <button className="button button-primary button-full" type="submit">Üye Ekle</button>
+                                <div style={{ marginTop: "24px" }}>
+                                    <button className="button button-primary button-full" type="submit">Üye Ekle</button>
+                                </div>
                                 {memberFeedback && <InlineFeedback type={memberFeedback.type} message={memberFeedback.message} />}
                             </form>
-                        </div>
+                        </section>
                     )
                 }
 
-                <div className="panel">
+                <section className="form-section">
                     <div className="section-heading">
                         <span className="eyebrow">Takım</span>
                         <h2>Takım Üyeleri</h2>
@@ -489,16 +493,16 @@ function TeamDetails() {
                                         }
                                         {
                                             canRemoveMember(member) && (
-                                            <button
-                                                className="button button-danger"
-                                                type="button"
-                                                onClick={() => {
-                                                    setRemoveFeedback("");
-                                                    setMemberToRemove(member);
-                                                }}
-                                            >
-                                                Çıkar
-                                            </button>
+                                                <button
+                                                    className="button button-danger button-sm"
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setRemoveFeedback("");
+                                                        setMemberToRemove(member);
+                                                    }}
+                                                >
+                                                    Çıkar
+                                                </button>
                                             )
                                         }
                                     </div>
@@ -506,7 +510,7 @@ function TeamDetails() {
                             ))
                         )
                     }
-                </div>
+                </section>
             </section>
             <ConfirmModal
                 open={memberToRemove !== null}

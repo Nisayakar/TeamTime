@@ -558,7 +558,7 @@ function ProjectDetails() {
             <section className="content-grid two-columns">
                 {
                     canMutateTasks ? (
-                        <div className="panel app-form-card">
+                        <section className="form-section">
                             <div className="section-heading">
                                 <span className="eyebrow">Görev formu</span>
                                 <h2>{editId ? "Görevi Güncelle" : "Yeni Görev"}</h2>
@@ -567,20 +567,23 @@ function ProjectDetails() {
                             <div className="stacked-form">
                                 <label>Görev başlığı</label>
                                 <input
+                                    className="ghost-input"
                                     placeholder="Görev başlığı"
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
                                 />
 
-                                <label>Açıklama</label>
+                                <label style={{ marginTop: "16px", display: "block" }}>Açıklama</label>
                                 <textarea
+                                    className="ghost-input"
                                     placeholder="Açıklama"
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                 />
 
-                                <label>Durum</label>
+                                <label style={{ marginTop: "16px", display: "block" }}>Durum</label>
                                 <select
+                                    className="ghost-input"
                                     value={status}
                                     onChange={(e) => setStatus(e.target.value as TaskStatus)}
                                 >
@@ -589,8 +592,9 @@ function ProjectDetails() {
                                     <option value="TAMAMLANDI">Tamamlandı</option>
                                 </select>
 
-                                <label>Öncelik</label>
+                                <label style={{ marginTop: "16px", display: "block" }}>Öncelik</label>
                                 <select
+                                    className="ghost-input"
                                     value={priority}
                                     onChange={(e) => setPriority(e.target.value as TaskPriority)}
                                 >
@@ -600,8 +604,9 @@ function ProjectDetails() {
                                     <option value="URGENT">Acil</option>
                                 </select>
 
-                                <label>Son Tarih</label>
+                                <label style={{ marginTop: "16px", display: "block" }}>Son Tarih</label>
                                 <input
+                                    className="ghost-input"
                                     type="date"
                                     value={dueDate}
                                     onChange={(e) => setDueDate(e.target.value)}
@@ -610,8 +615,9 @@ function ProjectDetails() {
                                 {
                                     canAssignTasks && (
                                         <>
-                                            <label htmlFor="task-assignee">Atanan Kişi</label>
+                                            <label style={{ marginTop: "16px", display: "block" }} htmlFor="task-assignee">Atanan Kişi</label>
                                             <select
+                                                className="ghost-input"
                                                 id="task-assignee"
                                                 value={assignedUserId}
                                                 onChange={(e) => setAssignedUserId(e.target.value)}
@@ -627,7 +633,7 @@ function ProjectDetails() {
                                     )
                                 }
 
-                                <div className="button-row">
+                                <div className="button-row" style={{ marginTop: "24px" }}>
                                     <button className="button button-primary" onClick={saveTask} disabled={savingTask}>
                                         {savingTask ? "Kaydediliyor..." : editId ? "Güncelle" : "Görev Ekle"}
                                     </button>
@@ -638,19 +644,19 @@ function ProjectDetails() {
                                 </div>
                                 {taskFormFeedback && <InlineFeedback type={taskFormFeedback.type} message={taskFormFeedback.message} />}
                             </div>
-                        </div>
+                        </section>
                     ) : (
-                        <div className="panel app-form-card">
+                        <section className="form-section">
                             <div className="section-heading">
                                 <span className="eyebrow">Görev formu</span>
                                 <h2>Görüntüleme Modu</h2>
                             </div>
                             <p className="empty-state app-empty-state">Bu takım projesindeki görevleri görüntüleyebilirsiniz.</p>
-                        </div>
+                        </section>
                     )
                 }
 
-                <div className="panel app-form-card tasks-panel">
+                <section className="form-section tasks-panel">
                     <div className="section-heading">
                         <span className="eyebrow">Akış</span>
                         <h2>Görevler</h2>
@@ -658,19 +664,21 @@ function ProjectDetails() {
 
                     <div className="task-filter-panel" aria-label="Görev filtreleri">
                         <div className="task-filter-grid">
-                            <div className="field">
+                            <div>
+                                <label htmlFor="task-search">Görev ara</label>
                                 <input
+                                    className="ghost-input"
                                     id="task-search"
                                     type="search"
                                     placeholder="Başlık veya açıklama ara"
                                     value={taskSearch}
                                     onChange={(event) => setTaskSearch(event.target.value)}
                                 />
-                                <label htmlFor="task-search">Görev ara</label>
                             </div>
-
-                            <div className="field">
+                            <div>
+                                <label htmlFor="task-status-filter">Durum</label>
                                 <select
+                                    className="ghost-input"
                                     id="task-status-filter"
                                     value={statusFilter}
                                     onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
@@ -680,11 +688,11 @@ function ProjectDetails() {
                                     <option value="DEVAM_EDIYOR">Devam Ediyor</option>
                                     <option value="TAMAMLANDI">Tamamlandı</option>
                                 </select>
-                                <label htmlFor="task-status-filter">Durum</label>
                             </div>
-
-                            <div className="field">
+                            <div>
+                                <label htmlFor="task-priority-filter">Öncelik</label>
                                 <select
+                                    className="ghost-input"
                                     id="task-priority-filter"
                                     value={priorityFilter}
                                     onChange={(event) => setPriorityFilter(event.target.value as PriorityFilter)}
@@ -695,11 +703,11 @@ function ProjectDetails() {
                                     <option value="HIGH">Yüksek</option>
                                     <option value="URGENT">Acil</option>
                                 </select>
-                                <label htmlFor="task-priority-filter">Öncelik</label>
                             </div>
-
-                            <div className="field">
+                            <div>
+                                <label htmlFor="task-due-date-filter">Son tarih</label>
                                 <select
+                                    className="ghost-input"
                                     id="task-due-date-filter"
                                     value={dueDateFilter}
                                     onChange={(event) => setDueDateFilter(event.target.value as DueDateFilter)}
@@ -710,11 +718,11 @@ function ProjectDetails() {
                                     <option value="UPCOMING">Yaklaşan</option>
                                     <option value="NO_DATE">Tarihsiz</option>
                                 </select>
-                                <label htmlFor="task-due-date-filter">Son tarih</label>
                             </div>
-
-                            <div className="field">
+                            <div>
+                                <label htmlFor="task-sort">Sıralama</label>
                                 <select
+                                    className="ghost-input"
                                     id="task-sort"
                                     value={sortOption}
                                     onChange={(event) => setSortOption(event.target.value as SortOption)}
@@ -726,7 +734,6 @@ function ProjectDetails() {
                                     <option value="PRIORITY_ASC">Öncelik Düşük</option>
                                     <option value="TITLE_ASC">Başlık A-Z</option>
                                 </select>
-                                <label htmlFor="task-sort">Sıralama</label>
                             </div>
                         </div>
 
@@ -849,7 +856,7 @@ function ProjectDetails() {
                             </>
                         )
                     }
-                </div>
+                </section>
             </section>
             <ConfirmModal
                 open={taskToDelete !== null}

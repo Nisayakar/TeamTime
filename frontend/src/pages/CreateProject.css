@@ -1,0 +1,366 @@
+/* C:\Projects\TeamTime\frontend\src\pages\CreateProject.css */
+
+.create-project-page {
+    max-width: 1440px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.create-project-page form {
+    display: flex;
+    flex-direction: column;
+    gap: 48px; /* space-y-section-gap-large */
+}
+
+/* Glassmorphism subtle containers */
+.glass-section {
+    background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow: 0 4px 24px -4px rgba(0,0,0,0.02);
+    border-radius: 1.5rem;
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+}
+
+[data-theme="dark"] .glass-section {
+    background: linear-gradient(135deg, rgba(20,23,28,0.6) 0%, rgba(10,12,16,0.2) 100%);
+    border: 1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 4px 24px -4px rgba(0,0,0,0.2);
+}
+
+.glass-section-accent-primary {
+    box-shadow: 0 0 50px -12px rgba(0,82,204,0.15);
+}
+.glass-section-accent-secondary {
+    box-shadow: 0 0 50px -12px rgba(31,89,194,0.15);
+}
+
+/* Decorative subtle accent lines */
+.glass-section-line {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 4px;
+    height: 100%;
+    transition: background-color 0.5s;
+}
+
+.glass-section:hover .glass-section-line.primary {
+    background-color: var(--tt-primary);
+}
+.glass-section .glass-section-line.primary {
+    background-color: rgba(0,82,204,0.3);
+}
+[data-theme="dark"] .glass-section .glass-section-line.primary {
+    background-color: rgba(178,197,255,0.3);
+}
+
+.glass-section:hover .glass-section-line.secondary {
+    background-color: var(--tt-secondary);
+}
+.glass-section .glass-section-line.secondary {
+    background-color: rgba(31,89,194,0.3);
+}
+
+.glass-section:hover .glass-section-line.tertiary {
+    background-color: var(--tt-tertiary);
+}
+.glass-section .glass-section-line.tertiary {
+    background-color: rgba(49,67,104,0.3);
+}
+
+/* Layout for sections */
+.cp-section-flex {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+@media (min-width: 1024px) {
+    .cp-section-flex {
+        flex-direction: row;
+        gap: 48px;
+    }
+}
+
+.cp-section-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex-shrink: 0;
+}
+@media (min-width: 1024px) {
+    .cp-section-left {
+        width: 33.333333%;
+    }
+}
+@media (min-width: 1280px) {
+    .cp-section-left {
+        width: 25%;
+    }
+}
+
+.cp-section-right {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+}
+@media (min-width: 1024px) {
+    .cp-section-right {
+        width: 66.666667%;
+    }
+}
+@media (min-width: 1280px) {
+    .cp-section-right {
+        width: 75%;
+    }
+}
+
+.cp-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px;
+    width: 100%;
+}
+@media (min-width: 768px) {
+    .cp-grid-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Icons */
+.cp-icon-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.cp-icon-primary {
+    background: linear-gradient(to bottom right, rgba(0,82,204,0.2), rgba(31,89,194,0.2));
+    color: var(--tt-primary);
+    box-shadow: 0 0 15px rgba(0,82,204,0.2);
+}
+.cp-icon-secondary {
+    background: linear-gradient(to bottom right, rgba(31,89,194,0.2), rgba(0,82,204,0.2));
+    color: var(--tt-secondary);
+    box-shadow: 0 0 15px rgba(31,89,194,0.2);
+}
+.cp-icon-tertiary {
+    background: linear-gradient(to bottom right, rgba(0,82,204,0.2), rgba(31,89,194,0.2));
+    color: var(--tt-tertiary);
+    box-shadow: 0 0 15px rgba(0,82,204,0.2);
+}
+
+.cp-step-badge {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    display: inline-block;
+    color: #fff;
+}
+.cp-step-badge.primary { background: linear-gradient(to right, #003d9b, #1f59c2); }
+.cp-step-badge.secondary { background: linear-gradient(to right, #1f59c2, #003d9b); }
+
+.cp-title {
+    font-size: 20px;
+    line-height: 28px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.cp-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+}
+.cp-input-group label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-left: 4px;
+}
+
+/* Modern inputs override for this page if they want blur */
+.create-project-page .ghost-input {
+    background-color: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(115, 118, 133, 0.2);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(8px);
+    width: 100%;
+    color: var(--tt-text);
+}
+[data-theme="dark"] .create-project-page .ghost-input {
+    background-color: rgba(20, 23, 28, 0.6);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    color-scheme: dark; /* Fixes datepicker calendar icon color */
+}
+.create-project-page .ghost-input:focus {
+    border-color: #0052cc;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.1);
+    outline: none;
+}
+[data-theme="dark"] .create-project-page .ghost-input:focus {
+    background-color: rgba(30, 34, 41, 0.8);
+    border-color: #b2c5ff;
+    box-shadow: 0 0 0 3px rgba(178, 197, 255, 0.1);
+}
+
+/* Fix dropdown options readability */
+.create-project-page .ghost-input option {
+    background-color: var(--tt-surface);
+    color: var(--tt-text);
+}
+[data-theme="dark"] .create-project-page .ghost-input option {
+    background-color: var(--tt-surface);
+    color: var(--tt-text-inverse, #f0f1f3);
+}
+
+/* Radio Tiles */
+.cp-radio-tile-label {
+    position: relative;
+    cursor: pointer;
+    display: block;
+    height: 100%;
+}
+
+.cp-radio-tile {
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(8px);
+    padding: 24px;
+    border-radius: 1rem;
+    border: 1px solid rgba(115,118,133,0.2);
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+}
+[data-theme="dark"] .cp-radio-tile {
+    background: rgba(20, 23, 28, 0.5);
+    border-color: rgba(255,255,255,0.1);
+}
+
+.cp-radio-tile-input:checked + .cp-radio-tile {
+    background-color: rgba(0, 82, 204, 0.03);
+    border-color: #0052cc;
+    box-shadow: 0 4px 12px rgba(0, 82, 204, 0.08), inset 0 0 0 1px #0052cc;
+    transform: translateY(-2px);
+}
+[data-theme="dark"] .cp-radio-tile-input:checked + .cp-radio-tile {
+    background-color: rgba(178, 197, 255, 0.05);
+    border-color: #b2c5ff;
+    box-shadow: 0 4px 12px rgba(178, 197, 255, 0.08), inset 0 0 0 1px #b2c5ff;
+}
+
+.cp-radio-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+.cp-radio-icon {
+    transition: color 0.3s;
+    color: var(--tt-text-secondary);
+}
+.cp-radio-tile-input:checked + .cp-radio-tile .cp-radio-icon {
+    color: var(--tt-primary);
+}
+
+.cp-radio-circle {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid rgba(115,118,133,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.cp-radio-tile-input:checked + .cp-radio-tile .cp-radio-circle {
+    border-color: var(--tt-primary);
+}
+.cp-radio-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--tt-primary);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.cp-radio-tile-input:checked + .cp-radio-tile .cp-radio-circle .cp-radio-dot {
+    opacity: 1;
+}
+
+.cp-radio-title {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.cp-radio-desc {
+    display: block;
+    font-size: 14px;
+    color: var(--tt-text-secondary);
+}
+
+.cp-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 16px;
+    padding-top: 16px;
+    padding-bottom: 40px;
+}
+
+.cp-btn-gradient {
+    background: linear-gradient(to right, #003d9b, #1f59c2);
+    color: #fff;
+    height: 48px;
+    padding: 0 32px;
+    border-radius: 9999px;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,82,204,0.5);
+    transition: all 0.3s;
+}
+.cp-btn-gradient:hover {
+    box-shadow: 0 8px 25px rgba(0,82,204,0.6);
+    transform: translateY(-2px);
+    opacity: 0.9;
+}
+.cp-btn-gradient:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+.cp-btn-cancel {
+    background: transparent;
+    border: none;
+    color: var(--tt-text-secondary);
+    font-size: 16px;
+    font-weight: 500;
+    padding: 8px 24px;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+.cp-btn-cancel:hover {
+    color: var(--tt-text);
+}

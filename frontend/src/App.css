@@ -20,6 +20,107 @@
   --radius: 16px;
 }
 
+/* --- PHASE 2 ATMOSPHERIC MINIMALISM TOKENS --- */
+.app-navbar-auth,
+.app-page {
+    /* Typography */
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    
+    /* Light Theme Tokens */
+    --surface: #ffffff;
+    --surface-soft: #f3f4f6;
+    --bg: #f8f9fb;
+    --text: #191c1e;
+    --text-secondary: #434654;
+    --muted: #434654;
+    --border: rgba(115, 118, 133, 0.2);
+    --primary: #003d9b;
+    --primary-soft: rgba(0, 82, 204, 0.05);
+    
+    background-color: var(--bg);
+    color: var(--text);
+}
+
+[data-theme="dark"] .app-navbar-auth,
+[data-theme="dark"] .app-page {
+    /* Dark Theme Tokens */
+    --bg: #0a0c10;
+    --surface: #14171c;
+    --surface-soft: #1b2027;
+    --text: #ffffff;
+    --text-secondary: #b4c6f3;
+    --muted: #737685;
+    --border: rgba(255, 255, 255, 0.1);
+    --primary: #b2c5ff;
+    --primary-soft: rgba(178, 197, 255, 0.1);
+    
+    background-color: var(--bg);
+    color: var(--text);
+}
+
+.app-page h1,
+.app-page h2,
+.app-page h3,
+.app-navbar-auth .brand {
+    font-family: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.app-page .eyebrow {
+    font-family: "JetBrains Mono", monospace, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Form System: Ghost Input */
+.app-page .ghost-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    padding-left: 0;
+    padding-right: 0;
+    box-shadow: none !important;
+    transition: border-color 0.3s ease;
+    width: 100%;
+}
+.app-page .ghost-input:focus {
+    border-bottom-color: var(--primary);
+    outline: none;
+}
+.app-page .stacked-form .ghost-input {
+    padding-block: 8px;
+    margin-bottom: 8px;
+}
+
+/* Radio Tiles */
+.app-page .radio-tile-input:checked + .radio-tile {
+    background-color: var(--primary-soft);
+    border-color: var(--primary);
+}
+.app-page .radio-tile {
+    cursor: pointer;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    transition: all 0.2s ease;
+}
+.app-page .radio-tile:hover {
+    border-color: rgba(115, 118, 133, 0.4);
+}
+[data-theme="dark"] .app-page .radio-tile:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.app-page .section-divider {
+    border-top: 1px solid var(--border);
+    margin: 48px 0;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -4981,6 +5082,7 @@ button:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  margin-top: 32px;
 }
 
 .my-tasks-filter-panel {
@@ -5380,4 +5482,251 @@ button:focus-visible {
   border-radius: 8px;
   font-weight: 600;
   min-width: 120px;
+}
+/* --- PHASE 2 ATMOSPHERIC MINIMALISM TOKENS --- */
+.app-navbar-auth,
+.app-page {
+    /* Typography */
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    
+    /* Light Theme Tokens */
+    --surface: #ffffff;
+    --surface-soft: #f3f4f6;
+    --bg: #f8f9fb;
+    --text: #191c1e;
+    --text-secondary: #434654;
+    --muted: #434654;
+    --border: rgba(115, 118, 133, 0.2);
+    --primary: #003d9b;
+    --primary-soft: rgba(0, 82, 204, 0.05);
+    
+    background-color: var(--bg);
+    color: var(--text);
+}
+
+[data-theme="dark"] .app-navbar-auth,
+[data-theme="dark"] .app-page {
+    /* Dark Theme Tokens */
+    --bg: #0a0c10;
+    --surface: #14171c;
+    --surface-soft: #1b2027;
+    --text: #ffffff;
+    --text-secondary: #b4c6f3;
+    --muted: #737685;
+    --border: rgba(255, 255, 255, 0.1);
+    --primary: #b2c5ff;
+    --primary-soft: rgba(178, 197, 255, 0.1);
+    
+    background-color: var(--bg);
+    color: var(--text);
+}
+
+.app-page h1,
+.app-page h2,
+.app-page h3,
+.app-navbar-auth .brand {
+    font-family: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.app-page .eyebrow {
+    font-family: "JetBrains Mono", monospace, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Form System: Ghost Input */
+.app-page .ghost-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    padding-left: 0;
+    padding-right: 0;
+    box-shadow: none !important;
+    transition: border-color 0.3s ease;
+    width: 100%;
+}
+.app-page .ghost-input:focus {
+    border-bottom-color: var(--primary);
+    outline: none;
+}
+.app-page .stacked-form .ghost-input {
+    padding-block: 8px;
+    margin-bottom: 8px;
+}
+
+/* Radio Tiles */
+.app-page .radio-tile-input:checked + .radio-tile {
+    background-color: var(--primary-soft);
+    border-color: var(--primary);
+}
+.app-page .radio-tile {
+    cursor: pointer;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    transition: all 0.2s ease;
+}
+.app-page .radio-tile:hover {
+    border-color: rgba(115, 118, 133, 0.4);
+}
+[data-theme="dark"] .app-page .radio-tile:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.app-page .section-divider {
+    border-top: 1px solid var(--border);
+    margin: 48px 0;
+}
+
+
+/* --- PHASE 3: PROJECTS ROW LIST --- */
+.app-page .project-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.app-page .project-row {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    transition: all 0.2s ease;
+}
+@media (min-width: 768px) {
+    .app-page .project-row {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+.app-page .project-row:hover {
+    border-color: rgba(115, 118, 133, 0.4);
+}
+[data-theme="dark"] .app-page .project-row:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.app-page .project-row-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.app-page .project-row-desc {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 600px;
+}
+
+.app-page .project-row-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+}
+@media (min-width: 768px) {
+    .app-page .project-row-meta {
+        align-items: flex-end;
+    }
+}
+
+.app-page .project-row-dates {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--muted);
+}
+.app-page .project-row-dates .date-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.app-page .project-row-dates small {
+    font-weight: 600;
+}
+
+
+
+/* --- PHASE 3: PROJECTS ROW LIST --- */
+.app-page .project-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.app-page .project-row {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    transition: all 0.2s ease;
+}
+@media (min-width: 768px) {
+    .app-page .project-row {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+.app-page .project-row:hover {
+    border-color: rgba(115, 118, 133, 0.4);
+}
+[data-theme="dark"] .app-page .project-row:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.app-page .project-row-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.app-page .project-row-desc {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 600px;
+}
+
+.app-page .project-row-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+}
+@media (min-width: 768px) {
+    .app-page .project-row-meta {
+        align-items: flex-end;
+    }
+}
+
+.app-page .project-row-dates {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--muted);
+}
+.app-page .project-row-dates .date-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.app-page .project-row-dates small {
+    font-weight: 600;
 }

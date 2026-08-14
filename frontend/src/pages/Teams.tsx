@@ -223,109 +223,116 @@ function Teams() {
                 </div>
             </section>
 
-            <section className="panel app-form-card teams-create-panel">
+            <section className="form-section">
                 <div className="section-heading">
                     <span className="eyebrow">Yeni takım</span>
                     <h2>Takım oluştur</h2>
                 </div>
 
-                <form className="inline-form" onSubmit={createTeam}>
-                    <div>
-                        <label>Takım Adı</label>
-                        <input
-                            type="text"
-                            value={name}
-                            onChange={event => setName(event.target.value)}
-                            required
-                        />
-                    </div>
+                <form className="stacked-form" onSubmit={createTeam}>
+                    <label>Takım Adı</label>
+                    <input
+                        type="text"
+                        className="ghost-input"
+                        value={name}
+                        onChange={event => setName(event.target.value)}
+                        required
+                    />
 
-                    <div>
-                        <label>Açıklama</label>
-                        <input
-                            type="text"
-                            value={description}
-                            onChange={event => setDescription(event.target.value)}
-                            required
-                        />
-                    </div>
+                    <label style={{ marginTop: "16px", display: "block" }}>Açıklama</label>
+                    <input
+                        type="text"
+                        className="ghost-input"
+                        value={description}
+                        onChange={event => setDescription(event.target.value)}
+                        required
+                    />
 
-                    <button className="button button-primary" type="submit">Takım Oluştur</button>
+                    <div style={{ marginTop: "24px" }}>
+                        <button className="button button-primary" type="submit">Takım Oluştur</button>
+                    </div>
                 </form>
                 {createFeedback && <InlineFeedback type={createFeedback.type} message={createFeedback.message} />}
             </section>
+            
+            <hr className="section-divider" style={{ margin: "32px 0" }} />
+            
             {sectionFeedback && <InlineFeedback type={sectionFeedback.type} message={sectionFeedback.message} />}
 
             {
                 sectionFeedback?.type === "error" ? null : teams.length === 0 ? (
                     <p className="empty-state app-empty-state">Henüz takım yok</p>
                 ) : (
-                    <section className="cards-grid teams-grid">
+                    <div className="project-list teams-list">
                         {
                             teams.map(team => (
-                                <article className="data-card team-card app-entity-card" key={team.id}>
+                                <article className="project-row team-row" key={team.id}>
                                     {
                                         editingTeamId === team.id ? (
-                                            <div className="team-edit-form">
-                                                <input
-                                                    type="text"
-                                                    value={editName}
-                                                    onChange={event => setEditName(event.target.value)}
-                                                />
+                                            <div className="team-edit-form" style={{ width: "100%" }}>
+                                                <div className="stacked-form">
+                                                    <input
+                                                        type="text"
+                                                        className="ghost-input"
+                                                        value={editName}
+                                                        onChange={event => setEditName(event.target.value)}
+                                                    />
 
-                                                <input
-                                                    type="text"
-                                                    value={editDescription}
-                                                    onChange={event => setEditDescription(event.target.value)}
-                                                />
+                                                    <input
+                                                        type="text"
+                                                        className="ghost-input"
+                                                        style={{ marginTop: "8px" }}
+                                                        value={editDescription}
+                                                        onChange={event => setEditDescription(event.target.value)}
+                                                    />
 
-                                                <div className="button-row">
-                                                    <button className="button button-primary" onClick={() => updateTeam(team)}>
-                                                        Kaydet
-                                                    </button>
+                                                    <div className="button-row" style={{ marginTop: "16px" }}>
+                                                        <button className="button button-primary" onClick={() => updateTeam(team)}>
+                                                            Kaydet
+                                                        </button>
 
-                                                    <button className="button button-secondary" onClick={cancelEdit}>
-                                                        Vazgeç
-                                                    </button>
+                                                        <button className="button button-secondary" onClick={cancelEdit}>
+                                                            Vazgeç
+                                                        </button>
+                                                    </div>
+                                                    {editFeedback && <InlineFeedback type={editFeedback.type} message={editFeedback.message} />}
                                                 </div>
-                                                {editFeedback && <InlineFeedback type={editFeedback.type} message={editFeedback.message} />}
                                             </div>
                                         ) : (
                                             <>
-                                                <div className="project-card-body">
-                                                    <div className="card-icon app-card-icon">TM</div>
-                                                    <div className="app-card-copy">
-                                                        <h3>{team.name}</h3>
-                                                        <p>{team.description}</p>
-                                                    </div>
+                                                <div className="project-row-main">
+                                                    <h3 style={{ fontSize: "16px", fontWeight: "600", color: "var(--text)", margin: 0 }}>{team.name}</h3>
+                                                    <p className="project-row-desc">{team.description}</p>
                                                 </div>
 
-                                                <div className="button-row">
-                                                    <button className="button button-primary" onClick={() => navigate(`/teams/${team.id}`)}>
-                                                        Üyeleri Gör
-                                                    </button>
+                                                <div className="project-row-meta">
+                                                    <div className="button-row">
+                                                        <button className="button button-primary button-sm" onClick={() => navigate(`/teams/${team.id}`)}>
+                                                            Üyeleri Gör
+                                                        </button>
 
-                                                    {
-                                                        (rolesByTeamId[team.id] === "OWNER" || rolesByTeamId[team.id] === "ADMIN") && (
-                                                            <button className="button button-secondary" onClick={() => startEdit(team)}>
-                                                                Düzenle
-                                                            </button>
-                                                        )
-                                                    }
+                                                        {
+                                                            (rolesByTeamId[team.id] === "OWNER" || rolesByTeamId[team.id] === "ADMIN") && (
+                                                                <button className="button button-secondary button-sm" onClick={() => startEdit(team)}>
+                                                                    Düzenle
+                                                                </button>
+                                                            )
+                                                        }
 
-                                                    {
-                                                        rolesByTeamId[team.id] === "OWNER" && (
-                                                            <button
-                                                                className="button button-danger"
-                                                                onClick={() => {
-                                                                    setDeleteFeedback("");
-                                                                    setTeamToDelete(team);
-                                                                }}
-                                                            >
-                                                                Sil
-                                                            </button>
-                                                        )
-                                                    }
+                                                        {
+                                                            rolesByTeamId[team.id] === "OWNER" && (
+                                                                <button
+                                                                    className="button button-danger button-sm"
+                                                                    onClick={() => {
+                                                                        setDeleteFeedback("");
+                                                                        setTeamToDelete(team);
+                                                                    }}
+                                                                >
+                                                                    Sil
+                                                                </button>
+                                                            )
+                                                        }
+                                                    </div>
                                                 </div>
                                             </>
                                         )
@@ -333,7 +340,7 @@ function Teams() {
                                 </article>
                             ))
                         }
-                    </section>
+                    </div>
                 )
             }
             <ConfirmModal

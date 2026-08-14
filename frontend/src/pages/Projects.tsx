@@ -170,60 +170,65 @@ function Projects() {
                 ) : projects.length === 0 ? (
                     <p className="empty-state projects-empty-state">Henüz erişebileceğiniz proje yok.</p>
                 ) : (
-                    <section className="cards-grid projects-grid">
+                    <section className="project-list flex flex-col gap-4">
                         {
                             projects.map((project) => (
-                                <article className="data-card project-card" key={project.id}>
-                                    <ProjectCard
-                                        projectName={project.projectName}
-                                        teamId={project.teamId}
-                                        teamName={project.teamName}
-                                        teamProject={project.teamProject}
-                                    />
-
-                                    <p className="card-description">{project.description}</p>
-
-                                    <div className="meta-grid">
-                                        <span>
-                                            <small>Başlangıç</small>
-                                            {project.startDate || "-"}
-                                        </span>
-                                        <span>
-                                            <small>Bitiş</small>
-                                            {project.endDate || "-"}
-                                        </span>
+                                <article className="project-row" key={project.id}>
+                                    <div className="project-row-main">
+                                        <div className="project-row-header">
+                                            <ProjectCard
+                                                projectName={project.projectName}
+                                                teamId={project.teamId}
+                                                teamName={project.teamName}
+                                                teamProject={project.teamProject}
+                                            />
+                                        </div>
+                                        <p className="project-row-desc">{project.description}</p>
                                     </div>
 
-                                    <div className="button-row">
-                                        <button
-                                            className="button button-primary"
-                                            onClick={() => navigate(`/project/${project.id}`)}
-                                        >
-                                            Görevleri Gör
-                                        </button>
+                                    <div className="project-row-meta">
+                                        <div className="project-row-dates">
+                                            <span className="date-item">
+                                                <span className="material-symbols-outlined icon">calendar_today</span>
+                                                <small>Başlangıç:</small> {project.startDate || "-"}
+                                            </span>
+                                            <span className="date-item">
+                                                <span className="material-symbols-outlined icon">calendar_today</span>
+                                                <small>Bitiş:</small> {project.endDate || "-"}
+                                            </span>
+                                        </div>
 
-                                        {
-                                            canManageProject(project) && (
-                                                <>
-                                                    <button
-                                                        className="button button-secondary"
-                                                        onClick={() => navigate(`/edit-project/${project.id}`)}
-                                                    >
-                                                        Düzenle
-                                                    </button>
+                                        <div className="project-row-actions button-row">
+                                            <button
+                                                className="button button-primary"
+                                                onClick={() => navigate(`/project/${project.id}`)}
+                                            >
+                                                Görevleri Gör
+                                            </button>
 
-                                                    <button
-                                                        className="button button-danger"
-                                                        onClick={() => {
-                                                            setDeleteFeedback("");
-                                                            setProjectToDelete(project);
-                                                        }}
-                                                    >
-                                                        Sil
-                                                    </button>
-                                                </>
-                                            )
-                                        }
+                                            {
+                                                canManageProject(project) && (
+                                                    <>
+                                                        <button
+                                                            className="button button-secondary"
+                                                            onClick={() => navigate(`/edit-project/${project.id}`)}
+                                                        >
+                                                            Düzenle
+                                                        </button>
+
+                                                        <button
+                                                            className="button button-danger"
+                                                            onClick={() => {
+                                                                setDeleteFeedback("");
+                                                                setProjectToDelete(project);
+                                                            }}
+                                                        >
+                                                            Sil
+                                                        </button>
+                                                    </>
+                                                )
+                                            }
+                                        </div>
                                     </div>
                                 </article>
                             ))

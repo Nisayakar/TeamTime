@@ -164,77 +164,107 @@ function EditProject() {
                 ) : !project ? (
                     <p className="empty-state app-empty-state">Proje bulunamadı.</p>
                 ) : (
-                    <form className="form-card app-form-card" onSubmit={updateProject}>
-                        <label>Proje Adı</label>
-                        <input
-                            name="projectName"
-                            value={projectName}
-                            onChange={(event) => setProjectName(event.target.value)}
-                            required
-                        />
-
-                        <label>Açıklama</label>
-                        <input
-                            name="description"
-                            value={description}
-                            onChange={(event) => setDescription(event.target.value)}
-                        />
-
-                        <div className="project-team-readonly">
-                            <div>
-                                <span>Proje Türü</span>
-                                <strong>{project.teamProject ? "Takım Projesi" : "Kişisel Proje"}</strong>
+                    <form className="stacked-form" onSubmit={updateProject}>
+                        <section className="form-section">
+                            <div className="section-heading">
+                                <span className="eyebrow">Detaylar</span>
+                                <h2>Proje bilgileri</h2>
                             </div>
+
+                            <label>Proje Adı</label>
+                            <input
+                                className="ghost-input"
+                                name="projectName"
+                                value={projectName}
+                                onChange={(event) => setProjectName(event.target.value)}
+                                required
+                            />
+
+                            <label>Açıklama</label>
+                            <input
+                                className="ghost-input"
+                                name="description"
+                                value={description}
+                                onChange={(event) => setDescription(event.target.value)}
+                            />
+                        </section>
+                        
+                        <hr className="section-divider" />
+
+                        <section className="form-section">
+                            <div className="section-heading">
+                                <span className="eyebrow">Erişim</span>
+                                <h2>Proje Türü</h2>
+                            </div>
+
+                            <div className="project-team-readonly" style={{ padding: "16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "12px" }}>
+                                <div>
+                                    <span className="muted" style={{ fontSize: "13px" }}>Proje Türü:</span>
+                                    <strong style={{ marginLeft: "8px" }}>{project.teamProject ? "Takım Projesi" : "Kişisel Proje"}</strong>
+                                </div>
+                                {
+                                    project.teamProject && (
+                                        <div style={{ marginTop: "8px" }}>
+                                            <span className="muted" style={{ fontSize: "13px" }}>Takım:</span>
+                                            <strong style={{ marginLeft: "8px" }}>{project.teamName || "Takım"}</strong>
+                                        </div>
+                                    )
+                                }
+                                {
+                                    project.teamProject && currentTeamRole && (
+                                        <div style={{ marginTop: "8px" }}>
+                                            <span className="muted" style={{ fontSize: "13px" }}>Rolünüz:</span>
+                                            <strong style={{ marginLeft: "8px" }}>{getTeamRoleLabel(currentTeamRole)}</strong>
+                                        </div>
+                                    )
+                                }
+                                <p className="muted" style={{ marginTop: "16px", fontSize: "13px" }}>Projenin takım bağlantısı oluşturulduktan sonra değiştirilemez.</p>
+                            </div>
+                        </section>
+                        
+                        <hr className="section-divider" />
+
+                        <section className="form-section">
+                            <div className="section-heading">
+                                <span className="eyebrow">Zaman Çizelgesi</span>
+                                <h2>Tarih Planlaması</h2>
+                            </div>
+                            <div className="form-grid two-columns">
+                                <div>
+                                    <label>Başlangıç Tarihi</label>
+                                    <input
+                                        className="ghost-input"
+                                        type="date"
+                                        name="startDate"
+                                        value={startDate}
+                                        onChange={(event) => setStartDate(event.target.value)}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label>Bitiş Tarihi</label>
+                                    <input
+                                        className="ghost-input"
+                                        type="date"
+                                        name="endDate"
+                                        value={endDate}
+                                        onChange={(event) => setEndDate(event.target.value)}
+                                    />
+                                </div>
+                            </div>
+                        </section>
+
+                        <div style={{ marginTop: "48px" }}>
                             {
-                                project.teamProject && (
-                                    <div>
-                                        <span>Takım</span>
-                                        <strong>{project.teamName || "Takım"}</strong>
-                                    </div>
+                                canUpdateProject ? (
+                                    <button className="button button-primary button-full" type="submit" disabled={submitting}>
+                                        {submitting ? "Güncelleniyor..." : "Güncelle"}
+                                    </button>
+                                ) : (
+                                    <p className="empty-state app-empty-state">Bu takım projesini düzenleme yetkiniz yok.</p>
                                 )
                             }
-                            {
-                                project.teamProject && currentTeamRole && (
-                                    <div>
-                                        <span>Rolünüz</span>
-                                        <strong>{getTeamRoleLabel(currentTeamRole)}</strong>
-                                    </div>
-                                )
-                            }
-                            <p>Projenin takım bağlantısı oluşturulduktan sonra değiştirilemez.</p>
                         </div>
-
-                        <div className="form-grid two-columns">
-                            <div>
-                                <label>Başlangıç Tarihi</label>
-                                <input
-                                    type="date"
-                                    name="startDate"
-                                    value={startDate}
-                                    onChange={(event) => setStartDate(event.target.value)}
-                                />
-                            </div>
-
-                            <div>
-                                <label>Bitiş Tarihi</label>
-                                <input
-                                    type="date"
-                                    name="endDate"
-                                    value={endDate}
-                                    onChange={(event) => setEndDate(event.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        {
-                            canUpdateProject ? (
-                                <button className="button button-primary button-full" type="submit" disabled={submitting}>
-                                    {submitting ? "Güncelleniyor..." : "Güncelle"}
-                                </button>
-                            ) : (
-                                <p className="empty-state app-empty-state">Bu takım projesini düzenleme yetkiniz yok.</p>
-                            )
-                        }
                         {formFeedback && <InlineFeedback type={formFeedback.type} message={formFeedback.message} />}
                     </form>
                 )

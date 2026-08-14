@@ -244,16 +244,17 @@ function MyTasks() {
 
                 <div className="my-tasks-filter-panel" aria-label="Görev filtreleri">
                     <label>
-                        <span>Arama</span>
+                        <span className="eyebrow">Arama</span>
                         <input
+                            className="ghost-input"
                             value={search}
                             onChange={event => setSearch(event.target.value)}
                             placeholder="Görev veya proje ara"
                         />
                     </label>
                     <label>
-                        <span>Atama</span>
-                        <select value={assignmentFilter} onChange={event => setAssignmentFilter(event.target.value as AssignmentFilter)}>
+                        <span className="eyebrow">Atama</span>
+                        <select className="ghost-input" value={assignmentFilter} onChange={event => setAssignmentFilter(event.target.value as AssignmentFilter)}>
                             <option value="ALL">Tümü</option>
                             <option value="PENDING">Kabul Bekliyor</option>
                             <option value="ACCEPTED">Kabul Edildi</option>
@@ -261,8 +262,8 @@ function MyTasks() {
                         </select>
                     </label>
                     <label>
-                        <span>Görev Durumu</span>
-                        <select value={statusFilter} onChange={event => setStatusFilter(event.target.value as TaskStatusFilter)}>
+                        <span className="eyebrow">Görev Durumu</span>
+                        <select className="ghost-input" value={statusFilter} onChange={event => setStatusFilter(event.target.value as TaskStatusFilter)}>
                             <option value="ALL">Tümü</option>
                             <option value="BEKLIYOR">Bekliyor</option>
                             <option value="DEVAM_EDIYOR">Devam Ediyor</option>
@@ -270,8 +271,8 @@ function MyTasks() {
                         </select>
                     </label>
                     <label>
-                        <span>Öncelik</span>
-                        <select value={priorityFilter} onChange={event => setPriorityFilter(event.target.value as PriorityFilter)}>
+                        <span className="eyebrow">Öncelik</span>
+                        <select className="ghost-input" value={priorityFilter} onChange={event => setPriorityFilter(event.target.value as PriorityFilter)}>
                             <option value="ALL">Tümü</option>
                             <option value="LOW">Düşük</option>
                             <option value="MEDIUM">Orta</option>
@@ -280,8 +281,8 @@ function MyTasks() {
                         </select>
                     </label>
                     <label>
-                        <span>Son Tarih</span>
-                        <select value={dueFilter} onChange={event => setDueFilter(event.target.value as DueFilter)}>
+                        <span className="eyebrow">Son Tarih</span>
+                        <select className="ghost-input" value={dueFilter} onChange={event => setDueFilter(event.target.value as DueFilter)}>
                             <option value="ALL">Tümü</option>
                             <option value="OVERDUE">Gecikmiş</option>
                             <option value="TODAY">Bugün</option>

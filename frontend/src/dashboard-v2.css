@@ -1,4 +1,4 @@
-/* Dashboard V2 Specific Styles */
+﻿/* Dashboard V2 Specific Styles */
 
 .dashboard-v2-container {
     flex: 1;
@@ -577,72 +577,62 @@
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
 }
 
+/* --- COMPACT MY TASKS CARD --- */
 .my-task-card {
     display: flex;
     flex-direction: column;
     background-color: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 22px;
-    padding: 24px;
+    border-radius: 12px;
+    padding: 16px;
     transition: all 0.2s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-    min-height: 240px;
 }
-
 [data-theme="dark"] .my-task-card {
-    background-color: #111113;
-    border-color: #27272a;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    background-color: var(--surface);
+    border-color: var(--border);
 }
-
 .my-task-card:hover {
-    border-color: color-mix(in srgb, var(--primary) 40%, var(--border) 60%);
-    background-color: color-mix(in srgb, var(--surface) 97%, var(--primary) 3%);
+    border-color: rgba(115, 118, 133, 0.4);
 }
-
 [data-theme="dark"] .my-task-card:hover {
-    background-color: #18181b;
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 .my-task-card-header {
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
-
 .my-task-title-line {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 6px;
+    gap: 8px;
+    margin-bottom: 4px;
 }
-
 .my-task-title-line h3 {
-    margin: 0;
     font-size: 16px;
-    font-weight: 700;
-    color: var(--text);
-    line-height: 1.4;
-}
-
-.my-task-project {
+    font-weight: 600;
+    line-height: 1.3;
     margin: 0;
+    color: var(--text);
+}
+.my-task-project {
     font-size: 13px;
     color: var(--muted);
     font-weight: 500;
+    margin: 0;
 }
 
 .my-task-card-body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
 }
-
 .my-task-description {
-    margin: 0;
     font-size: 14px;
-    color: var(--text-secondary);
     line-height: 1.5;
+    color: var(--text-secondary);
+    margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -652,53 +642,48 @@
 .my-task-meta-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
     align-items: center;
-    margin-top: auto;
+    gap: 8px;
 }
-
 .my-task-date {
-    font-size: 13px;
-    color: var(--muted);
+    font-size: 12px;
     font-weight: 600;
+    color: var(--muted);
     margin-left: auto;
 }
 
 .my-task-reason-box {
-    background: var(--danger-soft);
-    padding: 12px 16px;
-    border-radius: 12px;
+    margin-top: 8px;
+    padding: 12px;
+    background: color-mix(in srgb, var(--danger) 10%, transparent);
     border: 1px solid color-mix(in srgb, var(--danger) 20%, transparent);
+    border-radius: 8px;
 }
-
 .my-task-reason-box strong {
     display: block;
-    color: var(--danger);
     font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    color: var(--danger);
     margin-bottom: 4px;
 }
-
 .my-task-reason-box p {
-    margin: 0;
     font-size: 13px;
     color: var(--text);
+    margin: 0;
 }
 
 .my-task-card-footer {
-    margin-top: 20px;
-    padding-top: 16px;
-    border-top: 1px dashed var(--border);
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
 }
-
 .my-task-card-footer .my-task-actions {
     display: flex;
-    gap: 12px;
+    gap: 8px;
 }
-
 .my-task-card-footer .button {
     flex: 1;
+    height: 36px;
+    font-size: 13px;
 }
 
 /* Badge Semantic Overrides for Dashboard V2 */
@@ -735,3 +720,4 @@
     background: rgba(37, 99, 235, 0.15) !important;
     color: #60a5fa !important;
 }
+

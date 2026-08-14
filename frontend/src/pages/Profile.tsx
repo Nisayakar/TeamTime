@@ -381,45 +381,39 @@ function Profile() {
             </section>
 
             <section className="content-grid two-columns profile-grid">
-                <div className="panel app-form-card profile-card profile-details-card">
+                <div className="form-section profile-details-card">
                     <div className="section-heading">
                         <span className="eyebrow">Hesap</span>
                         <h2>Profil Bilgileri</h2>
                     </div>
 
                     <div className="stacked-form">
-                        <div className="field">
-                            <input
-                                aria-label="Ad"
-                                type="text"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder=" "
-                            />
-                            <label>Ad</label>
-                        </div>
+                        <label>Ad</label>
+                        <input
+                            aria-label="Ad"
+                            type="text"
+                            className="ghost-input"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                        />
 
-                        <div className="field">
-                            <input
-                                aria-label="Soyad"
-                                type="text"
-                                value={surname}
-                                onChange={(e) => setSurname(e.target.value)}
-                                placeholder=" "
-                            />
-                            <label>Soyad</label>
-                        </div>
+                        <label style={{ marginTop: "16px", display: "block" }}>Soyad</label>
+                        <input
+                            aria-label="Soyad"
+                            type="text"
+                            className="ghost-input"
+                            value={surname}
+                            onChange={(e) => setSurname(e.target.value)}
+                        />
 
-                        <div className="field">
-                            <input
-                                aria-label="E-mail"
-                                type="email"
-                                value={email}
-                                readOnly
-                                placeholder=" "
-                            />
-                            <label>E-mail</label>
-                        </div>
+                        <label style={{ marginTop: "16px", display: "block" }}>E-mail</label>
+                        <input
+                            aria-label="E-mail"
+                            type="email"
+                            className="ghost-input"
+                            value={email}
+                            readOnly
+                        />
 
                         <button className="button button-secondary profile-email-change-trigger" type="button" onClick={openEmailChangePanel}>
                             E-posta Adresini Değiştir
@@ -431,17 +425,15 @@ function Profile() {
                                     {
                                         emailChangeStep === "request" ? (
                                             <form className="stacked-form" onSubmit={requestEmailChangeCode} noValidate>
-                                                <div className="field">
-                                                    <input
-                                                        aria-label="Yeni E-posta Adresi"
-                                                        type="email"
-                                                        value={newEmail}
-                                                        onChange={(event) => setNewEmail(event.target.value)}
-                                                        placeholder=" "
-                                                        autoComplete="email"
-                                                    />
-                                                    <label>Yeni E-posta Adresi</label>
-                                                </div>
+                                                <label>Yeni E-posta Adresi</label>
+                                                <input
+                                                    aria-label="Yeni E-posta Adresi"
+                                                    type="email"
+                                                    className="ghost-input"
+                                                    value={newEmail}
+                                                    onChange={(event) => setNewEmail(event.target.value)}
+                                                    autoComplete="email"
+                                                />
 
                                                 <div className="profile-email-change-actions">
                                                     <button className="button button-primary" type="submit" disabled={requestingEmailCode}>
@@ -458,12 +450,12 @@ function Profile() {
                                                     {submittedEmail} adresine gönderilen 6 haneli kodu girin.
                                                 </p>
 
-                                                <div className="verification-code-field">
+                                                <div className="verification-code-field" style={{ marginTop: "16px" }}>
                                                     <label htmlFor="profile-email-code">Doğrulama kodu</label>
                                                     <input
                                                         ref={emailCodeInputRef}
                                                         id="profile-email-code"
-                                                        className="verification-code-input"
+                                                        className="ghost-input verification-code-input"
                                                         type="text"
                                                         value={emailCode}
                                                         onChange={(event) => handleEmailCodeChange(event.target.value)}
@@ -522,44 +514,42 @@ function Profile() {
                 </div>
 
                 <div className="profile-side-column">
-                    <section className="panel app-form-card profile-card profile-section-card">
+                    <section className="form-section profile-section-card">
                         <div className="profile-settings-block">
                             <div>
                                 <strong>Tema</strong>
-                                <span>Uygulama görünümünü seçin.</span>
+                                <span className="muted" style={{ display: "block", fontSize: "14px" }}>Uygulama görünümünü seçin.</span>
                             </div>
                             <ThemeSwitcher />
                         </div>
                     </section>
 
-                    <section className="panel app-form-card profile-card profile-section-card">
+                    <hr className="section-divider" style={{ margin: "24px 0" }} />
+
+                    <section className="form-section profile-section-card">
                         <div className="section-heading compact-heading">
                             <span className="eyebrow">Güvenlik</span>
                             <h3>Şifre Değiştir</h3>
                         </div>
 
                         <div className="stacked-form">
-                            <div className="field">
-                                <input
-                                    aria-label="Eski Şifre"
-                                    type="password"
-                                    value={oldPassword}
-                                    onChange={(e) => setOldPassword(e.target.value)}
-                                    placeholder=" "
-                                />
-                                <label>Eski Şifre</label>
-                            </div>
+                            <label>Eski Şifre</label>
+                            <input
+                                aria-label="Eski Şifre"
+                                type="password"
+                                className="ghost-input"
+                                value={oldPassword}
+                                onChange={(e) => setOldPassword(e.target.value)}
+                            />
 
-                            <div className="field">
-                                <input
-                                    aria-label="Yeni Şifre"
-                                    type="password"
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                    placeholder=" "
-                                />
-                                <label>Yeni Şifre</label>
-                            </div>
+                            <label style={{ marginTop: "16px", display: "block" }}>Yeni Şifre</label>
+                            <input
+                                aria-label="Yeni Şifre"
+                                type="password"
+                                className="ghost-input"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                            />
 
                             <button className="button button-primary" onClick={updatePassword} disabled={savingPassword}>
                                 {savingPassword ? "Güncelleniyor..." : "Şifreyi Güncelle"}
@@ -568,11 +558,13 @@ function Profile() {
                         </div>
                     </section>
 
-                    <section className="panel app-form-card profile-card profile-section-card profile-danger-card">
+                    <hr className="section-divider" style={{ margin: "24px 0" }} />
+
+                    <section className="form-section profile-section-card profile-danger-card">
                         <div className="profile-danger-zone">
                             <div>
                                 <strong>Hesabı Sil</strong>
-                                <span>Bu işlem hesabınızı ve size bağlı verileri kalıcı olarak kaldırır.</span>
+                                <span className="muted" style={{ display: "block", fontSize: "14px", marginTop: "4px" }}>Bu işlem hesabınızı ve size bağlı verileri kalıcı olarak kaldırır.</span>
                             </div>
                             <button className="button button-danger" onClick={openDeleteModal} disabled={deletingAccount}>
                                 Hesabı Sil
