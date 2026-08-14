@@ -1085,6 +1085,7 @@ button:focus-visible {
 .stacked-form {
   display: grid;
   gap: 13px;
+  align-content: start;
 }
 
 .field {
@@ -2814,6 +2815,7 @@ button:focus-visible {
   display: grid;
   gap: 16px;
   padding: clamp(20px, 3vw, 28px);
+  align-content: start;
 }
 
 .app-page .section-heading {

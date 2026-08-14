@@ -202,15 +202,23 @@ public class TaskService {
                 .orElseThrow(() -> new AccessDeniedException("Atanacak kullanıcı bu takımın üyesi değil"));
 
         task.setAssignedUser(targetMembership.getUser());
-        task.setAssignmentStatus(AssignmentStatus.PENDING);
         task.setRejectionReason(null);
-        task.setAssignedAt(LocalDateTime.now());
-        task.setRespondedAt(null);
 
-        Task savedTask = taskRepository.save(task);
-        notificationService.notifyTaskAssigned(targetMembership.getUser(), savedTask.getProject().getTeam(), savedTask.getId(), savedTask.getTitle());
-
-        return convertToResponse(savedTask);
+        if (assignedUserId.equals(currentUserId)) {
+            task.setAssignmentStatus(AssignmentStatus.ACCEPTED);
+            task.setAssignedAt(LocalDateTime.now());
+            task.setRespondedAt(LocalDateTime.now());
+            Task savedTask = taskRepository.save(task);
+            return convertToResponse(savedTask);
+        } else {
+            task.setAssignmentStatus(AssignmentStatus.PENDING);
+            task.setAssignedAt(LocalDateTime.now());
+            task.setRespondedAt(null);
+            
+            Task savedTask = taskRepository.save(task);
+            notificationService.notifyTaskAssigned(targetMembership.getUser(), savedTask.getProject().getTeam(), savedTask.getId(), savedTask.getTitle());
+            return convertToResponse(savedTask);
+        }
     }
 
     @Transactional

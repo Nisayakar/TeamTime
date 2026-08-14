@@ -378,6 +378,7 @@ function Navbar() {
     ];
 
     return (
+        <>
         <nav className={navbarClassName}>
             <Link to={isLoggedIn ? "/dashboard" : "/"} className="brand">
                 <img className="brand-symbol" src="/home/teamtime-symbol.png" alt="" aria-hidden="true" />
@@ -558,6 +559,7 @@ function Navbar() {
                     </div>
                 )
             }
+            </nav>
 
             <ConfirmModal
                 open={isClearModalOpen}
@@ -568,7 +570,7 @@ function Navbar() {
                 onConfirm={clearAllNotifications}
                 onCancel={() => setIsClearModalOpen(false)}
             />
-        </nav>
+        </>
     );
 }
 

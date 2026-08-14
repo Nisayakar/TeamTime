@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api";
-import { Badge, Button, EmptyState, LoadingState, StatCard, type BadgeVariant } from "../components/ui";
+import { Badge, Button, EmptyState, LoadingState, type BadgeVariant } from "../components/ui";
 import InlineFeedback from "../components/ui/InlineFeedback";
 import type { AssignmentStatus, Task, TaskPriority, TaskStatus } from "../types/task";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
+import "../dashboard-v2.css";
 
 type AssignmentFilter = "ALL" | "PENDING" | "ACCEPTED" | "REJECTED";
 type TaskStatusFilter = "ALL" | TaskStatus;
@@ -182,11 +183,54 @@ function MyTasks() {
                 </div>
             </header>
 
-            <section className="dashboard-stat-grid my-tasks-summary" aria-label="Görevlerim özeti">
-                <StatCard label="Toplam Atanan" value={summary.total} icon={<TaskIcon />} tone="primary" layout="top" />
-                <StatCard label="Kabul Bekleyen" value={summary.pending} icon={<ClockIcon />} tone="warning" layout="top" />
-                <StatCard label="Kabul Edilen" value={summary.accepted} icon={<CheckIcon />} tone="success" layout="top" />
-                <StatCard label="Gecikmiş" value={summary.overdue} icon={<WarningIcon />} tone="danger" layout="top" />
+            <section className="dashboard-v2-status-grid my-tasks-summary" aria-label="Görevlerim özeti">
+                <div className="dashboard-v2-status-card">
+                    <div className="dashboard-v2-status-card-header">
+                        <div className="dashboard-v2-status-icon-wrap primary">
+                            <TaskIcon />
+                        </div>
+                    </div>
+                    <div>
+                        <span className="dashboard-v2-status-main-val">{summary.total}</span>
+                        <span className="dashboard-v2-status-main-lbl">Toplam Atanan</span>
+                    </div>
+                </div>
+                
+                <div className="dashboard-v2-status-card">
+                    <div className="dashboard-v2-status-card-header">
+                        <div className="dashboard-v2-status-icon-wrap warning">
+                            <ClockIcon />
+                        </div>
+                    </div>
+                    <div>
+                        <span className="dashboard-v2-status-main-val">{summary.pending}</span>
+                        <span className="dashboard-v2-status-main-lbl">Kabul Bekleyen</span>
+                    </div>
+                </div>
+
+                <div className="dashboard-v2-status-card">
+                    <div className="dashboard-v2-status-card-header">
+                        <div className="dashboard-v2-status-icon-wrap success">
+                            <CheckIcon />
+                        </div>
+                    </div>
+                    <div>
+                        <span className="dashboard-v2-status-main-val">{summary.accepted}</span>
+                        <span className="dashboard-v2-status-main-lbl">Kabul Edilen</span>
+                    </div>
+                </div>
+
+                <div className="dashboard-v2-status-card">
+                    <div className="dashboard-v2-status-card-header">
+                        <div className="dashboard-v2-status-icon-wrap danger">
+                            <WarningIcon />
+                        </div>
+                    </div>
+                    <div>
+                        <span className="dashboard-v2-status-main-val">{summary.overdue}</span>
+                        <span className="dashboard-v2-status-main-lbl">Gecikmiş</span>
+                    </div>
+                </div>
             </section>
 
             {feedback && <InlineFeedback type="success" message={feedback} />}
@@ -263,43 +307,48 @@ function MyTasks() {
                         title="Seçilen kriterlere uygun görev bulunamadı."
                     />
                 ) : (
-                    <div className="my-tasks-list">
+                    <div className="my-tasks-grid">
                         {filteredTasks.map(task => (
-                            <article className="my-task-row" key={task.id}>
-                                <div className="my-task-main">
+                            <article className="my-task-card" key={task.id}>
+                                <header className="my-task-card-header">
                                     <div className="my-task-title-line">
                                         <h3>{task.title}</h3>
                                         {isTaskOverdue(task) && <Badge variant="danger">Gecikmiş</Badge>}
                                     </div>
                                     <p className="my-task-project">{task.projectName ?? "Proje bilgisi yok"}</p>
+                                </header>
+                                
+                                <div className="my-task-card-body">
                                     {task.description && <p className="my-task-description">{task.description}</p>}
+                                    
+                                    <div className="my-task-meta-grid">
+                                        <Badge variant={getStatusBadgeVariant(task.status)}>
+                                            {getStatusLabel(task.status)}
+                                        </Badge>
+                                        <Badge variant={getPriorityBadgeVariant(task.priority)}>
+                                            {getPriorityLabel(task.priority)}
+                                        </Badge>
+                                        <Badge variant={getAssignmentBadgeVariant(task.assignmentStatus)}>
+                                            {getAssignmentStatusLabel(task.assignmentStatus)}
+                                        </Badge>
+                                        <span className="my-task-date">{formatDate(task.dueDate)}</span>
+                                    </div>
+
                                     {task.assignmentStatus === "REJECTED" && task.rejectionReason && (
-                                        <p className="my-task-reason">
+                                        <div className="my-task-reason-box">
                                             <strong>Mazeret</strong>
-                                            {task.rejectionReason}
-                                        </p>
+                                            <p>{task.rejectionReason}</p>
+                                        </div>
                                     )}
                                 </div>
 
-                                <div className="my-task-meta">
-                                    <Badge variant={getAssignmentBadgeVariant(task.assignmentStatus)}>
-                                        {getAssignmentStatusLabel(task.assignmentStatus)}
-                                    </Badge>
-                                    <Badge variant={getStatusBadgeVariant(task.status)}>
-                                        {getStatusLabel(task.status)}
-                                    </Badge>
-                                    <Badge variant={getPriorityBadgeVariant(task.priority)}>
-                                        {getPriorityLabel(task.priority)}
-                                    </Badge>
-                                    <span className="my-task-date">{formatDate(task.dueDate)}</span>
-                                </div>
-
-                                <div className="my-task-actions">
-                                    {task.projectId && (
-                                        <Button variant="secondary" size="sm" onClick={() => navigate(`/project/${task.projectId}`)}>
-                                            Projeye Git
-                                        </Button>
-                                    )}
+                                <footer className="my-task-card-footer">
+                                    <div className="my-task-actions">
+                                        {task.projectId && (
+                                            <Button variant="secondary" size="sm" onClick={() => navigate(`/project/${task.projectId}`)}>
+                                                Projeye Git
+                                            </Button>
+                                        )}
                                     {task.assignmentStatus === "PENDING" && (
                                         <>
                                             <Button
@@ -326,7 +375,8 @@ function MyTasks() {
                                         </>
                                     )}
                                 </div>
-                            </article>
+                            </footer>
+                        </article>
                         ))}
                     </div>
                 )}
