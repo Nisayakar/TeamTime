@@ -378,6 +378,7 @@ class AccountDeletionTests {
         PendingRegistration registration = new PendingRegistration();
         registration.setFirstName("Pending");
         registration.setLastName("User");
+        registration.setUsername("user_" + java.util.UUID.randomUUID().toString().substring(0, 8));
         registration.setEmail(email);
         registration.setEncodedPassword("encoded");
         registration.setVerificationCodeHash("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");

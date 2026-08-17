@@ -69,6 +69,7 @@ public class RootCauseTraceTests {
         owner = new User();
         owner.setName("Owner");
         owner.setSurname("User");
+        owner.setUsername("owneruser");
         owner.setEmail("owner@example.com");
         owner.setPassword("hash");
         owner = userRepository.save(owner);
@@ -76,6 +77,7 @@ public class RootCauseTraceTests {
         invitee = new User();
         invitee.setName("Invitee");
         invitee.setSurname("User");
+        invitee.setUsername("inviteeuser");
         invitee.setEmail("invitee@example.com");
         invitee.setPassword("hash");
         invitee = userRepository.save(invitee);

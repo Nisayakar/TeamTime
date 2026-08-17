@@ -84,6 +84,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             DuplicateEmailException.class,
+            DuplicateUsernameException.class,
             ConflictException.class
     })
     public ResponseEntity<ApiErrorResponse> handleConflictException(RuntimeException exception, HttpServletRequest request) {

@@ -13,16 +13,18 @@ public class TeamInvitationResponse {
     private LocalDateTime createdAt;
 
     private String invitedUserFullName;
+    private String invitedUsername;
 
     public TeamInvitationResponse() {
     }
 
-    public TeamInvitationResponse(Long invitationId, Long teamId, String teamName, String inviterName, String invitedUserFullName, TeamInvitationStatus status, LocalDateTime createdAt) {
+    public TeamInvitationResponse(Long invitationId, Long teamId, String teamName, String inviterName, String invitedUserFullName, String invitedUsername, TeamInvitationStatus status, LocalDateTime createdAt) {
         this.invitationId = invitationId;
         this.teamId = teamId;
         this.teamName = teamName;
         this.inviterName = inviterName;
         this.invitedUserFullName = invitedUserFullName;
+        this.invitedUsername = invitedUsername;
         this.status = status;
         this.createdAt = createdAt;
     }
@@ -73,6 +75,14 @@ public class TeamInvitationResponse {
 
     public void setInvitedUserFullName(String invitedUserFullName) {
         this.invitedUserFullName = invitedUserFullName;
+    }
+
+    public String getInvitedUsername() {
+        return invitedUsername;
+    }
+
+    public void setInvitedUsername(String invitedUsername) {
+        this.invitedUsername = invitedUsername;
     }
 
     public LocalDateTime getCreatedAt() {

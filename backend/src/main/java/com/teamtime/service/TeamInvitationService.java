@@ -204,6 +204,7 @@ public class TeamInvitationService {
                 inv.getTeam().getName(),
                 inv.getInvitedBy().getName() + " " + inv.getInvitedBy().getSurname(),
                 inv.getInvitedUser() != null ? inv.getInvitedUser().getName() + " " + inv.getInvitedUser().getSurname() : "",
+                inv.getInvitedUser() != null ? inv.getInvitedUser().getUsername() : "",
                 inv.getStatus(),
                 inv.getCreatedAt()
         );

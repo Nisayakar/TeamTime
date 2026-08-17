@@ -325,7 +325,7 @@ public class NotificationService {
         notification.setType(NotificationType.TEAM_INVITATION_ACCEPTED);
         notification.setTitle("Takım daveti kabul edildi");
         
-        String username = invitedUser.getName() + " " + invitedUser.getSurname();
+        String username = invitedUser.getName() + " " + invitedUser.getSurname() + " (@" + invitedUser.getUsername() + ")";
         notification.setMessage(String.format("%s, %s takımına katılma davetinizi kabul etti.",
                 username.trim(), team.getName()));
         
@@ -346,7 +346,7 @@ public class NotificationService {
         notification.setType(NotificationType.TEAM_INVITATION_REJECTED);
         notification.setTitle("Takım daveti reddedildi");
         
-        String username = invitedUser.getName() + " " + invitedUser.getSurname();
+        String username = invitedUser.getName() + " " + invitedUser.getSurname() + " (@" + invitedUser.getUsername() + ")";
         notification.setMessage(String.format("%s, %s takımına katılma davetinizi reddetti.",
                 username.trim(), team.getName()));
         

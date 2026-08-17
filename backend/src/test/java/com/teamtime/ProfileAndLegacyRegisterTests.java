@@ -130,6 +130,7 @@ class ProfileAndLegacyRegisterTests {
                                 {
                                   "name": "Ayşe",
                                   "surname": "Demir",
+                                  "username": "aysedemir",
                                   "email": "owner-updated@example.com"
                                 }
                                 """))
@@ -148,7 +149,8 @@ class ProfileAndLegacyRegisterTests {
                         .content("""
                                 {
                                   "name": "Ayşe Nur",
-                                  "surname": "Yılmaz"
+                                  "surname": "Yılmaz",
+                                  "username": "aysenuryilmaz"
                                 }
                                 """))
                 .andExpect(status().isOk())
@@ -455,6 +457,7 @@ class ProfileAndLegacyRegisterTests {
                                 {
                                   "name": "Legacy",
                                   "surname": "User",
+                                  "username": "legacyuser",
                                   "email": "legacy@example.com",
                                   "password": "secret123"
                                 }

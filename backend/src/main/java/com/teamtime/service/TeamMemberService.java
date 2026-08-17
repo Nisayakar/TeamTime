@@ -184,6 +184,7 @@ public class TeamMemberService {
                 teamMember.getId(),
                 user.getId(),
                 "%s %s".formatted(user.getName(), user.getSurname()).trim(),
+                user.getUsername(),
                 includeEmail ? user.getEmail() : null,
                 team.getId(),
                 team.getName(),

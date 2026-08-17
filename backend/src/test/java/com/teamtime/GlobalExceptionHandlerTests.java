@@ -111,6 +111,7 @@ class GlobalExceptionHandlerTests {
                                 {
                                   "firstName": "Ayşe",
                                   "lastName": "Demir",
+                                  "username": "aysedemir",
                                   "email": "ayse@example.com",
                                   "password": "secret123"
                                 }

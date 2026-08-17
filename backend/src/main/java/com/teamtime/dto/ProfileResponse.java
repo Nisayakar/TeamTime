@@ -5,15 +5,17 @@ public class ProfileResponse {
     private Long id;
     private String name;
     private String surname;
+    private String username;
     private String email;
 
     public ProfileResponse() {
     }
 
-    public ProfileResponse(Long id, String name, String surname, String email) {
+    public ProfileResponse(Long id, String name, String surname, String username, String email) {
         this.id = id;
         this.name = name;
         this.surname = surname;
+        this.username = username;
         this.email = email;
     }
 
@@ -39,6 +41,14 @@ public class ProfileResponse {
 
     public void setSurname(String surname) {
         this.surname = surname;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getEmail() {

@@ -18,6 +18,7 @@ type TeamMember = {
     id: number;
     userId: number;
     userName: string;
+    username?: string;
     teamId: number;
     teamName: string;
     role: TeamRole;
@@ -28,6 +29,7 @@ type UserSearchResult = {
     id: number;
     name: string;
     surname: string;
+    username: string;
 }
 
 type StoredUser = {
@@ -116,7 +118,7 @@ function TeamDetails() {
 
 
     function getFullName(user: UserSearchResult) {
-        return `${user.name} ${user.surname}`;
+        return `${user.name} ${user.surname} (@${user.username})`;
     }
 
     function handleUserSearchChange(value: string) {
@@ -465,7 +467,7 @@ function TeamDetails() {
                                     <div>
                                         <h3>{member.userName}</h3>
                                         <p>
-                                            Kullanıcı Id: {member.userId}
+                                            {member.username ? `@${member.username}` : `Kullanıcı Id: ${member.userId}`}
                                             {member.userId === currentUserId ? " · Siz" : ""}
                                         </p>
                                     </div>

@@ -8,6 +8,22 @@ type RenderWithRouterOptions = RenderOptions & {
     routerProps?: MemoryRouterProps;
 };
 
+export function profile(
+    name = "Ayşe",
+    surname = "Demir",
+    email = "ayse@example.com",
+    username = "aysedemir"
+) {
+    return {
+        id: 1,
+        name,
+        surname,
+        email,
+        username,
+        role: "USER"
+    };
+}
+
 export function renderWithRouter(ui: ReactElement, options: RenderWithRouterOptions = {}) {
     const { routerProps, ...renderOptions } = options;
 

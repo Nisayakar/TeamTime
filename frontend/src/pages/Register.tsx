@@ -12,6 +12,7 @@ const RESEND_SECONDS = 60;
 function Register() {
     const [name, setName] = useState("");
     const [surname, setSurname] = useState("");
+    const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -24,6 +25,8 @@ function Register() {
     const [isVerifying, setIsVerifying] = useState(false);
     const [isResending, setIsResending] = useState(false);
     const [resendCountdown, setResendCountdown] = useState(RESEND_SECONDS);
+    const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+    const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
 
     const codeInputRef = useRef<HTMLInputElement>(null);
     const navigate = useNavigate();
@@ -36,6 +39,36 @@ function Register() {
         codeInputRef.current?.focus();
         setResendCountdown(RESEND_SECONDS);
     }, [step, submittedEmail]);
+
+    useEffect(() => {
+        const trimmed = username.trim().toLowerCase();
+        if (!/^[a-z0-9_.]+$/.test(trimmed) || trimmed.length < 3 || trimmed.length > 30) {
+            setUsernameAvailable(null);
+            setIsCheckingUsername(false);
+            return;
+        }
+
+        setIsCheckingUsername(true);
+        setUsernameAvailable(null);
+
+        const timerId = window.setTimeout(async () => {
+            try {
+                const res = await apiFetch(`/users/username-availability?username=${encodeURIComponent(trimmed)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setUsernameAvailable(data.available);
+                } else {
+                    setUsernameAvailable(null);
+                }
+            } catch {
+                setUsernameAvailable(null);
+            } finally {
+                setIsCheckingUsername(false);
+            }
+        }, 400);
+
+        return () => window.clearTimeout(timerId);
+    }, [username]);
 
     useEffect(() => {
         if (step !== "verification" || resendCountdown <= 0) {
@@ -63,6 +96,11 @@ function Register() {
             return;
         }
 
+        if (usernameAvailable === false) {
+            showMessage("Bu kullanıcı adı zaten kullanılıyor.", "error");
+            return;
+        }
+
         setIsSendingCode(true);
         showMessage("", "info");
 
@@ -73,6 +111,7 @@ function Register() {
                 body: JSON.stringify({
                     firstName: name.trim(),
                     lastName: surname.trim(),
+                    username: username.trim().toLowerCase(),
                     email: normalizedEmail,
                     password: password
                 })
@@ -192,6 +231,18 @@ function Register() {
             return "Soyad boş bırakılamaz";
         }
 
+        if (username.trim() === "") {
+            return "Kullanıcı adı boş bırakılamaz";
+        }
+
+        if (username.length < 3 || username.length > 30) {
+            return "Kullanıcı adı 3 ile 30 karakter arasında olmalıdır";
+        }
+
+        if (!/^[a-zA-Z0-9_.]+$/.test(username)) {
+            return "Kullanıcı adı sadece harf, rakam, alt çizgi ve nokta içerebilir";
+        }
+
         if (email.trim() === "") {
             return "Email boş bırakılamaz";
         }
@@ -247,6 +298,10 @@ function Register() {
 
         if (messageText.includes("bekleyin") || status === 429) {
             return "Yeni kod istemeden önce bir süre beklemelisiniz.";
+        }
+
+        if (messageText.includes("kullanıcı adı") || (status === 409 && messageText.includes("kullanıcı"))) {
+            return "Bu kullanıcı adı zaten kullanılıyor.";
         }
 
         if (messageText.includes("zaten var") || status === 409) {
@@ -342,6 +397,24 @@ function Register() {
                                         />
                                         <label htmlFor="register-surname">Soyad</label>
                                     </div>
+                                </div>
+
+                                <div className="field">
+                                    <input
+                                        id="register-username"
+                                        type="text"
+                                        value={username}
+                                        onChange={(event) => setUsername(event.target.value)}
+                                        placeholder=" "
+                                        required
+                                        minLength={3}
+                                        maxLength={30}
+                                        autoComplete="username"
+                                    />
+                                    <label htmlFor="register-username">Kullanıcı Adı</label>
+                                    {isCheckingUsername && <div style={{ fontSize: '0.85rem', marginTop: '0.25rem', color: '#6c757d' }}>Kontrol ediliyor...</div>}
+                                    {!isCheckingUsername && usernameAvailable === true && <div style={{ fontSize: '0.85rem', marginTop: '0.25rem', color: '#198754' }}>Bu kullanıcı adı kullanılabilir.</div>}
+                                    {!isCheckingUsername && usernameAvailable === false && <div style={{ fontSize: '0.85rem', marginTop: '0.25rem', color: '#dc3545' }}>Bu kullanıcı adı zaten kullanılıyor.</div>}
                                 </div>
 
                                 <div className="field">

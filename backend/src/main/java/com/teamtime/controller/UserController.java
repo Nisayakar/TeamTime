@@ -161,6 +161,20 @@ public class UserController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/users/username-availability")
+    public ResponseEntity<java.util.Map<String, Boolean>> checkUsernameAvailability(
+            @RequestParam String username,
+            Authentication authentication
+    ) {
+        Long userId = null;
+        if (authentication != null && authentication.getPrincipal() instanceof Long) {
+            userId = (Long) authentication.getPrincipal();
+        }
+        
+        boolean isAvailable = userService.isUsernameAvailable(username, userId);
+        return ResponseEntity.ok(java.util.Map.of("available", isAvailable));
+    }
     
     
 }

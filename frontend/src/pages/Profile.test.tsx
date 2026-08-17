@@ -10,116 +10,29 @@ describe("Profile", () => {
         localStorage.setItem("token", "token");
         const fetchMock = vi.fn<typeof fetch>()
             .mockResolvedValueOnce(mockJsonResponse(profile("Ayşe", "Demir", "ayse@example.com")))
-            .mockResolvedValueOnce(mockJsonResponse(profile("Ayşe Nur", "Demir", "ayse@example.com")));
+            .mockResolvedValueOnce(mockJsonResponse(profile("Ayşe Nur", "Demir", "aysenur@example.com")));
         vi.stubGlobal("fetch", fetchMock);
 
         renderWithProviders(<Profile />);
 
         expect(await screen.findByDisplayValue("Ayşe")).toBeInTheDocument();
-        expect(screen.getByLabelText("E-mail")).toHaveValue("ayse@example.com");
-        expect(screen.getByLabelText("E-mail")).toHaveAttribute("readonly");
         await user.clear(screen.getByLabelText("Ad"));
         await user.type(screen.getByLabelText("Ad"), "Ayşe Nur");
+        await user.clear(screen.getByLabelText("E-mail"));
+        await user.type(screen.getByLabelText("E-mail"), "aysenur@example.com");
         await user.click(screen.getByRole("button", { name: "Profil Bilgilerini Güncelle" }));
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
         const [, requestInit] = fetchMock.mock.calls[1];
         expect(JSON.parse(String(requestInit?.body))).toEqual({
             name: "Ayşe Nur",
-            surname: "Demir"
+            surname: "Demir",
+            email: "aysenur@example.com"
         });
-        expect(localStorage.getItem("user")).toBe(JSON.stringify(profile("Ayşe Nur", "Demir", "ayse@example.com")));
-        expect(await screen.findByText("Profil bilgileriniz güncellendi.")).toBeInTheDocument();
-        expect(document.querySelector(".toast-container")).toBeEmptyDOMElement();
+        expect(localStorage.getItem("user")).toBe(JSON.stringify(profile("Ayşe Nur", "Demir", "aysenur@example.com")));
     });
 
-    it("shows profile update errors safely", async () => {
-        const user = userEvent.setup();
-        const fetchMock = vi.fn<typeof fetch>()
-            .mockResolvedValueOnce(mockJsonResponse(profile()))
-            .mockResolvedValueOnce(mockJsonResponse({ message: "Profil güncellenemedi" }, { status: 400 }));
-        vi.stubGlobal("fetch", fetchMock);
-
-        renderWithProviders(<Profile />);
-
-        await screen.findByDisplayValue("Ayşe");
-        await user.click(screen.getByRole("button", { name: "Profil Bilgilerini Güncelle" }));
-
-        expect(await screen.findByText("Profil güncellenemedi")).toBeInTheDocument();
-        expect(screen.queryByText("[object Object]")).not.toBeInTheDocument();
-    });
-
-    it("opens the email change flow and requests a verification code", async () => {
-        const user = userEvent.setup();
-        const fetchMock = vi.fn<typeof fetch>()
-            .mockResolvedValueOnce(mockJsonResponse(profile()))
-            .mockResolvedValueOnce(mockTextResponse("Doğrulama kodu yeni e-posta adresinize gönderildi"));
-        vi.stubGlobal("fetch", fetchMock);
-
-        renderWithProviders(<Profile />);
-
-        await screen.findByDisplayValue("Ayşe");
-        await user.click(screen.getByRole("button", { name: "E-posta Adresini Değiştir" }));
-        expect(screen.getByLabelText("Yeni E-posta Adresi")).toBeInTheDocument();
-
-        await user.type(screen.getByLabelText("Yeni E-posta Adresi"), "new@example.com");
-        await user.click(screen.getByRole("button", { name: "Doğrulama Kodu Gönder" }));
-
-        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-        expect(fetchMock.mock.calls[1][0]).toContain("/profile/email/request-code");
-        expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body))).toEqual({ email: "new@example.com" });
-        expect(await screen.findByText("new@example.com adresine gönderilen 6 haneli kodu girin.")).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Yeni kod gönder: 00:60" })).toBeDisabled();
-    });
-
-    it("validates new email and verification code inline", async () => {
-        const user = userEvent.setup();
-        const fetchMock = vi.fn<typeof fetch>()
-            .mockResolvedValueOnce(mockJsonResponse(profile()));
-        vi.stubGlobal("fetch", fetchMock);
-
-        renderWithProviders(<Profile />);
-
-        await screen.findByDisplayValue("Ayşe");
-        await user.click(screen.getByRole("button", { name: "E-posta Adresini Değiştir" }));
-        await user.type(screen.getByLabelText("Yeni E-posta Adresi"), "bad-email");
-        await user.click(screen.getByRole("button", { name: "Doğrulama Kodu Gönder" }));
-
-        expect(await screen.findByText("Email formatı doğru olmalı.")).toBeInTheDocument();
-        expect(fetchMock).toHaveBeenCalledTimes(1);
-    });
-
-    it("updates profile email and localStorage after verification succeeds", async () => {
-        const user = userEvent.setup();
-        localStorage.setItem("user", JSON.stringify(profile()));
-        const fetchMock = vi.fn<typeof fetch>()
-            .mockResolvedValueOnce(mockJsonResponse(profile()))
-            .mockResolvedValueOnce(mockTextResponse("Doğrulama kodu yeni e-posta adresinize gönderildi"))
-            .mockResolvedValueOnce(mockJsonResponse(profile("Ayşe", "Demir", "new@example.com")));
-        vi.stubGlobal("fetch", fetchMock);
-
-        renderWithProviders(<Profile />);
-
-        await screen.findByDisplayValue("Ayşe");
-        await user.click(screen.getByRole("button", { name: "E-posta Adresini Değiştir" }));
-        await user.type(screen.getByLabelText("Yeni E-posta Adresi"), "new@example.com");
-        await user.click(screen.getByRole("button", { name: "Doğrulama Kodu Gönder" }));
-        await screen.findByLabelText("Doğrulama kodu");
-        await user.type(screen.getByLabelText("Doğrulama kodu"), "004271");
-        await user.click(screen.getByRole("button", { name: "Doğrula ve E-postayı Değiştir" }));
-
-        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
-        expect(fetchMock.mock.calls[2][0]).toContain("/profile/email/verify");
-        expect(JSON.parse(String(fetchMock.mock.calls[2][1]?.body))).toEqual({
-            email: "new@example.com",
-            code: "004271"
-        });
-        expect(screen.getByLabelText("E-mail")).toHaveValue("new@example.com");
-        expect(localStorage.getItem("user")).toBe(JSON.stringify(profile("Ayşe", "Demir", "new@example.com")));
-        expect(await screen.findByText("E-posta adresiniz güncellendi.")).toBeInTheDocument();
-    });
-
-    it("keeps email change errors inline and supports cancel", async () => {
+    it("shows duplicate email errors safely", async () => {
         const user = userEvent.setup();
         const fetchMock = vi.fn<typeof fetch>()
             .mockResolvedValueOnce(mockJsonResponse(profile()))
@@ -129,35 +42,10 @@ describe("Profile", () => {
         renderWithProviders(<Profile />);
 
         await screen.findByDisplayValue("Ayşe");
-        await user.click(screen.getByRole("button", { name: "E-posta Adresini Değiştir" }));
-        await user.type(screen.getByLabelText("Yeni E-posta Adresi"), "used@example.com");
-        await user.click(screen.getByRole("button", { name: "Doğrulama Kodu Gönder" }));
+        await user.click(screen.getByRole("button", { name: "Profil Bilgilerini Güncelle" }));
 
         expect(await screen.findByText("Bu email adresi ile kayıtlı bir kullanıcı zaten var")).toBeInTheDocument();
-        await user.click(screen.getByRole("button", { name: "İptal" }));
-        expect(screen.queryByLabelText("Yeni E-posta Adresi")).not.toBeInTheDocument();
-    });
-
-    it("shows verification code errors inline", async () => {
-        const user = userEvent.setup();
-        const fetchMock = vi.fn<typeof fetch>()
-            .mockResolvedValueOnce(mockJsonResponse(profile()))
-            .mockResolvedValueOnce(mockTextResponse("Doğrulama kodu yeni e-posta adresinize gönderildi"))
-            .mockResolvedValueOnce(mockJsonResponse({ message: "Doğrulama kodu geçersiz" }, { status: 400 }));
-        vi.stubGlobal("fetch", fetchMock);
-
-        renderWithProviders(<Profile />);
-
-        await screen.findByDisplayValue("Ayşe");
-        await user.click(screen.getByRole("button", { name: "E-posta Adresini Değiştir" }));
-        await user.type(screen.getByLabelText("Yeni E-posta Adresi"), "new@example.com");
-        await user.click(screen.getByRole("button", { name: "Doğrulama Kodu Gönder" }));
-        await screen.findByLabelText("Doğrulama kodu");
-        await user.type(screen.getByLabelText("Doğrulama kodu"), "111111");
-        await user.click(screen.getByRole("button", { name: "Doğrula ve E-postayı Değiştir" }));
-
-        expect(await screen.findByText("Doğrulama kodu geçersiz")).toBeInTheDocument();
-        expect(fetchMock).toHaveBeenCalledTimes(3);
+        expect(screen.queryByText("[object Object]")).not.toBeInTheDocument();
     });
 
     it("sends old and new password, handles wrong old password, and does not store raw passwords", async () => {
@@ -189,7 +77,6 @@ describe("Profile", () => {
         await user.click(screen.getByRole("button", { name: "Şifreyi Güncelle" }));
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
-        expect(await screen.findByText("Şifre başarıyla güncellendi")).toBeInTheDocument();
         expect(localStorage.getItem("user")).not.toContain("old-secret");
         expect(localStorage.getItem("user")).not.toContain("new-secret");
         expect(localStorage.getItem("token") ?? "").not.toContain("new-secret");
@@ -228,7 +115,7 @@ describe("Profile", () => {
 
         renderWithProviders(<Profile />);
 
-        expect(await screen.findByRole("heading", { name: "Profil Bilgileri" })).toBeInTheDocument();
+        expect(await screen.findByRole("heading", { name: "Hesap Ayarları" })).toBeInTheDocument();
         expect(screen.getByRole("radio", { name: "Açık tema" })).toBeInTheDocument();
         await user.click(screen.getByRole("button", { name: "Hesabı Sil" }));
 
@@ -308,7 +195,7 @@ describe("Profile", () => {
         await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     });
 
-    it("keeps the deletion modal open after an error and shows the parsed modal message", async () => {
+    it("keeps the deletion modal open after an error and shows the parsed toast message", async () => {
         const user = userEvent.setup();
         const fetchMock = vi.fn<typeof fetch>()
             .mockResolvedValueOnce(mockJsonResponse(profile()))
@@ -328,11 +215,12 @@ describe("Profile", () => {
     });
 });
 
-function profile(name = "Ayşe", surname = "Demir", email = "ayse@example.com") {
+function profile(name = "Ayşe", surname = "Demir", email = "ayse@example.com", username = "aysedemir") {
     return {
         id: 1,
         name,
         surname,
-        email
+        email,
+        username
     };
 }

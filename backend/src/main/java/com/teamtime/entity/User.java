@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Column;
 
 
 @Entity
@@ -21,6 +22,9 @@ public class User {
 
     private String email;
 
+    @Column(nullable = false, unique = true)
+    private String username;
+
     private String password;
 
 
@@ -28,11 +32,21 @@ public class User {
 
     }
 
-
     public User(Long id, String name, String surname, String email, String password) {
         this.id = id;
         this.name = name;
         this.surname = surname;
+        this.email = email;
+        this.password = password;
+        this.username = "user_" + java.util.UUID.randomUUID().toString().substring(0, 8);
+    }
+
+
+    public User(Long id, String name, String surname, String username, String email, String password) {
+        this.id = id;
+        this.name = name;
+        this.surname = surname;
+        this.username = username;
         this.email = email;
         this.password = password;
     }
@@ -77,6 +91,14 @@ public class User {
         this.email = email;
     }
 
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
     public String getPassword() {
         return password;

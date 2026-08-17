@@ -13,6 +13,7 @@ type ProfileUser = {
     id: number;
     name: string;
     surname: string;
+    username: string;
     email: string;
 }
 
@@ -28,6 +29,7 @@ function Profile() {
     const [user, setUser] = useState<ProfileUser | null>(null);
     const [name, setName] = useState("");
     const [surname, setSurname] = useState("");
+    const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [emailChangeOpen, setEmailChangeOpen] = useState(false);
     const [emailChangeStep, setEmailChangeStep] = useState<EmailChangeStep>("request");
@@ -47,6 +49,8 @@ function Profile() {
     const [profileFeedback, setProfileFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
     const [passwordFeedback, setPasswordFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
     const [deleteFeedback, setDeleteFeedback] = useState("");
+    const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+    const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
 
     useEffect(() => {
         async function loadProfile() {
@@ -65,6 +69,7 @@ function Profile() {
                 setUser(data);
                 setName(data.name || "");
                 setSurname(data.surname || "");
+                setUsername(data.username || "");
                 setEmail(data.email || "");
                 updateStoredUser(data);
             } catch (error) {
@@ -77,6 +82,42 @@ function Profile() {
 
         loadProfile();
     }, [navigate, showToast]);
+
+    useEffect(() => {
+        if (!user || username === user.username) {
+            setUsernameAvailable(null);
+            setIsCheckingUsername(false);
+            return;
+        }
+
+        const trimmed = username.trim().toLowerCase();
+        if (!/^[a-z0-9_.]+$/.test(trimmed) || trimmed.length < 3 || trimmed.length > 30) {
+            setUsernameAvailable(null);
+            setIsCheckingUsername(false);
+            return;
+        }
+
+        setIsCheckingUsername(true);
+        setUsernameAvailable(null);
+
+        const timerId = window.setTimeout(async () => {
+            try {
+                const res = await apiFetch(`/users/username-availability?username=${encodeURIComponent(trimmed)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setUsernameAvailable(data.available);
+                } else {
+                    setUsernameAvailable(null);
+                }
+            } catch {
+                setUsernameAvailable(null);
+            } finally {
+                setIsCheckingUsername(false);
+            }
+        }, 400);
+
+        return () => window.clearTimeout(timerId);
+    }, [username, user]);
 
     useEffect(() => {
         if (!emailChangeOpen || emailChangeStep !== "verify") {
@@ -109,6 +150,16 @@ function Profile() {
             return;
         }
 
+        if (username.trim() === "") {
+            setProfileFeedback({ type: "error", message: "Kullanıcı adı boş bırakılamaz." });
+            return;
+        }
+
+        if (usernameAvailable === false) {
+            setProfileFeedback({ type: "error", message: "Bu kullanıcı adı zaten kullanılıyor." });
+            return;
+        }
+
         setProfileFeedback(null);
         setSavingProfile(true);
 
@@ -117,7 +168,8 @@ function Profile() {
                 method: "PUT",
                 body: JSON.stringify({
                     name,
-                    surname
+                    surname,
+                    username
                 })
             });
 
@@ -376,7 +428,7 @@ function Profile() {
                 <div className="app-page-header-copy">
                     <span className="eyebrow">Profil</span>
                     <h1>{user ? `${user.name} ${user.surname}` : "Profil"}</h1>
-                    <p>{user?.email || "Profil bilgileri yükleniyor"}</p>
+                    <p>{user?.username ? `@${user.username}` : (user?.email || "Profil bilgileri yükleniyor")}</p>
                 </div>
             </section>
 
@@ -406,6 +458,20 @@ function Profile() {
                             onChange={(e) => setSurname(e.target.value)}
                         />
 
+                        <label style={{ marginTop: "16px", display: "block" }}>Kullanıcı Adı</label>
+                        <input
+                            aria-label="Kullanıcı Adı"
+                            type="text"
+                            className="ghost-input"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            minLength={3}
+                            maxLength={30}
+                        />
+                        {isCheckingUsername && <div style={{ fontSize: '0.85rem', marginTop: '0.25rem', color: '#6c757d' }}>Kontrol ediliyor...</div>}
+                        {!isCheckingUsername && usernameAvailable === true && <div style={{ fontSize: '0.85rem', marginTop: '0.25rem', color: '#198754' }}>Bu kullanıcı adı kullanılabilir.</div>}
+                        {!isCheckingUsername && usernameAvailable === false && <div style={{ fontSize: '0.85rem', marginTop: '0.25rem', color: '#dc3545' }}>Bu kullanıcı adı zaten kullanılıyor.</div>}
+
                         <label style={{ marginTop: "16px", display: "block" }}>E-mail</label>
                         <input
                             aria-label="E-mail"
@@ -413,6 +479,7 @@ function Profile() {
                             className="ghost-input"
                             value={email}
                             readOnly
+                            disabled
                         />
 
                         <button className="button button-secondary profile-email-change-trigger" type="button" onClick={openEmailChangePanel}>

@@ -10,6 +10,8 @@ public class TeamMemberResponse {
 
     private String userName;
 
+    private String username;
+
     private String userEmail;
 
     private Long teamId;
@@ -23,22 +25,24 @@ public class TeamMemberResponse {
     public TeamMemberResponse() {
     }
 
-    public TeamMemberResponse(Long id, Long userId, String userName, Long teamId, String teamName, String role,
+    public TeamMemberResponse(Long id, Long userId, String userName, String username, Long teamId, String teamName, String role,
             LocalDateTime joinedDate) {
         this.id = id;
         this.userId = userId;
         this.userName = userName;
+        this.username = username;
         this.teamId = teamId;
         this.teamName = teamName;
         this.role = role;
         this.joinedDate = joinedDate;
     }
 
-    public TeamMemberResponse(Long id, Long userId, String userName, String userEmail, Long teamId, String teamName,
+    public TeamMemberResponse(Long id, Long userId, String userName, String username, String userEmail, Long teamId, String teamName,
             String role, LocalDateTime joinedDate) {
         this.id = id;
         this.userId = userId;
         this.userName = userName;
+        this.username = username;
         this.userEmail = userEmail;
         this.teamId = teamId;
         this.teamName = teamName;
@@ -68,6 +72,14 @@ public class TeamMemberResponse {
 
     public void setUserName(String userName) {
         this.userName = userName;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getUserEmail() {

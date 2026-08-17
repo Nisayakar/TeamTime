@@ -11,7 +11,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
         Optional<User> findByEmail(String email);
         Optional<User> findByEmailIgnoreCase(String email);
         boolean existsByEmailIgnoreCase(String email);
-        List<User> findTop10ByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(String name, String surname);
+        boolean existsByUsernameIgnoreCase(String username);
+        List<User> findTop10ByUsernameContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(String username, String name, String surname);
         //"Email'e göre kullanıcı bul."
 //Spring Data JPA metodun ismine bakarak arka planda otomatik SQL oluşturuyor.
 }

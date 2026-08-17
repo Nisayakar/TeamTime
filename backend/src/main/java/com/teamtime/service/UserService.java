@@ -41,6 +41,7 @@ import com.teamtime.dto.UpdatePasswordRequest;
 import com.teamtime.dto.UpdateProfileRequest;
 import com.teamtime.dto.UserSearchResponse;
 import com.teamtime.exception.DuplicateEmailException;
+import com.teamtime.exception.DuplicateUsernameException;
 import com.teamtime.exception.InvalidCredentialsException;
 import com.teamtime.exception.ResourceNotFoundException;
 import com.teamtime.exception.ConflictException;
@@ -110,6 +111,7 @@ public class UserService {
         RegisterCodeRequest codeRequest = new RegisterCodeRequest(
                 request.getName(),
                 request.getSurname(),
+                request.getUsername(),
                 request.getEmail(),
                 request.getPassword());
 
@@ -121,9 +123,20 @@ public class UserService {
     @Transactional
     public String requestRegistrationCode(RegisterCodeRequest request) {
         String email = normalizeEmail(request.getEmail());
+        String username = request.getUsername().trim().toLowerCase(Locale.ROOT);
 
         if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new DuplicateEmailException("Bu email adresi ile kayıtlı bir kullanıcı zaten var");
+        }
+
+        if (userRepository.existsByUsernameIgnoreCase(username) || pendingRegistrationRepository.existsByUsernameIgnoreCase(username)) {
+            // Check if there is an expired pending registration blocking it
+            PendingRegistration existingPending = pendingRegistrationRepository.findByEmail(email).orElse(null);
+            if (existingPending != null && existingPending.getUsername().equalsIgnoreCase(username) && existingPending.getExpiresAt().isBefore(Instant.now())) {
+                // It's the same user trying again, let it pass
+            } else {
+                throw new DuplicateUsernameException("Bu kullanıcı adı zaten kullanılıyor.");
+            }
         }
 
         String code = verificationCodeGenerator.generateSixDigitCode();
@@ -133,6 +146,7 @@ public class UserService {
 
         pendingRegistration.setFirstName(request.getFirstName().trim());
         pendingRegistration.setLastName(request.getLastName().trim());
+        pendingRegistration.setUsername(username);
         pendingRegistration.setEmail(email);
         pendingRegistration.setEncodedPassword(passwordEncoder.encode(request.getPassword()));
         updateVerificationCode(pendingRegistration, code);
@@ -174,10 +188,15 @@ public class UserService {
         User user = new User();
         user.setName(pendingRegistration.getFirstName());
         user.setSurname(pendingRegistration.getLastName());
+        user.setUsername(pendingRegistration.getUsername());
         user.setEmail(email);
         user.setPassword(pendingRegistration.getEncodedPassword());
 
-        userRepository.save(user);
+        try {
+            userRepository.save(user);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new DuplicateUsernameException("Bu kullanıcı adı zaten kullanılıyor.");
+        }
         pendingRegistrationRepository.delete(pendingRegistration);
 
         return "Kullanıcı Başarıyla Kaydedildi";
@@ -361,10 +380,48 @@ public class UserService {
 
         user.setName(request.getName().trim());
         user.setSurname(request.getSurname().trim());
+        
+        if (request.getUsername() != null && !request.getUsername().isBlank()) {
+            String newUsername = request.getUsername().trim().toLowerCase(Locale.ROOT);
+            if (!newUsername.matches("^[a-z0-9_.]+$") || newUsername.length() < 3 || newUsername.length() > 30) {
+                throw new IllegalArgumentException("Geçersiz kullanıcı adı formatı");
+            }
+            if (!user.getUsername().equalsIgnoreCase(newUsername)) {
+                if (userRepository.existsByUsernameIgnoreCase(newUsername)) {
+                    throw new DuplicateUsernameException("Bu kullanıcı adı zaten kullanılıyor.");
+                }
+                user.setUsername(newUsername);
+            }
+        }
 
-        User updatedUser = userRepository.save(user);
+        User updatedUser;
+        try {
+            updatedUser = userRepository.save(user);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new DuplicateUsernameException("Bu kullanıcı adı zaten kullanılıyor.");
+        }
 
         return toProfileResponse(updatedUser);
+    }
+
+    public boolean isUsernameAvailable(String username, Long currentUserId) {
+        if (username == null || username.isBlank()) {
+            return false;
+        }
+        String normalized = username.trim().toLowerCase(Locale.ROOT);
+        if (!normalized.matches("^[a-z0-9_.]+$") || normalized.length() < 3 || normalized.length() > 30) {
+            return false;
+        }
+
+        if (currentUserId != null) {
+            Optional<User> currentUser = userRepository.findById(currentUserId);
+            if (currentUser.isPresent() && currentUser.get().getUsername().equalsIgnoreCase(normalized)) {
+                return true;
+            }
+        }
+
+        return !userRepository.existsByUsernameIgnoreCase(normalized) && 
+               !pendingRegistrationRepository.existsByUsernameIgnoreCase(normalized);
     }
 
     @Transactional
@@ -556,15 +613,30 @@ public class UserService {
             return List.of();
         }
 
-        String searchTerm = query.trim();
+        String searchTerm = query.trim().toLowerCase(Locale.ROOT);
 
-        return userRepository
-                .findTop10ByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(searchTerm, searchTerm)
-                .stream()
+        List<User> foundUsers = userRepository
+                .findTop10ByUsernameContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(searchTerm, searchTerm, searchTerm);
+
+        return foundUsers.stream()
+                .sorted((u1, u2) -> {
+                    boolean exact1 = u1.getUsername().equalsIgnoreCase(searchTerm);
+                    boolean exact2 = u2.getUsername().equalsIgnoreCase(searchTerm);
+                    if (exact1 && !exact2) return -1;
+                    if (!exact1 && exact2) return 1;
+
+                    boolean prefix1 = u1.getUsername().toLowerCase(Locale.ROOT).startsWith(searchTerm);
+                    boolean prefix2 = u2.getUsername().toLowerCase(Locale.ROOT).startsWith(searchTerm);
+                    if (prefix1 && !prefix2) return -1;
+                    if (!prefix1 && prefix2) return 1;
+
+                    return u1.getName().compareToIgnoreCase(u2.getName());
+                })
                 .map(user -> new UserSearchResponse(
                         user.getId(),
                         user.getName(),
-                        user.getSurname()))
+                        user.getSurname(),
+                        user.getUsername()))
                 .toList();
     }
 
@@ -578,6 +650,7 @@ public class UserService {
                 user.getId(),
                 user.getName(),
                 user.getSurname(),
+                user.getUsername(),
                 user.getEmail());
     }
 
