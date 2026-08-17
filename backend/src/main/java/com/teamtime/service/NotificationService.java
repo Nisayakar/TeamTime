@@ -140,9 +140,11 @@ public class NotificationService {
     @Transactional
     public void notifyTaskAssignmentRejected(Team team, Long taskId, String taskTitle, String responderName, String reason, Long respondingUserId) {
         String baseMessage = "%s, %s görevini reddetti.".formatted(responderName, taskTitle);
-        String finalMessage = (reason != null && !reason.isBlank()) 
-                ? baseMessage + " Mazeret: " + (reason.length() > 100 ? reason.substring(0, 97) + "..." : reason) 
-                : baseMessage;
+        String finalMessage = baseMessage;
+        if (reason != null && !reason.isBlank()) {
+            String truncatedReason = reason.length() > 100 ? reason.substring(0, 97) + "..." : reason;
+            finalMessage += " Mazeret: " + truncatedReason;
+        }
 
         notifyTaskManagers(
                 team,
@@ -301,6 +303,8 @@ public class NotificationService {
         }
 
         return switch (notification.getType()) {
+            case TEAM_INVITATION -> "/teams/invitations";
+            case TEAM_INVITATION_ACCEPTED, TEAM_INVITATION_REJECTED -> "/teams/" + notification.getRelatedEntityId();
             case TEAM_MEMBER_ADDED -> "/teams/" + notification.getRelatedEntityId();
             case TEAM_MEMBER_REMOVED -> "/teams";
             case TEAM_PROJECT_CREATED -> "/project/" + notification.getRelatedEntityId();
@@ -309,5 +313,47 @@ public class NotificationService {
                 yield projectId != null ? "/project/" + projectId : null;
             }
         };
+    }
+
+    public void notifyTeamInvitationAccepted(User teamOwner, User invitedUser, Team team) {
+        if (teamOwner.getId().equals(invitedUser.getId())) {
+            return;
+        }
+
+        Notification notification = new Notification();
+        notification.setRecipient(teamOwner);
+        notification.setType(NotificationType.TEAM_INVITATION_ACCEPTED);
+        notification.setTitle("Takım daveti kabul edildi");
+        
+        String username = invitedUser.getName() + " " + invitedUser.getSurname();
+        notification.setMessage(String.format("%s, %s takımına katılma davetinizi kabul etti.",
+                username.trim(), team.getName()));
+        
+        notification.setRelatedEntityId(team.getId());
+        notification.setRelatedEntityType("TEAM");
+        notification.setRead(false);
+        
+        notificationRepository.save(notification);
+    }
+
+    public void notifyTeamInvitationRejected(User teamOwner, User invitedUser, Team team) {
+        if (teamOwner.getId().equals(invitedUser.getId())) {
+            return;
+        }
+
+        Notification notification = new Notification();
+        notification.setRecipient(teamOwner);
+        notification.setType(NotificationType.TEAM_INVITATION_REJECTED);
+        notification.setTitle("Takım daveti reddedildi");
+        
+        String username = invitedUser.getName() + " " + invitedUser.getSurname();
+        notification.setMessage(String.format("%s, %s takımına katılma davetinizi reddetti.",
+                username.trim(), team.getName()));
+        
+        notification.setRelatedEntityId(team.getId());
+        notification.setRelatedEntityType("TEAM");
+        notification.setRead(false);
+        
+        notificationRepository.save(notification);
     }
 }

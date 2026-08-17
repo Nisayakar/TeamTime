@@ -2,6 +2,7 @@ package com.teamtime.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import java.util.List;
 
 public class TeamRequest {
 
@@ -11,6 +12,8 @@ public class TeamRequest {
 
     @Size(max = 1000, message = "Takım açıklaması en fazla 1000 karakter olabilir")
     private String description;
+
+    private List<Long> memberIds;
 
     public TeamRequest() {
     }
@@ -34,6 +37,14 @@ public class TeamRequest {
 
     public void setDescription(String description) {
         this.description = trimToNull(description);
+    }
+
+    public List<Long> getMemberIds() {
+        return memberIds;
+    }
+
+    public void setMemberIds(List<Long> memberIds) {
+        this.memberIds = memberIds;
     }
 
     private String trim(String value) {

@@ -405,7 +405,6 @@
 }
 
 /* Notification and profile overlays */
-.app-navbar-auth .notification-panel,
 .app-navbar-auth .app-navbar-profile-menu {
   border: 1px solid var(--tt-border);
   border-radius: var(--tt-radius-lg);
@@ -415,60 +414,7 @@
   backdrop-filter: blur(14px);
 }
 
-.app-navbar-auth .notification-panel {
-  width: min(390px, calc(100vw - 24px));
-  overflow: hidden;
-}
 
-.app-navbar-auth .notification-panel-header {
-  padding: 14px;
-  border-bottom-color: var(--tt-border);
-}
-
-.app-navbar-auth .notification-panel-header strong,
-.app-navbar-auth .notification-copy strong {
-  color: var(--tt-text);
-}
-
-.app-navbar-auth .notification-read-all,
-.app-navbar-auth .notification-load-more {
-  color: var(--tt-primary);
-}
-
-.app-navbar-auth .notification-read-all:hover,
-.app-navbar-auth .notification-load-more:hover:not(:disabled) {
-  color: var(--tt-primary-hover);
-}
-
-.app-navbar-auth .notification-item {
-  gap: var(--tt-space-3);
-  padding: 13px 14px;
-  border-bottom-color: var(--tt-border);
-}
-
-.app-navbar-auth .notification-item:hover {
-  background: var(--tt-surface-secondary);
-}
-
-.app-navbar-auth .notification-copy span,
-.app-navbar-auth .notification-empty {
-  color: var(--tt-text-secondary);
-}
-
-.app-navbar-auth .notification-copy time,
-.app-navbar-auth .notification-error {
-  color: var(--tt-text-muted);
-}
-
-.app-navbar-auth .notification-item.is-unread .notification-dot {
-  background: var(--tt-primary);
-  box-shadow: 0 0 0 4px var(--tt-primary-soft);
-}
-
-.app-navbar-auth .notification-load-more {
-  border-top-color: var(--tt-border);
-  background: var(--tt-surface-secondary);
-}
 
 .app-navbar-auth .app-navbar-profile-menu {
   min-width: 220px;
@@ -582,13 +528,7 @@
     display: none;
   }
 
-  .app-navbar-auth .notification-panel {
-    position: fixed;
-    top: calc(var(--tt-navbar-height) + 8px);
-    right: 12px;
-    left: 12px;
-    width: auto;
-  }
+
 }
 
 @media (prefers-reduced-motion: reduce) {

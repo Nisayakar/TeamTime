@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { apiFetch } from "../api";
 import { Badge, Button, EmptyState, LoadingState, type BadgeVariant } from "../components/ui";
 import InlineFeedback from "../components/ui/InlineFeedback";
@@ -26,12 +26,26 @@ function MyTasks() {
     const [feedback, setFeedback] = useState("");
     const [search, setSearch] = useState("");
     const [assignmentFilter, setAssignmentFilter] = useState<AssignmentFilter>("ALL");
-    const [statusFilter, setStatusFilter] = useState<TaskStatusFilter>("ALL");
+    const [statusFilter, setStatusFilter] = useState<TaskStatusFilter>(() => {
+        if (typeof window !== "undefined") {
+            const queryParams = new URLSearchParams(window.location.search);
+            const statusParam = queryParams.get("status");
+            if (statusParam === "DEVAM_EDIYOR" || statusParam === "BEKLIYOR" || statusParam === "TAMAMLANDI") {
+                return statusParam as TaskStatusFilter;
+            }
+        }
+        return "ALL";
+    });
     const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("ALL");
-    const [dueFilter, setDueFilter] = useState<DueFilter>("ALL");
     const [assignmentActionTaskId, setAssignmentActionTaskId] = useState<number | null>(null);
     const [rejectAssignment, setRejectAssignment] = useState<RejectAssignmentState | null>(null);
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const [dueFilter, setDueFilter] = useState<DueFilter>(() => {
+        const queryParams = new URLSearchParams(location.search);
+        return queryParams.get("due") === "overdue" ? "OVERDUE" : "ALL";
+    });
 
     useEffect(() => {
         loadMyTasks();

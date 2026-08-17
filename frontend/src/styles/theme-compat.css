@@ -77,68 +77,7 @@
   color: #ffffff;
 }
 
-[data-theme="light"] .app-navbar-auth .notification-panel {
-  background: var(--tt-surface);
-  border-color: var(--tt-border);
-  box-shadow: var(--tt-shadow-lg);
-  backdrop-filter: none;
-}
 
-[data-theme="light"] .app-navbar-auth .notification-panel-header {
-  border-bottom-color: var(--tt-border);
-}
-
-[data-theme="light"] .app-navbar-auth .notification-panel-header strong {
-  color: var(--tt-text);
-}
-
-[data-theme="light"] .app-navbar-auth .notification-read-all {
-  color: var(--tt-primary);
-}
-
-[data-theme="light"] .app-navbar-auth .notification-read-all:hover {
-  color: var(--tt-primary-hover);
-}
-
-[data-theme="light"] .app-navbar-auth .notification-item {
-  border-bottom-color: var(--tt-border);
-}
-
-[data-theme="light"] .app-navbar-auth .notification-item:hover {
-  background: var(--tt-surface-secondary);
-}
-
-[data-theme="light"] .app-navbar-auth .notification-copy strong {
-  color: var(--tt-text);
-}
-
-[data-theme="light"] .app-navbar-auth .notification-copy span {
-  color: var(--tt-text-secondary);
-}
-
-[data-theme="light"] .app-navbar-auth .notification-copy time {
-  color: var(--tt-text-muted);
-}
-
-[data-theme="light"] .app-navbar-auth .notification-dot {
-  background: transparent;
-}
-
-[data-theme="light"] .app-navbar-auth .notification-item.is-unread .notification-dot {
-  background: var(--tt-primary);
-  box-shadow: 0 0 0 4px var(--tt-primary-soft);
-}
-
-[data-theme="light"] .app-navbar-auth .notification-load-more {
-  border-top-color: var(--tt-border);
-  background: var(--tt-surface-secondary);
-  color: var(--tt-primary);
-}
-
-[data-theme="light"] .app-navbar-auth .notification-load-more:hover:not(:disabled) {
-  background: var(--tt-surface);
-  color: var(--tt-primary-hover);
-}
 
 [data-theme="light"] .app-navbar-auth .nav-user {
   border-left-color: var(--tt-border);
@@ -221,59 +160,7 @@
   color: #ffffff;
 }
 
-[data-theme="dark"] .app-navbar-auth .notification-panel {
-  background: var(--tt-surface);
-  border-color: var(--tt-border);
-  box-shadow: var(--tt-shadow-lg);
-  backdrop-filter: none;
-}
 
-[data-theme="dark"] .app-navbar-auth .notification-panel-header {
-  border-bottom-color: var(--tt-border);
-}
-
-[data-theme="dark"] .app-navbar-auth .notification-panel-header strong {
-  color: var(--tt-text);
-}
-
-[data-theme="dark"] .app-navbar-auth .notification-read-all {
-  color: var(--tt-primary);
-}
-
-[data-theme="dark"] .app-navbar-auth .notification-read-all:hover {
-  color: var(--tt-primary-hover);
-}
-
-[data-theme="dark"] .app-navbar-auth .notification-item {
-  border-bottom-color: var(--tt-border);
-}
-
-[data-theme="dark"] .app-navbar-auth .notification-item:hover {
-  background: var(--tt-surface-secondary);
-}
-
-[data-theme="dark"] .app-navbar-auth .notification-copy strong {
-  color: var(--tt-text);
-}
-
-[data-theme="dark"] .app-navbar-auth .notification-copy span {
-  color: var(--tt-text-secondary);
-}
-
-[data-theme="dark"] .app-navbar-auth .notification-copy time {
-  color: var(--tt-text-muted);
-}
-
-[data-theme="dark"] .app-navbar-auth .notification-item.is-unread .notification-dot {
-  background: var(--tt-primary);
-  box-shadow: 0 0 0 4px var(--tt-primary-soft);
-}
-
-[data-theme="dark"] .app-navbar-auth .notification-load-more {
-  border-top-color: var(--tt-border);
-  background: var(--tt-surface-secondary);
-  color: var(--tt-primary);
-}
 
 [data-theme="dark"] .app-navbar-auth .nav-user {
   border-left-color: var(--tt-border);

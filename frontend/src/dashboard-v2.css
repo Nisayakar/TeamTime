@@ -1,4 +1,4 @@
-﻿/* Dashboard V2 Specific Styles */
+/* Dashboard V2 Specific Styles */
 
 .dashboard-v2-container {
     flex: 1;
@@ -212,12 +212,18 @@
 .dashboard-v2-status-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 1.5rem;
 }
 
 @media (min-width: 768px) {
     .dashboard-v2-status-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1200px) {
+    .dashboard-v2-status-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 
@@ -575,6 +581,12 @@
     display: grid;
     gap: 20px;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+}
+
+@media (min-width: 1200px) {
+    .dashboard-v2-status-grid.my-tasks-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 /* --- COMPACT MY TASKS CARD --- */

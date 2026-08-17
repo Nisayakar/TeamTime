@@ -91,6 +91,23 @@ function BellIcon() {
     );
 }
 
+function CheckIcon() {
+    return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12" />
+        </svg>
+    );
+}
+
+function TrashIcon() {
+    return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M3 6h18" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+        </svg>
+    );
+}
+
 function renderNavIcon(to: string): ReactNode {
     if (to === "/dashboard") return <DashboardIcon />;
     if (to === "/projects") return <ProjectsIcon />;
@@ -439,7 +456,7 @@ function Navbar() {
                                                                 className="notification-read-all"
                                                                 onClick={markAllNotificationsAsRead}
                                                             >
-                                                                Tümünü okundu işaretle
+                                                                <CheckIcon /> Tümünü okundu yap
                                                             </button>
                                                         )
                                                     }
@@ -450,7 +467,7 @@ function Navbar() {
                                                                 className="notification-clear-all"
                                                                 onClick={() => setIsClearModalOpen(true)}
                                                             >
-                                                                Bildirimleri Temizle
+                                                                <TrashIcon /> Bildirimleri Temizle
                                                             </button>
                                                         )
                                                     }

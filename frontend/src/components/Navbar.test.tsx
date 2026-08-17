@@ -132,7 +132,7 @@ describe("Navbar notifications", () => {
 
         await waitFor(() => expect(screen.getByText("1")).toBeInTheDocument());
         await user.click(screen.getByRole("button", { name: /1 okunmamış bildirim/ }));
-        await user.click(screen.getByRole("button", { name: "Tümünü okundu işaretle" }));
+        await user.click(screen.getByRole("button", { name: "Tümünü okundu yap" }));
 
         await waitFor(() => expect(screen.queryByText("1")).not.toBeInTheDocument());
         expect(fetchMock.mock.calls.some(call => String(call[0]).includes("/notifications/1/read"))).toBe(true);
@@ -182,7 +182,7 @@ describe("Navbar notifications", () => {
         await screen.findByText("First");
         await user.click(screen.getByRole("button", { name: "Daha Fazla Göster" }));
         await screen.findByText("Second");
-        await user.click(screen.getByRole("button", { name: "Tümünü okundu işaretle" }));
+        await user.click(screen.getByRole("button", { name: "Tümünü okundu yap" }));
         await user.click(screen.getByRole("button", { name: /Second/ }));
 
         expect(fetchMock.mock.calls.some(call => String(call[0]).includes("/notifications/2/read"))).toBe(false);

@@ -174,6 +174,10 @@ describe("destructive action confirmations", () => {
                 ]));
             }
 
+            if (url.includes("/team-invitations/team/") || url.includes("/teams/1/invitations")) {
+                return Promise.resolve(mockJsonResponse([]));
+            }
+
             return Promise.resolve(mockJsonResponse([
                 {
                     id: 1,

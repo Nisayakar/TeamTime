@@ -322,6 +322,53 @@ class TeamAuthorizationTests {
                 .andExpect(jsonPath("$.status").value(403));
     }
 
+    @Test
+    void ownerCanPromoteMemberToAdmin() throws Exception {
+        Long teamId = createTeam(owner, "Promotion Team");
+        addMember(owner, teamId, member.getId(), TeamRole.MEMBER);
+
+        mockMvc.perform(put("/api/teams/{teamId}/members/{userId}/admin", teamId, member.getId())
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk());
+
+        org.assertj.core.api.Assertions.assertThat(
+            teamMemberRepository.findByTeamIdAndUserId(teamId, member.getId()).get().getRole()
+        ).isEqualTo("ADMIN");
+    }
+
+    @Test
+    void memberCannotPromoteOrTransferOwnership() throws Exception {
+        Long teamId = createTeam(owner, "Mischief Team");
+        addMember(owner, teamId, member.getId(), TeamRole.MEMBER);
+        addMember(owner, teamId, outsider.getId(), TeamRole.MEMBER);
+
+        mockMvc.perform(put("/api/teams/{teamId}/members/{userId}/admin", teamId, outsider.getId())
+                        .header(AUTHORIZATION, bearer(member)))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(put("/api/teams/{teamId}/members/{userId}/owner", teamId, outsider.getId())
+                        .header(AUTHORIZATION, bearer(member)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void ownerCanTransferOwnershipAndBecomesAdmin() throws Exception {
+        Long teamId = createTeam(owner, "Transfer Team");
+        addMember(owner, teamId, member.getId(), TeamRole.MEMBER);
+
+        mockMvc.perform(put("/api/teams/{teamId}/members/{userId}/owner", teamId, member.getId())
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk());
+
+        org.assertj.core.api.Assertions.assertThat(ownerCount(teamId)).isEqualTo(1);
+        org.assertj.core.api.Assertions.assertThat(
+            teamMemberRepository.findByTeamIdAndUserId(teamId, member.getId()).get().getRole()
+        ).isEqualTo("OWNER");
+        org.assertj.core.api.Assertions.assertThat(
+            teamMemberRepository.findByTeamIdAndUserId(teamId, owner.getId()).get().getRole()
+        ).isEqualTo("ADMIN");
+    }
+
     private Long createTeam(User creator, String name) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/teams")
                         .header(AUTHORIZATION, bearer(creator))

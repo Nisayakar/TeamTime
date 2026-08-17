@@ -67,6 +67,16 @@ public class TeamMemberController {
         return ResponseEntity.ok(teamMemberService.transferOwnership(teamId, userId, currentUserId));
     }
 
+    @PutMapping("/teams/{teamId}/members/{userId}/admin")
+    public ResponseEntity<TeamMemberResponse> promoteToAdmin(
+            @PathVariable Long teamId,
+            @PathVariable Long userId,
+            Authentication authentication
+    ) {
+        Long currentUserId = (Long) authentication.getPrincipal();
+        return ResponseEntity.ok(teamMemberService.promoteToAdmin(teamId, userId, currentUserId));
+    }
+
     @GetMapping("/teams/{teamId}/members")
     public ResponseEntity<List<TeamMemberResponse>> getTeamMembers(@PathVariable Long teamId, Authentication authentication) {
         Long currentUserId = (Long) authentication.getPrincipal();

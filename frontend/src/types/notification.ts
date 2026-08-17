@@ -2,7 +2,8 @@ export type NotificationType =
     | "TEAM_MEMBER_ADDED"
     | "TEAM_MEMBER_REMOVED"
     | "TEAM_PROJECT_CREATED"
-    | "TEAM_TASK_CREATED";
+    | "TEAM_TASK_CREATED"
+    | "TEAM_INVITATION";
 
 export type NotificationRelatedEntityType = "TEAM" | "PROJECT" | "TASK";
 

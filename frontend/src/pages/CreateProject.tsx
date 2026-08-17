@@ -4,7 +4,7 @@ import "./CreateProject.css";
 import { apiFetch, getStoredUser } from "../api";
 import InlineFeedback, { type InlineFeedbackType } from "../components/ui/InlineFeedback";
 import type { ProjectRequest } from "../types/project";
-import { canManageTeamProjects, getTeamRoleLabel, type Team, type TeamMember, type TeamRole } from "../types/team";
+import { getTeamRoleLabel, type Team, type TeamMember, type TeamRole } from "../types/team";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
 
 type StoredUser = {
@@ -89,7 +89,7 @@ function CreateProject() {
                     const members: TeamMember[] = Array.isArray(membersData) ? membersData : [];
                     const currentMembership = members.find(member => member.userId === currentUserId);
 
-                    if (!canManageTeamProjects(currentMembership?.role)) {
+                    if (!currentMembership) {
                         return null;
                     }
 

@@ -2,11 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ConfirmModal from "../components/ConfirmModal";
 import { apiFetch, getStoredUser } from "../api";
-import InlineFeedback, { type InlineFeedbackType } from "../components/ui/InlineFeedback";
+import { useToast } from "../context/toast";
 import type { TeamRole } from "../types/team";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
 import { navigateForInitialLoadError } from "../utils/routeErrors";
-import "./CreateProject.css";
 
 type Team = {
     id: number;
@@ -24,7 +23,15 @@ type StoredUser = {
     id: number;
 }
 
+type UserSearchResult = {
+    id: number;
+    email: string;
+    name?: string;
+    surname?: string;
+}
+
 function Teams() {
+    const { showToast } = useToast();
     const [teams, setTeams] = useState<Team[]>([]);
     const [rolesByTeamId, setRolesByTeamId] = useState<Record<number, TeamRole | undefined>>({});
     const [name, setName] = useState("");
@@ -34,11 +41,18 @@ function Teams() {
     const [editDescription, setEditDescription] = useState("");
     const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
     const [deletingTeam, setDeletingTeam] = useState(false);
-    const [sectionFeedback, setSectionFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
-    const [createFeedback, setCreateFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
-    const [editFeedback, setEditFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
-    const [deleteFeedback, setDeleteFeedback] = useState("");
+    const [userSearch, setUserSearch] = useState("");
+    const [userResults, setUserResults] = useState<UserSearchResult[]>([]);
+    const [selectedUsers, setSelectedUsers] = useState<UserSearchResult[]>([]);
     const navigate = useNavigate();
+
+    function getFullName(user: UserSearchResult): string {
+        if (!user.name && !user.surname) {
+            return user.email;
+        }
+
+        return `${user.name ?? ""} ${user.surname ?? ""}`.trim();
+    }
 
     const getCurrentUserId = useCallback(() => {
         const storedUser: unknown = getStoredUser();
@@ -95,7 +109,10 @@ function Teams() {
                     return;
                 }
 
-                setSectionFeedback({ type: "error", message: await parseApiError(response, "Takımlar yüklenemedi") });
+                showToast({
+                    type: "error",
+                    message: await parseApiError(response, "Takımlar yüklenemedi")
+                });
                 return;
             }
 
@@ -103,47 +120,108 @@ function Teams() {
             const loadedTeams = Array.isArray(data) ? data as Team[] : [];
 
             setTeams(loadedTeams);
-            setSectionFeedback(null);
             await loadCurrentUserRoles(loadedTeams);
         } catch {
-            setSectionFeedback({ type: "error", message: "Sunucuya bağlanılamadı" });
+            showToast({
+                type: "error",
+                message: "Sunucuya bağlanılamadı"
+            });
             setTeams([]);
             setRolesByTeamId({});
         }
-    }, [loadCurrentUserRoles, navigate]);
+    }, [loadCurrentUserRoles, navigate, showToast]);
 
     useEffect(() => {
         getTeams();
     }, [getTeams]);
 
+    useEffect(() => {
+        const query = userSearch.trim();
+
+        if (query === "") {
+            setUserResults([]);
+            return;
+        }
+
+        const debounceTimer = setTimeout(() => {
+            apiFetch(`/users/search?query=${encodeURIComponent(query)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Kullanıcılar aranamadı");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const results = Array.isArray(data) ? data : [];
+                    const filteredResults = results.filter((user: UserSearchResult) => {
+                        if (user.id === getCurrentUserId()) return false;
+                        if (selectedUsers.some(u => u.id === user.id)) return false;
+                        return true;
+                    });
+                    setUserResults(filteredResults);
+                })
+                .catch(() => {
+                    setUserResults([]);
+                });
+        }, 300);
+
+        return () => clearTimeout(debounceTimer);
+    }, [userSearch, selectedUsers, getCurrentUserId]);
+
     async function createTeam(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        setCreateFeedback(null);
 
         try {
             const response = await apiFetch("/teams", {
                 method: "POST",
                 body: JSON.stringify({
                     name,
-                    description
+                    description,
+                    memberIds: selectedUsers.map(u => u.id)
                 })
             });
 
             if (!response.ok) {
-                setCreateFeedback({ type: "error", message: await parseApiError(response, "Takım oluşturulamadı") });
+                showToast({
+                    type: "error",
+                    message: await parseApiError(response, "Takım oluşturulamadı")
+                });
                 return;
             }
 
             const createdTeam = await response.json();
 
             setTeams([...teams, createdTeam]);
+            setRolesByTeamId({ ...rolesByTeamId, [createdTeam.id]: "OWNER" });
+
             setName("");
             setDescription("");
-            await loadCurrentUserRoles([...teams, createdTeam]);
-            setCreateFeedback({ type: "success", message: "Takım başarıyla oluşturuldu." });
+            setSelectedUsers([]);
+            setUserSearch("");
+
+            showToast({
+                type: "success",
+                message: "Takım başarıyla oluşturuldu."
+            });
         } catch {
-            setCreateFeedback({ type: "error", message: "Sunucuya bağlanılamadı" });
+            showToast({
+                type: "error",
+                message: "Sunucuya bağlanılamadı"
+            });
         }
+    }
+
+    function selectUser(user: UserSearchResult) {
+        if (selectedUsers.some(u => u.id === user.id)) {
+            return;
+        }
+        setSelectedUsers([...selectedUsers, user]);
+        setUserSearch("");
+        setUserResults([]);
+    }
+
+    function removeSelectedUser(userId: number) {
+        setSelectedUsers(selectedUsers.filter(u => u.id !== userId));
     }
 
     function startEdit(team: Team) {
@@ -159,8 +237,6 @@ function Teams() {
     }
 
     async function updateTeam(team: Team) {
-        setEditFeedback(null);
-
         const response = await apiFetch(`/teams/${team.id}`, {
             method: "PUT",
             body: JSON.stringify({
@@ -171,7 +247,10 @@ function Teams() {
         });
 
         if (!response.ok) {
-            setEditFeedback({ type: "error", message: await parseApiError(response, "Takım güncellenemedi") });
+            showToast({
+                type: "error",
+                message: await parseApiError(response, "Takım güncellenemedi")
+            });
             return;
         }
 
@@ -184,7 +263,10 @@ function Teams() {
         );
 
         cancelEdit();
-        setSectionFeedback({ type: "success", message: "Takım başarıyla güncellendi." });
+        showToast({
+            type: "success",
+            message: "Takım başarıyla güncellendi."
+        });
     }
 
     async function confirmDeleteTeam() {
@@ -200,22 +282,31 @@ function Teams() {
             });
 
             if (!response.ok) {
-                setDeleteFeedback(await parseApiError(response, "Takım silinemedi"));
+                showToast({
+                    type: "error",
+                    message: await parseApiError(response, "Takım silinemedi")
+                });
                 return;
             }
 
             setTeams(currentTeams => currentTeams.filter(team => team.id !== teamToDelete.id));
-            setSectionFeedback({ type: "success", message: "Takım başarıyla silindi." });
+            showToast({
+                type: "success",
+                message: "Takım başarıyla silindi."
+            });
             setTeamToDelete(null);
         } catch (error) {
-            setDeleteFeedback(getErrorMessage(error, "Takım silinemedi"));
+            showToast({
+                type: "error",
+                message: getErrorMessage(error, "Takım silinemedi")
+            });
         } finally {
             setDeletingTeam(false);
         }
     }
 
     return (
-        <main className="page-shell app-page teams-page glass-page">
+        <main className="page-shell app-page teams-page">
             <section className="page-header app-page-header">
                 <div className="app-page-header-copy">
                     <span className="eyebrow">Takımlar</span>
@@ -224,102 +315,152 @@ function Teams() {
                 </div>
             </section>
 
-            {/* Section 1: Takım Oluştur */}
-            <section className="glass-section glass-section-accent-primary">
-                <div className="glass-section-line primary"></div>
-                <div className="cp-section-flex">
-                    <div className="cp-section-left">
-                        <div className="cp-icon-circle cp-icon-primary">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-                        </div>
-                        <div>
-                            <div className="cp-step-badge primary">Yeni Takım</div>
-                            <h2 className="cp-title text-on-surface dark:text-on-primary">Takım Oluştur</h2>
-                        </div>
-                    </div>
-                    <div className="cp-section-right">
-                        <form onSubmit={createTeam}>
-                            <div className="cp-grid-2">
-                                <div className="cp-input-group">
-                                    <label>Takım Adı</label>
-                                    <input type="text" className="ghost-input" value={name} onChange={event => setName(event.target.value)} required />
-                                </div>
-                                <div className="cp-input-group">
-                                    <label>Açıklama</label>
-                                    <input type="text" className="ghost-input" value={description} onChange={event => setDescription(event.target.value)} required />
-                                </div>
-                            </div>
-                            <div className="cp-actions" style={{ marginTop: "24px", justifyContent: "flex-start" }}>
-                                <button className="cp-btn-gradient" type="submit">
-                                    Takım Oluştur
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ marginLeft: "8px" }}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                                </button>
-                            </div>
-                            {createFeedback && <div style={{marginTop: "16px"}}><InlineFeedback type={createFeedback.type} message={createFeedback.message} /></div>}
-                        </form>
-                    </div>
+            <section className="panel app-form-card teams-create-panel">
+                <div className="section-heading">
+                    <span className="eyebrow">Yeni takım</span>
+                    <h2>Takım oluştur</h2>
                 </div>
-            </section>
-            
-            {sectionFeedback && <div style={{marginTop: "16px", marginBottom: "16px"}}><InlineFeedback type={sectionFeedback.type} message={sectionFeedback.message} /></div>}
 
-            {/* Section 2: Mevcut Takımlar */}
-            {sectionFeedback?.type !== "error" && (
-                <section className="glass-section glass-section-accent-secondary" style={{ marginTop: "32px" }}>
-                    <div className="glass-section-line secondary"></div>
-                    <div className="cp-section-flex">
-                        <div className="cp-section-left">
-                            <div className="cp-icon-circle cp-icon-secondary">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                            </div>
-                            <div>
-                                <div className="cp-step-badge secondary">Liste</div>
-                                <h2 className="cp-title text-on-surface dark:text-on-primary">Mevcut Takımlar</h2>
-                            </div>
-                        </div>
-                        <div className="cp-section-right">
-                            {teams.length === 0 ? (
-                                <p className="empty-state app-empty-state">Henüz takım yok</p>
-                            ) : (
-                                <div className="cp-grid-2">
-                                    {teams.map(team => (
-                                        <div className="cp-radio-tile" style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "16px" }} key={team.id}>
-                                            {editingTeamId === team.id ? (
-                                                <div style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
-                                                    <input type="text" className="ghost-input" value={editName} onChange={event => setEditName(event.target.value)} />
-                                                    <input type="text" className="ghost-input" value={editDescription} onChange={event => setEditDescription(event.target.value)} />
-                                                    <div style={{ display: "flex", gap: "12px", marginTop: "8px" }}>
-                                                        <button type="button" className="cp-btn-gradient" style={{ padding: "8px 16px", flex: 1, minHeight: "36px" }} onClick={() => updateTeam(team)}>Kaydet</button>
-                                                        <button type="button" className="cp-btn-cancel" style={{ padding: "8px 16px", flex: 1, minHeight: "36px" }} onClick={cancelEdit}>Vazgeç</button>
-                                                    </div>
-                                                    {editFeedback && <InlineFeedback type={editFeedback.type} message={editFeedback.message} />}
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <div>
-                                                        <h3 style={{ fontSize: "18px", fontWeight: "600", color: "var(--tt-text)", margin: "0 0 4px 0" }}>{team.name}</h3>
-                                                        <p style={{ fontSize: "14px", color: "var(--tt-text-secondary)", margin: 0 }}>{team.description}</p>
-                                                    </div>
-                                                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "auto" }}>
-                                                        <button type="button" className="cp-btn-gradient" style={{ padding: "6px 12px", fontSize: "13px", minHeight: "32px", flex: 1 }} onClick={() => navigate(`/teams/${team.id}`)}>Üyeleri Gör</button>
-                                                        {(rolesByTeamId[team.id] === "OWNER" || rolesByTeamId[team.id] === "ADMIN") && (
-                                                            <button type="button" className="cp-btn-cancel" style={{ padding: "6px 12px", fontSize: "13px", minHeight: "32px" }} onClick={() => startEdit(team)}>Düzenle</button>
-                                                        )}
-                                                        {rolesByTeamId[team.id] === "OWNER" && (
-                                                            <button type="button" className="cp-btn-cancel" style={{ padding: "6px 12px", fontSize: "13px", minHeight: "32px", color: "var(--tt-danger, #e11d48)" }} onClick={() => { setDeleteFeedback(""); setTeamToDelete(team); }}>Sil</button>
-                                                        )}
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                <form className="inline-form" onSubmit={createTeam}>
+                    <div>
+                        <label>Takım Adı</label>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={event => setName(event.target.value)}
+                            required
+                        />
                     </div>
-                </section>
-            )}
 
+                    <div>
+                        <label>Açıklama</label>
+                        <input
+                            type="text"
+                            value={description}
+                            onChange={event => setDescription(event.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div className="autocomplete-field">
+                        <label>Üyeler</label>
+                        <input
+                            aria-label="Üyeler"
+                            type="text"
+                            value={userSearch}
+                            onChange={event => setUserSearch(event.target.value)}
+                            autoComplete="off"
+                            placeholder="Kişi ara..."
+                        />
+                        {userResults.length > 0 && (
+                            <div className="autocomplete-list">
+                                {userResults.map(user => (
+                                    <button
+                                        className="autocomplete-option"
+                                        key={user.id}
+                                        type="button"
+                                        onClick={() => selectUser(user)}
+                                    >
+                                        {getFullName(user)}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        {selectedUsers.length > 0 && (
+                            <div className="selected-users-chips" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+                                {selectedUsers.map(user => (
+                                    <span key={user.id} className="chip" style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '16px', padding: '4px 12px', fontSize: '13px' }}>
+                                        {getFullName(user)}
+                                        <button 
+                                            type="button" 
+                                            onClick={() => removeSelectedUser(user.id)}
+                                            style={{ background: 'transparent', border: 'none', marginLeft: '6px', cursor: 'pointer', padding: '0 4px' }}
+                                        >
+                                            &times;
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <button className="button button-primary" type="submit">Takımı Oluştur</button>
+                </form>
+            </section>
+
+            {
+                teams.length === 0 ? (
+                    <p className="empty-state app-empty-state">Henüz takım yok</p>
+                ) : (
+                    <section className="cards-grid teams-grid">
+                        {
+                            teams.map(team => (
+                                <article className="data-card team-card app-entity-card" key={team.id}>
+                                    {
+                                        editingTeamId === team.id ? (
+                                            <div className="team-edit-form">
+                                                <input
+                                                    type="text"
+                                                    value={editName}
+                                                    onChange={event => setEditName(event.target.value)}
+                                                />
+
+                                                <input
+                                                    type="text"
+                                                    value={editDescription}
+                                                    onChange={event => setEditDescription(event.target.value)}
+                                                />
+
+                                                <div className="button-row">
+                                                    <button className="button button-primary" onClick={() => updateTeam(team)}>
+                                                        Kaydet
+                                                    </button>
+
+                                                    <button className="button button-secondary" onClick={cancelEdit}>
+                                                        Vazgeç
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div className="project-card-body">
+                                                    <div className="card-icon app-card-icon">TM</div>
+                                                    <div className="app-card-copy">
+                                                        <h3>{team.name}</h3>
+                                                        <p>{team.description}</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="button-row">
+                                                    <button className="button button-primary" onClick={() => navigate(`/teams/${team.id}`)}>
+                                                        Üyeleri Gör
+                                                    </button>
+
+                                                    {
+                                                        (rolesByTeamId[team.id] === "OWNER" || rolesByTeamId[team.id] === "ADMIN") && (
+                                                            <button className="button button-secondary" onClick={() => startEdit(team)}>
+                                                                Düzenle
+                                                            </button>
+                                                        )
+                                                    }
+
+                                                    {
+                                                        rolesByTeamId[team.id] === "OWNER" && (
+                                                            <button className="button button-danger" onClick={() => setTeamToDelete(team)}>
+                                                                Sil
+                                                            </button>
+                                                        )
+                                                    }
+                                                </div>
+                                            </>
+                                        )
+                                    }
+                                </article>
+                            ))
+                        }
+                    </section>
+                )
+            }
             <ConfirmModal
                 open={teamToDelete !== null}
                 title="Takımı sil"
@@ -327,12 +468,8 @@ function Teams() {
                 confirmLabel={deletingTeam ? "Siliniyor" : "Sil"}
                 variant="danger"
                 loading={deletingTeam}
-                errorMessage={deleteFeedback}
                 onConfirm={confirmDeleteTeam}
-                onCancel={() => {
-                    setDeleteFeedback("");
-                    setTeamToDelete(null);
-                }}
+                onCancel={() => setTeamToDelete(null)}
             />
         </main>
     );

@@ -173,7 +173,7 @@ class ProjectTeamAuthorizationTests {
     }
 
     @Test
-    void memberAndNonMemberCannotCreateTeamProject() throws Exception {
+    void memberCanCreateTeamProjectAndNonMemberCannot() throws Exception {
         Long teamId = createTeam(owner, "Restricted Team");
         addMember(owner, teamId, member.getId(), TeamRole.MEMBER);
 
@@ -181,7 +181,7 @@ class ProjectTeamAuthorizationTests {
                         .header(AUTHORIZATION, bearer(member))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(teamProjectJson(teamId, "Member Attempt")))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/projects")
                         .header(AUTHORIZATION, bearer(outsider))

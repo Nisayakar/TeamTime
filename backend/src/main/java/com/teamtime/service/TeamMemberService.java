@@ -190,4 +190,25 @@ public class TeamMemberService {
                 teamMember.getRole(),
                 teamMember.getJoinedDate());
     }
+
+    @Transactional
+    public TeamMemberResponse promoteToAdmin(Long teamId, Long targetUserId, Long currentUserId) {
+        TeamMember currentMembership = requireMembership(teamId, currentUserId);
+
+        if (TeamRole.from(currentMembership.getRole()) != TeamRole.OWNER) {
+            throw new org.springframework.security.access.AccessDeniedException("Bu işlem için yetkiniz yok");
+        }
+
+        TeamMember targetMembership = teamMemberRepository.findByTeamIdAndUserId(teamId, targetUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Hedef kullanıcı takım üyesi değil"));
+
+        TeamRole targetRole = TeamRole.from(targetMembership.getRole());
+        
+        if (targetRole == TeamRole.OWNER || targetRole == TeamRole.ADMIN) {
+            throw new ConflictException("Kullanıcı zaten " + (targetRole == TeamRole.OWNER ? "takım sahibi" : "yönetici") + ".");
+        }
+
+        targetMembership.setRole(TeamRole.ADMIN.name());
+        return convertToResponse(teamMemberRepository.save(targetMembership), true);
+    }
 }

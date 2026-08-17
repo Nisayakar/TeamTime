@@ -9,6 +9,7 @@ import com.teamtime.entity.User;
 import com.teamtime.exception.ConflictException;
 import com.teamtime.exception.ResourceNotFoundException;
 import com.teamtime.repository.ProjectRepository;
+import com.teamtime.repository.TeamInvitationRepository;
 import com.teamtime.repository.TeamMemberRepository;
 import com.teamtime.repository.TeamRepository;
 import com.teamtime.repository.UserRepository;
@@ -26,17 +27,23 @@ public class TeamService {
     private final TeamMemberRepository teamMemberRepository;
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
+    private final TeamInvitationRepository teamInvitationRepository;
+    private final TeamInvitationService teamInvitationService;
 
     public TeamService(
             TeamRepository teamRepository,
             TeamMemberRepository teamMemberRepository,
             UserRepository userRepository,
-            ProjectRepository projectRepository
+            ProjectRepository projectRepository,
+            TeamInvitationRepository teamInvitationRepository,
+            TeamInvitationService teamInvitationService
     ) {
         this.teamRepository = teamRepository;
         this.teamMemberRepository = teamMemberRepository;
         this.userRepository = userRepository;
         this.projectRepository = projectRepository;
+        this.teamInvitationRepository = teamInvitationRepository;
+        this.teamInvitationService = teamInvitationService;
     }
 
     @Transactional
@@ -60,6 +67,10 @@ public class TeamService {
         ownerMembership.setRole(TeamRole.OWNER.name());
         ownerMembership.setJoinedDate(java.time.LocalDateTime.now());
         teamMemberRepository.save(ownerMembership);
+
+        if (request.getMemberIds() != null && !request.getMemberIds().isEmpty()) {
+            teamInvitationService.createInvitations(savedTeam, creator, request.getMemberIds());
+        }
 
         return toResponse(savedTeam);
     }
@@ -101,6 +112,7 @@ public class TeamService {
             throw new ConflictException("Bu takıma bağlı projeler varken takım silinemez.");
         }
 
+        teamInvitationRepository.deleteByTeamId(id);
         teamMemberRepository.deleteByTeamId(id);
         teamRepository.delete(existingTeam);
     }

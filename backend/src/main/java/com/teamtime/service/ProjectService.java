@@ -60,7 +60,7 @@ public class ProjectService {
         if (request.getTeamId() != null) {
             Team team = teamRepository.findById(request.getTeamId())
                     .orElseThrow(() -> new ResourceNotFoundException("Takım bulunamadı"));
-            requireTeamProjectManager(team.getId(), userId);
+            requireTeamProjectMember(team.getId(), userId);
             project.setTeam(team);
         } else {
             project.setTeam(null);
@@ -149,6 +149,10 @@ public class ProjectService {
         }
 
         requireTeamProjectManager(project.getTeam().getId(), userId);
+    }
+
+    private void requireTeamProjectMember(Long teamId, Long userId) {
+        getMembershipRole(teamId, userId); // Throws AccessDeniedException if not a member
     }
 
     private void requireTeamProjectManager(Long teamId, Long userId) {

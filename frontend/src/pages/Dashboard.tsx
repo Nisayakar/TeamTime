@@ -153,16 +153,6 @@ function Dashboard() {
                             <div className="dashboard-v2-status-icon-wrap info">
                                 <FolderIcon />
                             </div>
-                            <div className="dashboard-v2-status-meta">
-                                <div>
-                                    <span className="dashboard-v2-status-meta-val">{dashboardData?.taskCount ?? 0}</span>
-                                    <span className="dashboard-v2-status-meta-lbl">Toplam Görev</span>
-                                </div>
-                                <div>
-                                    <span className="dashboard-v2-status-meta-val">{dashboardData?.teamCount ?? 0}</span>
-                                    <span className="dashboard-v2-status-meta-lbl">Takımlar</span>
-                                </div>
-                            </div>
                         </div>
                         <div>
                             <span className="dashboard-v2-status-main-val">{dashboardData?.projectCount ?? 0}</span>
@@ -170,7 +160,31 @@ function Dashboard() {
                         </div>
                     </button>
 
-                    <button className="dashboard-v2-status-card" onClick={() => navigate("/projects")} type="button">
+                    <button className="dashboard-v2-status-card" onClick={() => navigate("/my-tasks")} type="button">
+                        <div className="dashboard-v2-status-card-header">
+                            <div className="dashboard-v2-status-icon-wrap primary">
+                                <CheckIcon size={18} />
+                            </div>
+                        </div>
+                        <div>
+                            <span className="dashboard-v2-status-main-val">{dashboardData?.taskCount ?? 0}</span>
+                            <span className="dashboard-v2-status-main-lbl">Toplam Görev</span>
+                        </div>
+                    </button>
+
+                    <button className="dashboard-v2-status-card" onClick={() => navigate("/teams")} type="button">
+                        <div className="dashboard-v2-status-card-header">
+                            <div className="dashboard-v2-status-icon-wrap info">
+                                <UsersIcon />
+                            </div>
+                        </div>
+                        <div>
+                            <span className="dashboard-v2-status-main-val">{dashboardData?.teamCount ?? 0}</span>
+                            <span className="dashboard-v2-status-main-lbl">Takımlar</span>
+                        </div>
+                    </button>
+
+                    <button className="dashboard-v2-status-card" onClick={() => navigate("/my-tasks?status=DEVAM_EDIYOR")} type="button">
                         <div className="dashboard-v2-status-card-header">
                             <div className="dashboard-v2-status-icon-wrap warning">
                                 <PlayIcon />
@@ -182,7 +196,7 @@ function Dashboard() {
                         </div>
                     </button>
 
-                    <button className="dashboard-v2-status-card" onClick={() => navigate("/projects")} type="button">
+                    <button className="dashboard-v2-status-card" onClick={() => navigate("/my-tasks?due=overdue")} type="button">
                         <div className="dashboard-v2-status-card-header">
                             <div className="dashboard-v2-status-icon-wrap danger">
                                 <WarningIcon />
@@ -370,6 +384,10 @@ function ArrowForwardIcon() {
 
 function PlusIcon() {
     return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>;
+}
+
+function UsersIcon() {
+    return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>;
 }
 
 function PhotoIcon() {
