@@ -11,6 +11,7 @@ import { Routes, Route } from "react-router-dom"
 import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
 import Profile from './pages/Profile';
+import MyTasks from './pages/MyTasks';
 import AppShell from './components/AppShell';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -43,6 +44,7 @@ function App() {
             <Route path="/edit-project/:id" element={<EditProject />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/projects" element={<Projects />} />
+            <Route path="/my-tasks" element={<MyTasks />} />
             <Route path="/teams" element={<Teams />} />
             <Route path="/teams/invitations" element={<TeamInvitations />} />
             <Route path="/teams/:id" element={<TeamDetails />} />
