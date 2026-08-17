@@ -658,6 +658,9 @@
 
 .app-shell-main {
     min-height: calc(100vh - var(--tt-navbar-height));
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
 .app-shell-container {

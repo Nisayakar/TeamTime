@@ -48,7 +48,7 @@ describe("Profile", () => {
         expect(screen.queryByText("[object Object]")).not.toBeInTheDocument();
     });
 
-    it("sends old and new password, handles wrong old password, and does not store raw passwords", async () => {
+    it("sends old and new password, handles mismatch, wrong old password, and does not store raw passwords", async () => {
         const user = userEvent.setup();
         localStorage.setItem("user", JSON.stringify(profile()));
         const fetchMock = vi.fn<typeof fetch>()
@@ -61,8 +61,19 @@ describe("Profile", () => {
 
         await screen.findByDisplayValue("Ayşe");
         await user.click(screen.getByRole("button", { name: /Şifre Değiştir/i }));
+        
+        // Mismatch check
         await user.type(screen.getByLabelText("Eski Şifre"), "wrong-old");
         await user.type(screen.getByLabelText("Yeni Şifre"), "new-secret");
+        await user.type(screen.getByLabelText("Yeni Şifre Tekrar"), "mismatch-secret");
+        await user.click(screen.getByRole("button", { name: "Şifreyi Güncelle" }));
+
+        expect(await screen.findByText("Yeni şifreler eşleşmiyor.")).toBeInTheDocument();
+        expect(fetchMock).toHaveBeenCalledTimes(1); // Profile GET only
+
+        // Wrong old password check
+        await user.clear(screen.getByLabelText("Yeni Şifre Tekrar"));
+        await user.type(screen.getByLabelText("Yeni Şifre Tekrar"), "new-secret");
         await user.click(screen.getByRole("button", { name: "Şifreyi Güncelle" }));
 
         expect(await screen.findByText("Eski şifre hatalı")).toBeInTheDocument();
@@ -71,10 +82,13 @@ describe("Profile", () => {
             newPassword: "new-secret"
         });
 
+        // Successful update
         await user.clear(screen.getByLabelText("Eski Şifre"));
         await user.clear(screen.getByLabelText("Yeni Şifre"));
+        await user.clear(screen.getByLabelText("Yeni Şifre Tekrar"));
         await user.type(screen.getByLabelText("Eski Şifre"), "old-secret");
         await user.type(screen.getByLabelText("Yeni Şifre"), "new-secret");
+        await user.type(screen.getByLabelText("Yeni Şifre Tekrar"), "new-secret");
         await user.click(screen.getByRole("button", { name: "Şifreyi Güncelle" }));
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));

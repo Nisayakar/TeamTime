@@ -6,13 +6,14 @@
 }
 
 html {
-  background: var(--tt-background, #ffffff);
+  background: var(--bg, #0d1117);
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--bg, #0d1117);
 }
 
 #root {

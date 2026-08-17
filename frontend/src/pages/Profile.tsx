@@ -36,7 +36,6 @@ const ProfileIcon = (props: any) => <SvgIcon {...props} d={<><circle cx="12" cy=
 const LockIcon = (props: any) => <SvgIcon {...props} d={<><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></>} />;
 const PaletteIcon = (props: any) => <SvgIcon {...props} d={<><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.992 6.012 17.5 2 12 2z"/></>} />;
 const TrashIcon = (props: any) => <SvgIcon {...props} d={<><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></>} />;
-const MonitorIcon = (props: any) => <SvgIcon {...props} d={<><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></>} />;
 const CheckIcon = (props: any) => <SvgIcon {...props} d={<polyline points="20 6 9 17 4 12" />} />;
 const CameraIcon = (props: any) => <SvgIcon {...props} d={<><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></>} />;
 const MailIcon = (props: any) => <SvgIcon {...props} d={<><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></>} />;
@@ -59,6 +58,7 @@ function Profile() {
     const [emailCode, setEmailCode] = useState("");
     const [oldPassword, setOldPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
+    const [confirmNewPassword, setConfirmNewPassword] = useState("");
     const [savingProfile, setSavingProfile] = useState(false);
     const [requestingEmailCode, setRequestingEmailCode] = useState(false);
     const [verifyingEmailCode, setVerifyingEmailCode] = useState(false);
@@ -78,7 +78,7 @@ function Profile() {
     const [imageLoadError, setImageLoadError] = useState(false);
     const [avatarFeedback, setAvatarFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
     const [avatarModalOpen, setAvatarModalOpen] = useState(false);
-    const { preference, setPreference } = useTheme();
+    const { preference, resolvedTheme, setPreference } = useTheme();
     const [activeSection, setActiveSection] = useState<"profile" | "password" | "theme" | "delete">("profile");
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -391,6 +391,16 @@ function Profile() {
             return;
         }
 
+        if (confirmNewPassword.trim() === "") {
+            setPasswordFeedback({ type: "error", message: "Yeni şifre tekrar alanı zorunludur." });
+            return;
+        }
+
+        if (newPassword !== confirmNewPassword) {
+            setPasswordFeedback({ type: "error", message: "Yeni şifreler eşleşmiyor." });
+            return;
+        }
+
         setPasswordFeedback(null);
         setSavingPassword(true);
 
@@ -407,11 +417,12 @@ function Profile() {
                 throw new Error(await parseApiError(response, "Şifre güncellenemedi"));
             }
 
-            const data = await response.text();
+            await response.text();
 
             setOldPassword("");
             setNewPassword("");
-            setPasswordFeedback({ type: "success", message: data || "Şifreniz başarıyla güncellendi." });
+            setConfirmNewPassword("");
+            setPasswordFeedback({ type: "success", message: "Şifreniz başarıyla güncellendi." });
         } catch (error) {
             setPasswordFeedback({ type: "error", message: getErrorMessage(error, "Şifre güncellenemedi") });
         } finally {
@@ -655,7 +666,7 @@ function Profile() {
                                     
                                     <div className="input-group full-width">
                                         <label htmlFor="username-input">Kullanıcı Adı</label>
-                                        <div className="input-wrapper">
+                                        <div className="input-wrapper profile-username-input-wrapper">
                                             <span className="input-prefix">@</span>
                                             <input id="username-input" type="text" value={username} onChange={(e) => setUsername(e.target.value)} minLength={3} maxLength={30} placeholder="kullanici_adi" />
                                         </div>
@@ -757,6 +768,10 @@ function Profile() {
                                         <label htmlFor="new-password-input">Yeni Şifre</label>
                                         <input id="new-password-input" type="password" className="password-input" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Yeni şifrenizi girin" />
                                     </div>
+                                    <div className="input-group">
+                                        <label htmlFor="confirm-new-password-input">Yeni Şifre Tekrar</label>
+                                        <input id="confirm-new-password-input" type="password" className="password-input" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} placeholder="Yeni şifrenizi tekrar girin" />
+                                    </div>
                                     <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                                         <button className="btn-primary" onClick={updatePassword} disabled={savingPassword}>
                                             {savingPassword ? "Güncelleniyor..." : "Şifreyi Güncelle"}
@@ -813,19 +828,15 @@ function Profile() {
                                 </button>
                             </div>
                             
-                            <div className="system-theme-toggle" onClick={() => setPreference("system")}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <MonitorIcon size={20} style={{ color: 'var(--outline)' }} />
-                                    <div>
-                                        <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text)' }}>Sistem Teması</div>
-                                        <div style={{ fontSize: '12px', color: 'var(--text-variant)', marginTop: '4px' }}>Görünümü sistem ayarlarınıza göre otomatik ayarlar</div>
+                            <div className="theme-toggle-row">
+                                <div className="system-theme-toggle" onClick={() => { if (preference === "system") { setPreference(resolvedTheme); } else { setPreference("system"); } }}>
+                                    <div className="toggle-info">
+                                        <span className="theme-name">Sistem Teması</span>
+                                        <p className="input-hint" style={{ marginTop: '2px' }}>Cihazınızın tema ayarlarına uyum sağlar</p>
                                     </div>
-                                </div>
-                                <div>
-                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                        <input type="checkbox" checked={preference === "system"} readOnly style={{ appearance: 'none', width: '36px', height: '20px', backgroundColor: preference === "system" ? 'var(--primary)' : 'var(--surface-high)', borderRadius: '9999px', position: 'relative', outline: 'none', transition: '0.2s', cursor: 'pointer' }} />
-                                        <span style={{ position: 'absolute', width: '16px', height: '16px', backgroundColor: '#fff', borderRadius: '50%', transform: preference === "system" ? 'translateX(18px)' : 'translateX(2px)', transition: '0.2s', pointerEvents: 'none' }}></span>
-                                    </label>
+                                    <div style={{ width: '46px', height: '26px', borderRadius: '9999px', backgroundColor: preference === "system" ? 'var(--primary)' : 'var(--outline-variant)', position: 'relative', transition: '0.2s', flexShrink: 0 }}>
+                                        <span style={{ position: 'absolute', width: '20px', height: '20px', top: '3px', left: '3px', backgroundColor: '#fff', borderRadius: '50%', transform: preference === "system" ? 'translateX(20px)' : 'translateX(0)', transition: '0.2s', pointerEvents: 'none' }}></span>
+                                    </div>
                                 </div>
                             </div>
                         </>

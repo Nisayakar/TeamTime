@@ -4027,6 +4027,11 @@ button:focus-visible {
   background: var(--tt-background);
   color: var(--tt-text);
 }
+.app-shell-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
 
 .app-navbar-auth {
   min-height: var(--tt-navbar-height);

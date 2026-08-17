@@ -22,13 +22,18 @@
 }
 
 .app-shell {
-  min-height: 100vh;
+  min-height: calc(100vh - var(--tt-navbar-height));
+  display: flex;
+  flex-direction: column;
   background: var(--tt-background);
   color: var(--tt-text);
 }
 
 .app-shell-main {
   min-height: calc(100vh - var(--tt-navbar-height));
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   background:
     linear-gradient(180deg, var(--tt-surface-container-low) 0, var(--tt-background) 280px),
     var(--tt-background);
