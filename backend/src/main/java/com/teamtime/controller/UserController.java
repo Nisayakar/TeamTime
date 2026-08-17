@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import jakarta.validation.Valid;
 import java.util.List;
 
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api") //Bu sınıftaki bütün adreslerin başına /api ekler.
@@ -151,6 +152,23 @@ public class UserController {
         Long userId = (Long) authentication.getPrincipal();
 
         return ResponseEntity.ok(userService.updatePassword(userId, request));
+    }
+
+    @PostMapping("/profile/avatar")
+    public ResponseEntity<ProfileResponse> uploadAvatar(
+            Authentication authentication,
+            @RequestParam("file") MultipartFile file
+    ) {
+        Long userId = (Long) authentication.getPrincipal();
+        return ResponseEntity.ok(userService.uploadAvatar(userId, file));
+    }
+
+    @DeleteMapping("/profile/avatar")
+    public ResponseEntity<ProfileResponse> removeAvatar(
+            Authentication authentication
+    ) {
+        Long userId = (Long) authentication.getPrincipal();
+        return ResponseEntity.ok(userService.removeAvatar(userId));
     }
 
     @DeleteMapping("/profile")

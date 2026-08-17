@@ -27,6 +27,9 @@ public class User {
 
     private String password;
 
+    @Column(name = "profile_image_path")
+    private String profileImagePath;
+
 
     public User() {
 
@@ -109,4 +112,11 @@ public class User {
         this.password = password;
     }
 
+    public String getProfileImagePath() {
+        return profileImagePath;
+    }
+
+    public void setProfileImagePath(String profileImagePath) {
+        this.profileImagePath = profileImagePath;
+    }
 }

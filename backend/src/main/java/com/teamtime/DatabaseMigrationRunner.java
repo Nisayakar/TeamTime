@@ -40,6 +40,10 @@ public class DatabaseMigrationRunner implements CommandLineRunner {
             // 2. Username Migration
             migrateUsernames();
 
+            // 3. Avatar Migration
+            System.out.println("--- Migrating Avatars ---");
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_image_path VARCHAR(255)");
+
             System.out.println("=== MIGRATION APPLIED SUCCESSFULLY ===");
         } catch (Exception e) {
             e.printStackTrace();

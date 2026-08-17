@@ -418,28 +418,49 @@ body:has(.auth-page) .app-navbar-public .nav-links-public .nav-cta {
 
 
 .user-avatar,
-.profile-avatar {
+.profile-avatar,
+.avatar-circle,
+.app-navbar-profile-menu-avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
   border-radius: 50%;
-  background: var(--primary-dark);
-  color: #ffffff;
-  font-weight: 800;
+  background: #f1f5f9; /* soft blue-gray surface */
+  color: #0284c7; /* TeamTime blue */
+  border: 1px solid #e2e8f0;
+  font-weight: 600;
+  overflow: hidden;
+  position: relative;
 }
 
-.user-avatar {
+[data-theme="dark"] .user-avatar,
+[data-theme="dark"] .profile-avatar,
+[data-theme="dark"] .avatar-circle,
+[data-theme="dark"] .app-navbar-profile-menu-avatar {
+  background: #1e293b; /* slate surface */
+  color: #818cf8; /* indigo */
+  border-color: #334155;
+}
+
+.user-avatar,
+.avatar-circle {
   width: 36px;
   height: 36px;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .profile-avatar {
-  width: 104px;
-  height: 104px;
+  width: 100px;
+  height: 100px;
   font-size: 32px;
   box-shadow: var(--shadow);
+}
+
+.app-navbar-profile-menu-avatar {
+  width: 48px;
+  height: 48px;
+  font-size: 18px;
 }
 
 .page-shell,
@@ -3114,14 +3135,7 @@ button:focus-visible {
 
 .team-details-page .profile-avatar,
 .team-details-page .user-avatar {
-  background: var(--tt-primary);
-  color: var(--tt-primary-contrast);
   box-shadow: none;
-}
-
-[data-theme="light"] .team-details-page .profile-avatar,
-[data-theme="light"] .team-details-page .user-avatar {
-  color: #ffffff;
 }
 
 .team-details-page .panel {
@@ -3246,15 +3260,8 @@ button:focus-visible {
   width: 64px;
   height: 64px;
   border: 1px solid var(--tt-border);
-  background: var(--tt-primary);
-  color: #ffffff;
   box-shadow: none;
   font-size: 22px;
-}
-
-[data-theme="dark"] .profile-page .profile-avatar {
-  background: var(--tt-primary);
-  color: var(--tt-primary-contrast);
 }
 
 .profile-grid {

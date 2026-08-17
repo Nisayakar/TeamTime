@@ -1,7 +1,7 @@
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiFetch, clearAuth, updateStoredUser } from "../api";
+import { apiFetch, clearAuth, updateStoredUser, getMediaUrl } from "../api";
 import { useToast } from "../context/toast";
 import { ThemeSwitcher } from "../components/ui/ThemeSwitcher";
 import InlineFeedback, { type InlineFeedbackType } from "../components/ui/InlineFeedback";
@@ -15,6 +15,7 @@ type ProfileUser = {
     surname: string;
     username: string;
     email: string;
+    profileImageUrl?: string;
 }
 
 type EmailChangeStep = "request" | "verify";
@@ -51,6 +52,17 @@ function Profile() {
     const [deleteFeedback, setDeleteFeedback] = useState("");
     const [isCheckingUsername, setIsCheckingUsername] = useState(false);
     const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const [removingAvatar, setRemovingAvatar] = useState(false);
+    const [imageLoadError, setImageLoadError] = useState(false);
+    const [avatarFeedback, setAvatarFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
+    const [avatarModalOpen, setAvatarModalOpen] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        setImageLoadError(false);
+    }, [avatarPreview]);
 
     useEffect(() => {
         async function loadProfile() {
@@ -72,6 +84,12 @@ function Profile() {
                 setUsername(data.username || "");
                 setEmail(data.email || "");
                 updateStoredUser(data);
+                
+                if (data.profileImageUrl) {
+                    setAvatarPreview(getMediaUrl(data.profileImageUrl) ?? null);
+                } else {
+                    setAvatarPreview(null);
+                }
             } catch (error) {
                 showToast({
                     type: "error",
@@ -418,11 +436,135 @@ function Profile() {
         }
     }
 
+    async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            setAvatarFeedback({ type: "error", message: "Dosya boyutu 5MB'dan küçük olmalıdır." });
+            return;
+        }
+
+        const validTypes = ["image/jpeg", "image/png", "image/webp"];
+        if (!validTypes.includes(file.type)) {
+            setAvatarFeedback({ type: "error", message: "Sadece JPEG, PNG ve WEBP formatları desteklenmektedir." });
+            return;
+        }
+
+        setAvatarFeedback(null);
+        setUploadingAvatar(true);
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const response = await apiFetch("/profile/avatar", {
+                method: "POST",
+                body: formData,
+                headers: {} // Need to override content-type to let browser set boundary
+            });
+
+            if (!response.ok) {
+                throw new Error(await parseApiError(response, "Profil fotoğrafı yüklenemedi"));
+            }
+
+            const updatedUser: ProfileUser = await response.json();
+            setUser(updatedUser);
+            updateStoredUser(updatedUser);
+            
+            if (updatedUser.profileImageUrl) {
+                setAvatarPreview(getMediaUrl(updatedUser.profileImageUrl) ?? null);
+            }
+            
+            setAvatarFeedback(null);
+            showToast({ type: "success", message: "Profil fotoğrafı güncellendi." });
+            window.dispatchEvent(new Event("user-updated"));
+        } catch (error) {
+            setAvatarFeedback({ type: "error", message: getErrorMessage(error, "Profil fotoğrafı yüklenemedi") });
+        } finally {
+            setUploadingAvatar(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+        }
+    }
+
+    async function handleRemoveAvatar() {
+        if (removingAvatar) return;
+
+        setRemovingAvatar(true);
+        try {
+            const response = await apiFetch("/profile/avatar", {
+                method: "DELETE"
+            });
+
+            if (!response.ok) {
+                throw new Error(await parseApiError(response, "Profil fotoğrafı kaldırılamadı"));
+            }
+
+            const updatedUser: ProfileUser = await response.json();
+            setUser(updatedUser);
+            updateStoredUser(updatedUser);
+            setAvatarPreview(null);
+            setAvatarModalOpen(false);
+            setAvatarFeedback(null);
+            showToast({ type: "success", message: "Profil fotoğrafı kaldırıldı." });
+            window.dispatchEvent(new Event("user-updated"));
+        } catch (error) {
+            setAvatarFeedback({ type: "error", message: getErrorMessage(error, "Profil fotoğrafı kaldırılamadı") });
+        } finally {
+            setRemovingAvatar(false);
+        }
+    }
+
     return (
         <main className="page-shell app-page profile-page">
-            <section className="hero-card profile-cover app-page-header profile-hero">
-                <div className="profile-avatar">
-                    {(user?.name || "T").slice(0, 1)}{(user?.surname || "T").slice(0, 1)}
+            <section className="hero-card profile-cover app-page-header profile-hero" style={{ position: "relative" }}>
+                <div className="profile-avatar-container" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", position: "relative", zIndex: 1 }}>
+                    <div className="profile-avatar">
+                        {avatarPreview && !imageLoadError ? (
+                            <img src={avatarPreview} alt="Profil Fotoğrafı" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={() => setImageLoadError(true)} />
+                        ) : (
+                            <span>{(user?.name || "T").slice(0, 1)}{(user?.surname || "T").slice(0, 1)}</span>
+                        )}
+                        {uploadingAvatar && (
+                            <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.8rem" }}>
+                                Yükleniyor...
+                            </div>
+                        )}
+                    </div>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                        <button 
+                            className="button button-secondary" 
+                            style={{ padding: "4px 8px", fontSize: "0.8rem" }}
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploadingAvatar}
+                        >
+                            {avatarPreview ? "Fotoğrafı Değiştir" : "Profil Fotoğrafı Ekle"}
+                        </button>
+                        {avatarPreview && (
+                            <button 
+                                className="button button-danger" 
+                                style={{ padding: "4px 8px", fontSize: "0.8rem" }}
+                                onClick={() => setAvatarModalOpen(true)}
+                                disabled={uploadingAvatar}
+                            >
+                                Kaldır
+                            </button>
+                        )}
+                        <input 
+                            type="file" 
+                            ref={fileInputRef} 
+                            style={{ display: "none" }} 
+                            accept="image/jpeg, image/png, image/webp" 
+                            onChange={handleFileSelect} 
+                        />
+                    </div>
+                    {avatarFeedback && (
+                        <div style={{ position: "absolute", top: "100%", marginTop: "8px", width: "200px" }}>
+                            <InlineFeedback type={avatarFeedback.type} message={avatarFeedback.message} />
+                        </div>
+                    )}
                 </div>
 
                 <div className="app-page-header-copy">
@@ -645,16 +787,29 @@ function Profile() {
                 open={deleteModalOpen}
                 title="Hesabınızı silmek istediğinizden emin misiniz?"
                 message="Bu işlem geri alınamaz. Hesabınız ve hesabınıza bağlı veriler kalıcı olarak silinecektir."
-                cancelLabel="İptal"
                 confirmLabel="Hesabımı Kalıcı Olarak Sil"
-                variant="danger"
-                loading={deletingAccount}
-                errorMessage={deleteFeedback}
-                onCancel={closeDeleteModal}
+                cancelLabel="İptal"
                 onConfirm={deleteAccount}
+                onCancel={closeDeleteModal}
+                variant="danger"
+                errorMessage={deleteFeedback}
+                loading={deletingAccount}
+            />
+
+            <ConfirmModal
+                open={avatarModalOpen}
+                title="Profil fotoğrafını kaldır"
+                message="Profil fotoğrafınızı kaldırmak istediğinizden emin misiniz?"
+                confirmLabel="Kaldır"
+                cancelLabel="İptal"
+                onConfirm={handleRemoveAvatar}
+                onCancel={() => {
+                    if (!removingAvatar) setAvatarModalOpen(false);
+                }}
+                variant="danger"
+                loading={removingAvatar}
             />
         </main>
     );
 }
-
 export default Profile;

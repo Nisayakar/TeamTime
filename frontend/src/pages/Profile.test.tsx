@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { mockJsonResponse, mockTextResponse, renderWithProviders } from "../test/testUtils";
+import { mockJsonResponse, mockTextResponse, renderWithProviders, profile } from "../test/testUtils";
 import Profile from "./Profile";
 
 describe("Profile", () => {
@@ -9,8 +9,8 @@ describe("Profile", () => {
         const user = userEvent.setup();
         localStorage.setItem("token", "token");
         const fetchMock = vi.fn<typeof fetch>()
-            .mockResolvedValueOnce(mockJsonResponse(profile("Ayşe", "Demir", "ayse@example.com")))
-            .mockResolvedValueOnce(mockJsonResponse(profile("Ayşe Nur", "Demir", "aysenur@example.com")));
+            .mockResolvedValueOnce(mockJsonResponse(profile("Ayşe", "Demir", "ayse@example.com", "aysedemir")))
+            .mockResolvedValueOnce(mockJsonResponse(profile("Ayşe Nur", "Demir", "ayse@example.com", "aysenur123")));
         vi.stubGlobal("fetch", fetchMock);
 
         renderWithProviders(<Profile />);
@@ -18,8 +18,8 @@ describe("Profile", () => {
         expect(await screen.findByDisplayValue("Ayşe")).toBeInTheDocument();
         await user.clear(screen.getByLabelText("Ad"));
         await user.type(screen.getByLabelText("Ad"), "Ayşe Nur");
-        await user.clear(screen.getByLabelText("E-mail"));
-        await user.type(screen.getByLabelText("E-mail"), "aysenur@example.com");
+        await user.clear(screen.getByLabelText("Kullanıcı Adı"));
+        await user.type(screen.getByLabelText("Kullanıcı Adı"), "aysenur123");
         await user.click(screen.getByRole("button", { name: "Profil Bilgilerini Güncelle" }));
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
@@ -27,9 +27,9 @@ describe("Profile", () => {
         expect(JSON.parse(String(requestInit?.body))).toEqual({
             name: "Ayşe Nur",
             surname: "Demir",
-            email: "aysenur@example.com"
+            username: "aysenur123"
         });
-        expect(localStorage.getItem("user")).toBe(JSON.stringify(profile("Ayşe Nur", "Demir", "aysenur@example.com")));
+        expect(localStorage.getItem("user")).toBe(JSON.stringify(profile("Ayşe Nur", "Demir", "ayse@example.com", "aysenur123")));
     });
 
     it("shows duplicate email errors safely", async () => {
@@ -96,6 +96,8 @@ describe("Profile", () => {
         renderWithProviders(<Profile />);
 
         await screen.findByDisplayValue("Ayşe");
+        await user.clear(screen.getByLabelText("Kullanıcı Adı"));
+        await user.type(screen.getByLabelText("Kullanıcı Adı"), "aysedemir");
         await user.click(screen.getByRole("button", { name: "Profil Bilgilerini Güncelle" }));
 
         expect(screen.getByRole("button", { name: "Güncelleniyor..." })).toBeDisabled();
@@ -115,7 +117,7 @@ describe("Profile", () => {
 
         renderWithProviders(<Profile />);
 
-        expect(await screen.findByRole("heading", { name: "Hesap Ayarları" })).toBeInTheDocument();
+        expect(await screen.findByRole("heading", { name: "Profil Bilgileri" })).toBeInTheDocument();
         expect(screen.getByRole("radio", { name: "Açık tema" })).toBeInTheDocument();
         await user.click(screen.getByRole("button", { name: "Hesabı Sil" }));
 
@@ -215,12 +217,4 @@ describe("Profile", () => {
     });
 });
 
-function profile(name = "Ayşe", surname = "Demir", email = "ayse@example.com", username = "aysedemir") {
-    return {
-        id: 1,
-        name,
-        surname,
-        email,
-        username
-    };
-}
+

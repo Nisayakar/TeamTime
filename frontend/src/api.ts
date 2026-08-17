@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
 const TOKEN_STORAGE_KEY = "token";
 const USER_STORAGE_KEY = "user";
 let unauthorizedRedirectHandler = () => {
@@ -9,12 +9,26 @@ if (!API_BASE_URL) {
     throw new Error("VITE_API_BASE_URL tanımlı değil. Lütfen frontend/.env dosyasını kontrol edin.");
 }
 
+export function getMediaUrl(path?: string | null) {
+    if (!path) return undefined;
+    if (path.startsWith("http")) return path;
+    
+    const baseUrl = API_BASE_URL.replace(/\/$/, "");
+    if (path.startsWith("/api/") && baseUrl.endsWith("/api")) {
+        return `${baseUrl.slice(0, -4)}${path}`;
+    }
+    
+    const separator = path.startsWith("/") ? "" : "/";
+    return `${baseUrl}${separator}${path}`;
+}
+
 type LoginUser = {
     id: number;
     name: string;
     surname: string;
     email: string;
     token: string;
+    profileImageUrl?: string | null;
 }
 
 export function saveAuth(loginUser: LoginUser) {
@@ -25,7 +39,8 @@ export function saveAuth(loginUser: LoginUser) {
             id: loginUser.id,
             name: loginUser.name,
             surname: loginUser.surname,
-            email: loginUser.email
+            email: loginUser.email,
+            profileImageUrl: loginUser.profileImageUrl
         })
     );
 }
@@ -68,6 +83,7 @@ export function updateStoredUser(user: {
     name: string;
     surname: string;
     email: string;
+    profileImageUrl?: string | null;
 }) {
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
 }
@@ -110,7 +126,7 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     const token = getToken();
     const headers = new Headers(options.headers);
 
-    if (options.body && !headers.has("Content-Type")) {
+    if (options.body && !(options.body instanceof FormData) && !headers.has("Content-Type")) {
         headers.set("Content-Type", "application/json");
     }
 

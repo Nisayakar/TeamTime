@@ -1,7 +1,7 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { clearAuth, getStoredUser, isAuthenticated } from "../api";
-import { apiFetch } from "../api";
+import { apiFetch, getMediaUrl } from "../api";
 import type { NotificationItem, NotificationPage } from "../types/notification";
 import ConfirmModal from "./ConfirmModal";
 
@@ -135,14 +135,29 @@ function Navbar() {
     const [isClearModalOpen, setIsClearModalOpen] = useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+    const [imageLoadError, setImageLoadError] = useState(false);
 
-    const storedUser = getStoredUser();
+    const [storedUser, setStoredUser] = useState(() => getStoredUser());
+    
+    useEffect(() => {
+        function handleUserUpdated() {
+            setStoredUser(getStoredUser());
+        }
+        window.addEventListener("user-updated", handleUserUpdated);
+        return () => window.removeEventListener("user-updated", handleUserUpdated);
+    }, []);
+
+    useEffect(() => {
+        setImageLoadError(false);
+    }, [storedUser?.profileImageUrl]);
+
     const userInitials = storedUser
         ? getInitials(storedUser.name ?? "", storedUser.surname ?? "")
         : "TT";
     const userDisplayName = storedUser
         ? `${storedUser.name ?? ""} ${storedUser.surname ?? ""}`.trim()
         : "Hesap";
+    const userAvatar = getMediaUrl(storedUser?.profileImageUrl);
 
     function logout() {
         clearAuth();
@@ -529,13 +544,19 @@ function Navbar() {
                             <div className="app-navbar-profile" ref={profileRef}>
                                 <button
                                     type="button"
-                                    className="app-navbar-profile-toggle"
+                                    className="navbar-profile-trigger"
                                     aria-label={`Hesap menüsü: ${userDisplayName}`}
                                     aria-expanded={isProfileMenuOpen}
                                     aria-haspopup="menu"
                                     onClick={toggleProfileMenu}
                                 >
-                                    <span className="user-avatar">{userInitials}</span>
+                                    <div className="avatar-circle">
+                                        {userAvatar && !imageLoadError ? (
+                                            <img src={userAvatar} alt="Profil" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={() => setImageLoadError(true)} />
+                                        ) : (
+                                            <span aria-hidden="true">{userInitials}</span>
+                                        )}
+                                    </div>
                                     <span className="app-navbar-profile-name">{userDisplayName}</span>
                                 </button>
 
@@ -543,7 +564,13 @@ function Navbar() {
                                     isProfileMenuOpen && (
                                         <div className="app-navbar-profile-menu" role="menu" aria-label="Hesap menüsü">
                                             <div className="app-navbar-profile-menu-header">
-                                                <div className="app-navbar-profile-menu-avatar">{userInitials}</div>
+                                                <div className="app-navbar-profile-menu-avatar" style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
+                                                    {userAvatar && !imageLoadError ? (
+                                                        <img src={userAvatar} alt="Profil" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={() => setImageLoadError(true)} />
+                                                    ) : (
+                                                        <span aria-hidden="true">{userInitials}</span>
+                                                    )}
+                                                </div>
                                                 <div className="app-navbar-profile-menu-info">
                                                     <span className="app-navbar-profile-menu-name">{userDisplayName}</span>
                                                     {storedUser && 'email' in storedUser && typeof storedUser.email === 'string' && (

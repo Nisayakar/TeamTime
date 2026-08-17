@@ -7,16 +7,18 @@ public class ProfileResponse {
     private String surname;
     private String username;
     private String email;
+    private String profileImageUrl;
 
     public ProfileResponse() {
     }
 
-    public ProfileResponse(Long id, String name, String surname, String username, String email) {
+    public ProfileResponse(Long id, String name, String surname, String username, String email, String profileImageUrl) {
         this.id = id;
         this.name = name;
         this.surname = surname;
         this.username = username;
         this.email = email;
+        this.profileImageUrl = profileImageUrl;
     }
 
     public Long getId() {
@@ -57,5 +59,13 @@ public class ProfileResponse {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 }

@@ -45,6 +45,7 @@ import com.teamtime.exception.DuplicateUsernameException;
 import com.teamtime.exception.InvalidCredentialsException;
 import com.teamtime.exception.ResourceNotFoundException;
 import com.teamtime.exception.ConflictException;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -73,6 +74,7 @@ public class UserService {
     private final ProjectRepository projectRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final TeamRepository teamRepository;
+    private final FileStorageService fileStorageService;
 
     public UserService(
             UserRepository userRepository,
@@ -88,7 +90,8 @@ public class UserService {
             TaskRepository taskRepository,
             ProjectRepository projectRepository,
             TeamMemberRepository teamMemberRepository,
-            TeamRepository teamRepository
+            TeamRepository teamRepository,
+            FileStorageService fileStorageService
     ) {
         this.userRepository = userRepository;
         this.pendingRegistrationRepository = pendingRegistrationRepository;
@@ -104,6 +107,7 @@ public class UserService {
         this.projectRepository = projectRepository;
         this.teamMemberRepository = teamMemberRepository;
         this.teamRepository = teamRepository;
+        this.fileStorageService = fileStorageService;
     }
 
     @Transactional
@@ -646,12 +650,18 @@ public class UserService {
     }
 
     private ProfileResponse toProfileResponse(User user) {
+        String profileImageUrl = null;
+        if (user.getProfileImagePath() != null && !user.getProfileImagePath().isEmpty()) {
+            profileImageUrl = "/api/media/profile-images/" + user.getProfileImagePath();
+        }
+        
         return new ProfileResponse(
                 user.getId(),
                 user.getName(),
                 user.getSurname(),
                 user.getUsername(),
-                user.getEmail());
+                user.getEmail(),
+                profileImageUrl);
     }
 
     private void updateVerificationCode(PendingRegistration pendingRegistration, String code) {
@@ -711,5 +721,35 @@ public class UserService {
 
     private String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    @Transactional
+    public ProfileResponse uploadAvatar(Long userId, MultipartFile file) {
+        User user = findUserById(userId);
+        String newFileName = fileStorageService.storeProfileImage(file);
+        String oldFileName = user.getProfileImagePath();
+
+        user.setProfileImagePath(newFileName);
+        userRepository.save(user);
+
+        if (oldFileName != null && !oldFileName.isEmpty()) {
+            fileStorageService.deleteProfileImage(oldFileName);
+        }
+
+        return toProfileResponse(user);
+    }
+
+    @Transactional
+    public ProfileResponse removeAvatar(Long userId) {
+        User user = findUserById(userId);
+        String oldFileName = user.getProfileImagePath();
+
+        if (oldFileName != null && !oldFileName.isEmpty()) {
+            user.setProfileImagePath(null);
+            userRepository.save(user);
+            fileStorageService.deleteProfileImage(oldFileName);
+        }
+
+        return toProfileResponse(user);
     }
 }

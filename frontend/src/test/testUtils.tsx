@@ -12,7 +12,8 @@ export function profile(
     name = "Ayşe",
     surname = "Demir",
     email = "ayse@example.com",
-    username = "aysedemir"
+    username = "aysedemir",
+    profileImageUrl?: string
 ) {
     return {
         id: 1,
@@ -20,6 +21,7 @@ export function profile(
         surname,
         email,
         username,
+        profileImageUrl,
         role: "USER"
     };
 }
