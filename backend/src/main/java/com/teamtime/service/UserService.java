@@ -356,12 +356,18 @@ public class UserService {
         User loggedUser = user.get();
         String token = jwtService.generateToken(loggedUser);
 
+        String profileImageUrl = null;
+        if (loggedUser.getProfileImagePath() != null && !loggedUser.getProfileImagePath().isEmpty()) {
+            profileImageUrl = "/api/media/profile-images/" + loggedUser.getProfileImagePath();
+        }
+
         return new LoginResponse(
                 loggedUser.getId(),
                 loggedUser.getName(),
                 loggedUser.getSurname(),
                 loggedUser.getEmail(),
-                token);
+                token,
+                profileImageUrl);
     }
 
     public ProfileResponse getProfile(Long userId) {

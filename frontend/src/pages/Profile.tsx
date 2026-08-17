@@ -3,11 +3,12 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, clearAuth, updateStoredUser, getMediaUrl } from "../api";
 import { useToast } from "../context/toast";
-import { ThemeSwitcher } from "../components/ui/ThemeSwitcher";
+import { useTheme } from "../hooks/useTheme";
 import InlineFeedback, { type InlineFeedbackType } from "../components/ui/InlineFeedback";
 import ConfirmModal from "../components/ConfirmModal";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
 import { navigateForInitialLoadError } from "../utils/routeErrors";
+import "../styles/profile-v2.css";
 
 type ProfileUser = {
     id: number;
@@ -22,6 +23,25 @@ type EmailChangeStep = "request" | "verify";
 
 const RESEND_SECONDS = 60;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function SvgIcon({ d, viewBox = "0 0 24 24", fill = "none", stroke = "currentColor", size = 20, className, style }: any) {
+    return (
+        <svg width={size} height={size} viewBox={viewBox} fill={fill} stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className} style={style}>
+            {d}
+        </svg>
+    );
+}
+
+const ProfileIcon = (props: any) => <SvgIcon {...props} d={<><circle cx="12" cy="8" r="4" /><path d="M4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2" /></>} />;
+const LockIcon = (props: any) => <SvgIcon {...props} d={<><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></>} />;
+const PaletteIcon = (props: any) => <SvgIcon {...props} d={<><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.992 6.012 17.5 2 12 2z"/></>} />;
+const TrashIcon = (props: any) => <SvgIcon {...props} d={<><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></>} />;
+const MonitorIcon = (props: any) => <SvgIcon {...props} d={<><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></>} />;
+const CheckIcon = (props: any) => <SvgIcon {...props} d={<polyline points="20 6 9 17 4 12" />} />;
+const CameraIcon = (props: any) => <SvgIcon {...props} d={<><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></>} />;
+const MailIcon = (props: any) => <SvgIcon {...props} d={<><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></>} />;
+const VerifiedIcon = (props: any) => <SvgIcon {...props} d={<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></>} />;
+const WarningIcon = (props: any) => <SvgIcon {...props} d={<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></>} />;
 
 function Profile() {
     const { showToast } = useToast();
@@ -58,6 +78,8 @@ function Profile() {
     const [imageLoadError, setImageLoadError] = useState(false);
     const [avatarFeedback, setAvatarFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
     const [avatarModalOpen, setAvatarModalOpen] = useState(false);
+    const { preference, setPreference } = useTheme();
+    const [activeSection, setActiveSection] = useState<"profile" | "password" | "theme" | "delete">("profile");
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -357,9 +379,7 @@ function Profile() {
         return "";
     }
 
-    function formatCountdown(seconds: number) {
-        return `00:${String(seconds).padStart(2, "0")}`;
-    }
+
 
     async function updatePassword() {
         if (savingPassword) {
@@ -478,7 +498,6 @@ function Profile() {
             
             setAvatarFeedback(null);
             showToast({ type: "success", message: "Profil fotoğrafı güncellendi." });
-            window.dispatchEvent(new Event("user-updated"));
         } catch (error) {
             setAvatarFeedback({ type: "error", message: getErrorMessage(error, "Profil fotoğrafı yüklenemedi") });
         } finally {
@@ -509,7 +528,6 @@ function Profile() {
             setAvatarModalOpen(false);
             setAvatarFeedback(null);
             showToast({ type: "success", message: "Profil fotoğrafı kaldırıldı." });
-            window.dispatchEvent(new Event("user-updated"));
         } catch (error) {
             setAvatarFeedback({ type: "error", message: getErrorMessage(error, "Profil fotoğrafı kaldırılamadı") });
         } finally {
@@ -518,268 +536,330 @@ function Profile() {
     }
 
     return (
-        <main className="page-shell app-page profile-page">
-            <section className="hero-card profile-cover app-page-header profile-hero" style={{ position: "relative" }}>
-                <div className="profile-avatar-container" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", position: "relative", zIndex: 1 }}>
-                    <div className="profile-avatar">
-                        {avatarPreview && !imageLoadError ? (
-                            <img src={avatarPreview} alt="Profil Fotoğrafı" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={() => setImageLoadError(true)} />
-                        ) : (
-                            <span>{(user?.name || "T").slice(0, 1)}{(user?.surname || "T").slice(0, 1)}</span>
-                        )}
-                        {uploadingAvatar && (
-                            <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.8rem" }}>
-                                Yükleniyor...
-                            </div>
-                        )}
-                    </div>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                        <button 
-                            className="button button-secondary" 
-                            style={{ padding: "4px 8px", fontSize: "0.8rem" }}
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={uploadingAvatar}
-                        >
-                            {avatarPreview ? "Fotoğrafı Değiştir" : "Profil Fotoğrafı Ekle"}
-                        </button>
-                        {avatarPreview && (
-                            <button 
-                                className="button button-danger" 
-                                style={{ padding: "4px 8px", fontSize: "0.8rem" }}
-                                onClick={() => setAvatarModalOpen(true)}
-                                disabled={uploadingAvatar}
-                            >
-                                Kaldır
-                            </button>
-                        )}
-                        <input 
-                            type="file" 
-                            ref={fileInputRef} 
-                            style={{ display: "none" }} 
-                            accept="image/jpeg, image/png, image/webp" 
-                            onChange={handleFileSelect} 
-                        />
-                    </div>
-                    {avatarFeedback && (
-                        <div style={{ position: "absolute", top: "100%", marginTop: "8px", width: "200px" }}>
-                            <InlineFeedback type={avatarFeedback.type} message={avatarFeedback.message} />
+        <main className="profile-page-v2">
+            <div className="bg-decor"></div>
+            
+            {/* Sidebar */}
+            <aside className="profile-sidebar">
+                <div className="profile-sidebar-header">
+                    <div className="profile-sidebar-header-row">
+                        <div className="sidebar-icon-container">
+                            <ProfileIcon style={{ color: 'var(--primary)' }} />
                         </div>
-                    )}
-                </div>
-
-                <div className="app-page-header-copy">
-                    <span className="eyebrow">Profil</span>
-                    <h1>{user ? `${user.name} ${user.surname}` : "Profil"}</h1>
-                    <p>{user?.username ? `@${user.username}` : (user?.email || "Profil bilgileri yükleniyor")}</p>
-                </div>
-            </section>
-
-            <section className="content-grid two-columns profile-grid">
-                <div className="form-section profile-details-card">
-                    <div className="section-heading">
-                        <span className="eyebrow">Hesap</span>
-                        <h2>Profil Bilgileri</h2>
+                        <h2>Ayarlar</h2>
                     </div>
+                    <p>Hesap ve görünüm tercihlerinizi yönetin.</p>
+                </div>
+                
+                <nav className="sidebar-nav">
+                    <button 
+                        className={`sidebar-nav-item ${activeSection === "profile" ? "active" : ""}`}
+                        onClick={() => setActiveSection("profile")}
+                    >
+                        <ProfileIcon size={20} />
+                        <span>Profil Bilgileri</span>
+                    </button>
+                    
+                    <button 
+                        className={`sidebar-nav-item ${activeSection === "password" ? "active" : ""}`}
+                        onClick={() => setActiveSection("password")}
+                    >
+                        <LockIcon size={20} />
+                        <span>Şifre Değiştir</span>
+                    </button>
+                    
+                    <button 
+                        className={`sidebar-nav-item ${activeSection === "theme" ? "active" : ""}`}
+                        onClick={() => setActiveSection("theme")}
+                    >
+                        <PaletteIcon size={20} />
+                        <span>Tema Ayarları</span>
+                    </button>
+                    
+                    <button 
+                        className={`sidebar-nav-item danger ${activeSection === "delete" ? "active" : ""}`}
+                        onClick={() => setActiveSection("delete")}
+                    >
+                        <TrashIcon size={20} />
+                        <span>Hesabı Sil</span>
+                    </button>
+                </nav>
+            </aside>
+            
+            {/* Content Area */}
+            <section className="profile-content-area">
+                <div className={`profile-content-container ${activeSection === "password" ? "password-max" : activeSection === "delete" ? "delete-max" : ""}`}>
+                    
+                    {activeSection === "profile" && (
+                        <>
+                            <header className="content-header">
+                                <h1>Profil Bilgileri</h1>
+                                <p>Kişisel bilgilerinizi ve iletişim detaylarınızı güncelleyin.</p>
+                            </header>
 
-                    <div className="stacked-form">
-                        <label>Ad</label>
-                        <input
-                            aria-label="Ad"
-                            type="text"
-                            className="ghost-input"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                        />
+                            <div className="profile-top">
+                                <div className="avatar-wrapper">
+                                    <div className="avatar-circle">
+                                        {avatarPreview && !imageLoadError ? (
+                                            <img src={avatarPreview} alt="Profil" onError={() => setImageLoadError(true)} />
+                                        ) : (
+                                            <span>{(user?.name || "T").slice(0, 1)}{(user?.surname || "T").slice(0, 1)}</span>
+                                        )}
+                                        {uploadingAvatar && (
+                                            <div className="avatar-overlay">
+                                                <svg className='spin' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><line x1='12' y1='2' x2='12' y2='6'/><line x1='12' y1='18' x2='12' y2='22'/><line x1='4.93' y1='4.93' x2='7.76' y2='7.76'/><line x1='16.24' y1='16.24' x2='19.07' y2='19.07'/><line x1='2' y1='12' x2='6' y2='12'/><line x1='18' y1='12' x2='22' y2='12'/><line x1='4.93' y1='19.07' x2='7.76' y2='16.24'/><line x1='16.24' y1='7.76' x2='19.07' y2='4.93'/></svg>
+                                            </div>
+                                        )}
+                                        <div className="avatar-overlay" onClick={() => fileInputRef.current?.click()}>
+                                            <CameraIcon style={{ color: '#fff' }} />
+                                        </div>
+                                    </div>
+                                    <input type="file" ref={fileInputRef} style={{ display: "none" }} accept="image/jpeg, image/png, image/webp" onChange={handleFileSelect} />
+                                </div>
+                                
+                                <div className="avatar-info">
+                                    <h1>{user ? `${user.name} ${user.surname}` : "Profil"}</h1>
+                                    <p>{user?.username ? `@${user.username}` : (user?.email || "Yükleniyor...")}</p>
+                                </div>
 
-                        <label style={{ marginTop: "16px", display: "block" }}>Soyad</label>
-                        <input
-                            aria-label="Soyad"
-                            type="text"
-                            className="ghost-input"
-                            value={surname}
-                            onChange={(e) => setSurname(e.target.value)}
-                        />
+                                {avatarPreview && (
+                                    <button className="btn-outline" onClick={() => setAvatarModalOpen(true)} disabled={uploadingAvatar}>
+                                        Fotoğrafı Kaldır
+                                    </button>
+                                )}
+                            </div>
 
-                        <label style={{ marginTop: "16px", display: "block" }}>Kullanıcı Adı</label>
-                        <input
-                            aria-label="Kullanıcı Adı"
-                            type="text"
-                            className="ghost-input"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            minLength={3}
-                            maxLength={30}
-                        />
-                        {isCheckingUsername && <div style={{ fontSize: '0.85rem', marginTop: '0.25rem', color: '#6c757d' }}>Kontrol ediliyor...</div>}
-                        {!isCheckingUsername && usernameAvailable === true && <div style={{ fontSize: '0.85rem', marginTop: '0.25rem', color: '#198754' }}>Bu kullanıcı adı kullanılabilir.</div>}
-                        {!isCheckingUsername && usernameAvailable === false && <div style={{ fontSize: '0.85rem', marginTop: '0.25rem', color: '#dc3545' }}>Bu kullanıcı adı zaten kullanılıyor.</div>}
+                            {avatarFeedback && (
+                                <div className="mb-4">
+                                    <InlineFeedback type={avatarFeedback.type} message={avatarFeedback.message} />
+                                </div>
+                            )}
 
-                        <label style={{ marginTop: "16px", display: "block" }}>E-mail</label>
-                        <input
-                            aria-label="E-mail"
-                            type="email"
-                            className="ghost-input"
-                            value={email}
-                            readOnly
-                            disabled
-                        />
+                            <div className="divider"></div>
 
-                        <button className="button button-secondary profile-email-change-trigger" type="button" onClick={openEmailChangePanel}>
-                            E-posta Adresini Değiştir
-                        </button>
+                            <section className="glass-panel">
+                                <h3>Kişisel Bilgiler</h3>
+                                <div className="form-grid">
+                                    <div className="input-group">
+                                        <label htmlFor="name-input">Ad</label>
+                                        <div className="input-wrapper">
+                                            <input id="name-input" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Adınız" />
+                                        </div>
+                                    </div>
+                                    <div className="input-group">
+                                        <label htmlFor="surname-input">Soyad</label>
+                                        <div className="input-wrapper">
+                                            <input id="surname-input" type="text" value={surname} onChange={(e) => setSurname(e.target.value)} placeholder="Soyadınız" />
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="input-group full-width">
+                                        <label htmlFor="username-input">Kullanıcı Adı</label>
+                                        <div className="input-wrapper">
+                                            <span className="input-prefix">@</span>
+                                            <input id="username-input" type="text" value={username} onChange={(e) => setUsername(e.target.value)} minLength={3} maxLength={30} placeholder="kullanici_adi" />
+                                        </div>
+                                        <p className="input-hint">Kullanıcı adınız platformdaki diğer kullanıcılar tarafından görünür olacaktır.</p>
+                                        {isCheckingUsername && <p className="input-hint">Kontrol ediliyor...</p>}
+                                        {!isCheckingUsername && usernameAvailable === true && <p className="input-hint" style={{ color: '#82d385' }}>Bu kullanıcı adı kullanılabilir.</p>}
+                                        {!isCheckingUsername && usernameAvailable === false && <p className="input-hint" style={{ color: 'var(--danger)' }}>Bu kullanıcı adı zaten kullanılıyor.</p>}
+                                    </div>
+                                </div>
+                                <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+                                    <button className="btn-primary" onClick={updateProfile} disabled={savingProfile}>
+                                        {savingProfile ? "Güncelleniyor..." : "Profili Güncelle"}
+                                    </button>
+                                </div>
+                                {profileFeedback && <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}><InlineFeedback type={profileFeedback.type} message={profileFeedback.message} /></div>}
+                            </section>
 
-                        {
-                            emailChangeOpen && (
-                                <div className="profile-email-change-panel">
-                                    {
-                                        emailChangeStep === "request" ? (
-                                            <form className="stacked-form" onSubmit={requestEmailChangeCode} noValidate>
-                                                <label>Yeni E-posta Adresi</label>
-                                                <input
-                                                    aria-label="Yeni E-posta Adresi"
-                                                    type="email"
-                                                    className="ghost-input"
-                                                    value={newEmail}
-                                                    onChange={(event) => setNewEmail(event.target.value)}
-                                                    autoComplete="email"
-                                                />
-
-                                                <div className="profile-email-change-actions">
-                                                    <button className="button button-primary" type="submit" disabled={requestingEmailCode}>
-                                                        {requestingEmailCode ? "Kod gönderiliyor..." : "Doğrulama Kodu Gönder"}
+                            <section className="glass-panel">
+                                <h3>İletişim Bilgileri</h3>
+                                <div className="form-grid">
+                                    <div className="input-group full-width">
+                                        <label>E-posta Adresi</label>
+                                        <div className="input-wrapper">
+                                            <MailIcon size={20} className="input-prefix" />
+                                            <input type="email" value={email} readOnly disabled />
+                                            <VerifiedIcon size={20} className="input-suffix" />
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {!emailChangeOpen ? (
+                                    <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-start' }}>
+                                        <button className="btn-outline" onClick={openEmailChangePanel}>E-posta Adresini Değiştir</button>
+                                    </div>
+                                ) : (
+                                    <div style={{ marginTop: '24px', padding: '24px', borderRadius: '12px', backgroundColor: 'var(--surface-high)', border: '1px solid var(--border)' }}>
+                                        {emailChangeStep === "request" ? (
+                                            <form onSubmit={requestEmailChangeCode} noValidate>
+                                                <div className="input-group">
+                                                    <label>Yeni E-posta Adresi</label>
+                                                    <div className="input-wrapper">
+                                                        <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="yeni@email.com" />
+                                                    </div>
+                                                </div>
+                                                <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                                                    <button className="btn-primary" type="submit" disabled={requestingEmailCode}>
+                                                        {requestingEmailCode ? "Gönderiliyor..." : "Kod Gönder"}
                                                     </button>
-                                                    <button className="button button-ghost" type="button" onClick={closeEmailChangePanel}>
-                                                        İptal
-                                                    </button>
+                                                    <button className="btn-cancel" type="button" onClick={closeEmailChangePanel}>İptal</button>
                                                 </div>
                                             </form>
                                         ) : (
-                                            <form className="stacked-form" onSubmit={verifyEmailChange} noValidate>
-                                                <p className="profile-email-change-copy">
+                                            <form onSubmit={verifyEmailChange} noValidate>
+                                                <p style={{ fontSize: '14px', color: 'var(--text-variant)', marginBottom: '16px' }}>
                                                     {submittedEmail} adresine gönderilen 6 haneli kodu girin.
                                                 </p>
-
-                                                <div className="verification-code-field" style={{ marginTop: "16px" }}>
-                                                    <label htmlFor="profile-email-code">Doğrulama kodu</label>
-                                                    <input
-                                                        ref={emailCodeInputRef}
-                                                        id="profile-email-code"
-                                                        className="ghost-input verification-code-input"
-                                                        type="text"
-                                                        value={emailCode}
-                                                        onChange={(event) => handleEmailCodeChange(event.target.value)}
-                                                        inputMode="numeric"
-                                                        autoComplete="one-time-code"
-                                                        maxLength={6}
-                                                        minLength={6}
-                                                        pattern="[0-9]{6}"
-                                                        placeholder="000000"
-                                                    />
+                                                <div className="input-group">
+                                                    <label>Doğrulama Kodu</label>
+                                                    <div className="input-wrapper">
+                                                        <input ref={emailCodeInputRef} type="text" style={{ textAlign: 'center', letterSpacing: '4px', fontSize: '18px', fontFamily: 'monospace' }} value={emailCode} onChange={(e) => handleEmailCodeChange(e.target.value)} maxLength={6} placeholder="000000" />
+                                                    </div>
                                                 </div>
-
-                                                <button className="button button-primary" type="submit" disabled={verifyingEmailCode}>
-                                                    {verifyingEmailCode ? "Doğrulanıyor..." : "Doğrula ve E-postayı Değiştir"}
-                                                </button>
-
-                                                <div className="resend-panel profile-email-resend">
-                                                    <p>
-                                                        {
-                                                            resendCountdown > 0
-                                                                ? `Yeni kod gönderebilmek için ${resendCountdown} saniye bekleyin.`
-                                                                : "Yeni kod isteyebilirsiniz."
-                                                        }
-                                                    </p>
-                                                    <button
-                                                        className="button button-secondary"
-                                                        type="button"
-                                                        onClick={resendEmailChangeCode}
-                                                        disabled={resendingEmailCode || resendCountdown > 0}
-                                                    >
-                                                        {
-                                                            resendCountdown > 0
-                                                                ? `Yeni kod gönder: ${formatCountdown(resendCountdown)}`
-                                                                : resendingEmailCode
-                                                                    ? "Kod gönderiliyor..."
-                                                                    : "Kodu Yeniden Gönder"
-                                                        }
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
+                                                    <button className="btn-primary" type="submit" disabled={verifyingEmailCode}>
+                                                        {verifyingEmailCode ? "Doğrulanıyor..." : "Doğrula ve Değiştir"}
                                                     </button>
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', marginTop: '8px' }}>
+                                                        <span style={{ color: 'var(--text-variant)' }}>
+                                                            {resendCountdown > 0 ? `Yeni kod için ${resendCountdown}s bekleyin` : "Yeni kod isteyin"}
+                                                        </span>
+                                                        <button type="button" style={{ color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} onClick={resendEmailChangeCode} disabled={resendingEmailCode || resendCountdown > 0}>
+                                                            Kodu Yeniden Gönder
+                                                        </button>
+                                                    </div>
+                                                    <button className="btn-cancel" type="button" onClick={closeEmailChangePanel}>İptal</button>
                                                 </div>
-
-                                                <button className="button button-ghost" type="button" onClick={closeEmailChangePanel}>
-                                                    İptal
-                                                </button>
                                             </form>
-                                        )
-                                    }
+                                        )}
+                                    </div>
+                                )}
+                            </section>
+                        </>
+                    )}
+
+                    {activeSection === "password" && (
+                        <>
+                            <header className="content-header">
+                                <h1>Şifre Değiştir</h1>
+                                <p>Hesabınızın güvenliği için güçlü bir şifre kullanın.</p>
+                            </header>
+
+                            <div className="password-form-wrapper">
+                                <div className="password-form">
+                                    <div className="input-group">
+                                        <label htmlFor="old-password-input">Eski Şifre</label>
+                                        <input id="old-password-input" type="password" className="password-input" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} placeholder="Mevcut şifrenizi girin" />
+                                    </div>
+                                    <div className="input-group">
+                                        <label htmlFor="new-password-input">Yeni Şifre</label>
+                                        <input id="new-password-input" type="password" className="password-input" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Yeni şifrenizi girin" />
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                        <button className="btn-primary" onClick={updatePassword} disabled={savingPassword}>
+                                            {savingPassword ? "Güncelleniyor..." : "Şifreyi Güncelle"}
+                                        </button>
+                                    </div>
+                                    {passwordFeedback && <InlineFeedback type={passwordFeedback.type} message={passwordFeedback.message} />}
                                 </div>
-                            )
-                        }
-
-                        <button className="button button-primary" onClick={updateProfile} disabled={savingProfile}>
-                            {savingProfile ? "Güncelleniyor..." : "Profil Bilgilerini Güncelle"}
-                        </button>
-                        {profileFeedback && <InlineFeedback type={profileFeedback.type} message={profileFeedback.message} />}
-                    </div>
-                </div>
-
-                <div className="profile-side-column">
-                    <section className="form-section profile-section-card">
-                        <div className="profile-settings-block">
-                            <div>
-                                <strong>Tema</strong>
-                                <span className="muted" style={{ display: "block", fontSize: "14px" }}>Uygulama görünümünü seçin.</span>
                             </div>
-                            <ThemeSwitcher />
-                        </div>
-                    </section>
+                        </>
+                    )}
 
-                    <hr className="section-divider" style={{ margin: "24px 0" }} />
+                    {activeSection === "theme" && (
+                        <>
+                            <header className="content-header">
+                                <h1>Tema Ayarları</h1>
+                                <p>Uygulama görünümünü seçin.</p>
+                            </header>
 
-                    <section className="form-section profile-section-card">
-                        <div className="section-heading compact-heading">
-                            <span className="eyebrow">Güvenlik</span>
-                            <h3>Şifre Değiştir</h3>
-                        </div>
+                            <div className="theme-grid">
+                                <button
+                                    type="button"
+                                    className={`theme-card ${preference === "light" ? "active" : ""}`}
+                                    onClick={() => setPreference("light")}
+                                >
+                                    <div className="theme-preview" style={{ backgroundColor: '#ffffff' }}>
+                                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '16px', backgroundColor: '#f3f4f6', borderBottom: '1px solid #e5e7eb' }}></div>
+                                        <div style={{ position: 'absolute', top: '32px', left: '16px', right: '16px', bottom: '16px', backgroundColor: '#f9fafb', borderRadius: '4px', border: '1px solid #e5e7eb' }}></div>
+                                        <div style={{ position: 'absolute', top: '48px', left: '32px', width: '40px', height: '8px', backgroundColor: '#d1d5db', borderRadius: '4px' }}></div>
+                                    </div>
+                                    <div className="theme-card-footer">
+                                        <span className="theme-name">Açık Tema</span>
+                                        <div className="theme-indicator">
+                                            {preference === "light" && <CheckIcon size={14} />}
+                                        </div>
+                                    </div>
+                                </button>
 
-                        <div className="stacked-form">
-                            <label>Eski Şifre</label>
-                            <input
-                                aria-label="Eski Şifre"
-                                type="password"
-                                className="ghost-input"
-                                value={oldPassword}
-                                onChange={(e) => setOldPassword(e.target.value)}
-                            />
-
-                            <label style={{ marginTop: "16px", display: "block" }}>Yeni Şifre</label>
-                            <input
-                                aria-label="Yeni Şifre"
-                                type="password"
-                                className="ghost-input"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                            />
-
-                            <button className="button button-primary" onClick={updatePassword} disabled={savingPassword}>
-                                {savingPassword ? "Güncelleniyor..." : "Şifreyi Güncelle"}
-                            </button>
-                            {passwordFeedback && <InlineFeedback type={passwordFeedback.type} message={passwordFeedback.message} />}
-                        </div>
-                    </section>
-
-                    <hr className="section-divider" style={{ margin: "24px 0" }} />
-
-                    <section className="form-section profile-section-card profile-danger-card">
-                        <div className="profile-danger-zone">
-                            <div>
-                                <strong>Hesabı Sil</strong>
-                                <span className="muted" style={{ display: "block", fontSize: "14px", marginTop: "4px" }}>Bu işlem hesabınızı ve size bağlı verileri kalıcı olarak kaldırır.</span>
+                                <button
+                                    type="button"
+                                    className={`theme-card ${preference === "dark" ? "active" : ""}`}
+                                    onClick={() => setPreference("dark")}
+                                >
+                                    <div className="theme-preview" style={{ backgroundColor: '#131313' }}>
+                                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '16px', backgroundColor: '#1c1b1b', borderBottom: '1px solid #2a2a2a' }}></div>
+                                        <div style={{ position: 'absolute', top: '32px', left: '16px', right: '16px', bottom: '16px', backgroundColor: '#0e0e0e', borderRadius: '4px', border: '1px solid #2a2a2a' }}></div>
+                                        <div style={{ position: 'absolute', top: '48px', left: '32px', width: '40px', height: '8px', backgroundColor: '#353534', borderRadius: '4px' }}></div>
+                                    </div>
+                                    <div className="theme-card-footer">
+                                        <span className="theme-name">Koyu Tema</span>
+                                        <div className="theme-indicator">
+                                            {preference === "dark" && <CheckIcon size={14} />}
+                                        </div>
+                                    </div>
+                                </button>
                             </div>
-                            <button className="button button-danger" onClick={openDeleteModal} disabled={deletingAccount}>
-                                Hesabı Sil
-                            </button>
-                        </div>
-                    </section>
+                            
+                            <div className="system-theme-toggle" onClick={() => setPreference("system")}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <MonitorIcon size={20} style={{ color: 'var(--outline)' }} />
+                                    <div>
+                                        <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text)' }}>Sistem Teması</div>
+                                        <div style={{ fontSize: '12px', color: 'var(--text-variant)', marginTop: '4px' }}>Görünümü sistem ayarlarınıza göre otomatik ayarlar</div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                        <input type="checkbox" checked={preference === "system"} readOnly style={{ appearance: 'none', width: '36px', height: '20px', backgroundColor: preference === "system" ? 'var(--primary)' : 'var(--surface-high)', borderRadius: '9999px', position: 'relative', outline: 'none', transition: '0.2s', cursor: 'pointer' }} />
+                                        <span style={{ position: 'absolute', width: '16px', height: '16px', backgroundColor: '#fff', borderRadius: '50%', transform: preference === "system" ? 'translateX(18px)' : 'translateX(2px)', transition: '0.2s', pointerEvents: 'none' }}></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {activeSection === "delete" && (
+                        <>
+                            <header className="content-header">
+                                <h1>Hesabı Sil</h1>
+                                <p>Kalıcı olarak hesabınızı ve tüm verilerinizi sistemden kaldırın.</p>
+                            </header>
+
+                            <div className="danger-box">
+                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', flexDirection: 'row' }}>
+                                    <div className="danger-icon-wrapper">
+                                        <WarningIcon style={{ color: 'var(--danger)' }} />
+                                    </div>
+                                    <div className="danger-text-content">
+                                        <h3>Dikkat</h3>
+                                        <p>
+                                            Bu işlem hesabınızı ve size bağlı verileri kalıcı olarak kaldırır. Silinen hesaplar geri alınamaz. Devam etmeden önce önemli verilerinizi yedeklediğinizden emin olun.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="danger-actions">
+                                    <button className="danger-btn" onClick={openDeleteModal} disabled={deletingAccount}>
+                                        <TrashIcon size={18} />
+                                        Hesabı Sil
+                                    </button>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
                 </div>
             </section>
 

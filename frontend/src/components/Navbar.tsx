@@ -143,8 +143,17 @@ function Navbar() {
         function handleUserUpdated() {
             setStoredUser(getStoredUser());
         }
+        function handleStorage(e: StorageEvent) {
+            if (e.key === "user" || e.key === "token" || e.key === null) {
+                setStoredUser(getStoredUser());
+            }
+        }
         window.addEventListener("user-updated", handleUserUpdated);
-        return () => window.removeEventListener("user-updated", handleUserUpdated);
+        window.addEventListener("storage", handleStorage);
+        return () => {
+            window.removeEventListener("user-updated", handleUserUpdated);
+            window.removeEventListener("storage", handleStorage);
+        };
     }, []);
 
     useEffect(() => {
@@ -544,7 +553,7 @@ function Navbar() {
                             <div className="app-navbar-profile" ref={profileRef}>
                                 <button
                                     type="button"
-                                    className="navbar-profile-trigger"
+                                    className="app-navbar-profile-toggle"
                                     aria-label={`Hesap menüsü: ${userDisplayName}`}
                                     aria-expanded={isProfileMenuOpen}
                                     aria-haspopup="menu"

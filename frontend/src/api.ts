@@ -43,6 +43,7 @@ export function saveAuth(loginUser: LoginUser) {
             profileImageUrl: loginUser.profileImageUrl
         })
     );
+    window.dispatchEvent(new Event("user-updated"));
 }
 
 export function getToken() {
@@ -86,6 +87,7 @@ export function updateStoredUser(user: {
     profileImageUrl?: string | null;
 }) {
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    window.dispatchEvent(new Event("user-updated"));
 }
 
 export function isAuthenticated() {
@@ -95,6 +97,7 @@ export function isAuthenticated() {
 export function clearAuth() {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     localStorage.removeItem(USER_STORAGE_KEY);
+    window.dispatchEvent(new Event("user-updated"));
 }
 
 function isPublicAuthRequest(path: string) {

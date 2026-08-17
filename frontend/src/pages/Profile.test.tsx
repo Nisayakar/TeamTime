@@ -20,7 +20,7 @@ describe("Profile", () => {
         await user.type(screen.getByLabelText("Ad"), "Ayşe Nur");
         await user.clear(screen.getByLabelText("Kullanıcı Adı"));
         await user.type(screen.getByLabelText("Kullanıcı Adı"), "aysenur123");
-        await user.click(screen.getByRole("button", { name: "Profil Bilgilerini Güncelle" }));
+        await user.click(screen.getByRole("button", { name: "Profili Güncelle" }));
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
         const [, requestInit] = fetchMock.mock.calls[1];
@@ -42,7 +42,7 @@ describe("Profile", () => {
         renderWithProviders(<Profile />);
 
         await screen.findByDisplayValue("Ayşe");
-        await user.click(screen.getByRole("button", { name: "Profil Bilgilerini Güncelle" }));
+        await user.click(screen.getByRole("button", { name: "Profili Güncelle" }));
 
         expect(await screen.findByText("Bu email adresi ile kayıtlı bir kullanıcı zaten var")).toBeInTheDocument();
         expect(screen.queryByText("[object Object]")).not.toBeInTheDocument();
@@ -60,6 +60,7 @@ describe("Profile", () => {
         renderWithProviders(<Profile />);
 
         await screen.findByDisplayValue("Ayşe");
+        await user.click(screen.getByRole("button", { name: /Şifre Değiştir/i }));
         await user.type(screen.getByLabelText("Eski Şifre"), "wrong-old");
         await user.type(screen.getByLabelText("Yeni Şifre"), "new-secret");
         await user.click(screen.getByRole("button", { name: "Şifreyi Güncelle" }));
@@ -98,12 +99,12 @@ describe("Profile", () => {
         await screen.findByDisplayValue("Ayşe");
         await user.clear(screen.getByLabelText("Kullanıcı Adı"));
         await user.type(screen.getByLabelText("Kullanıcı Adı"), "aysedemir");
-        await user.click(screen.getByRole("button", { name: "Profil Bilgilerini Güncelle" }));
+        await user.click(screen.getByRole("button", { name: "Profili Güncelle" }));
 
         expect(screen.getByRole("button", { name: "Güncelleniyor..." })).toBeDisabled();
 
         resolveUpdate(mockJsonResponse(profile()));
-        expect(await screen.findByRole("button", { name: "Profil Bilgilerini Güncelle" })).toBeEnabled();
+        expect(await screen.findByRole("button", { name: "Profili Güncelle" })).toBeEnabled();
     });
 
     it("opens the account deletion modal without calling native confirm or delete immediately", async () => {
@@ -117,9 +118,14 @@ describe("Profile", () => {
 
         renderWithProviders(<Profile />);
 
-        expect(await screen.findByRole("heading", { name: "Profil Bilgileri" })).toBeInTheDocument();
-        expect(screen.getByRole("radio", { name: "Açık tema" })).toBeInTheDocument();
-        await user.click(screen.getByRole("button", { name: "Hesabı Sil" }));
+        expect(await screen.findByRole("heading", { name: "Kişisel Bilgiler" })).toBeInTheDocument();
+        await user.click(screen.getByRole("button", { name: /Tema Ayarları/i }));
+        expect(await screen.findByRole("button", { name: /Açık Tema/i })).toBeInTheDocument();
+        
+        const deleteTabButtons = screen.getAllByRole("button", { name: /Hesabı Sil/i });
+        await user.click(deleteTabButtons[0]);
+        const contentDeleteBtns = await screen.findAllByRole("button", { name: /Hesabı Sil/i });
+        await user.click(contentDeleteBtns[1]);
 
         expect(screen.getByRole("dialog", { name: "Hesabınızı silmek istediğinizden emin misiniz?" })).toBeInTheDocument();
         expect(screen.getByText("Bu işlem geri alınamaz. Hesabınız ve hesabınıza bağlı veriler kalıcı olarak silinecektir.")).toBeInTheDocument();
@@ -136,7 +142,10 @@ describe("Profile", () => {
         renderWithProviders(<Profile />);
 
         await screen.findByDisplayValue("Ayşe");
-        await user.click(screen.getByRole("button", { name: "Hesabı Sil" }));
+        const deleteTabButtons = screen.getAllByRole("button", { name: /Hesabı Sil/i });
+        await user.click(deleteTabButtons[0]);
+        const contentDeleteBtns = await screen.findAllByRole("button", { name: /Hesabı Sil/i });
+        await user.click(contentDeleteBtns[1]);
         await user.click(screen.getByRole("button", { name: "İptal" }));
 
         expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -155,7 +164,10 @@ describe("Profile", () => {
         renderWithProviders(<Profile />);
 
         await screen.findByDisplayValue("Ayşe");
-        await user.click(screen.getByRole("button", { name: "Hesabı Sil" }));
+        const deleteTabButtons = screen.getAllByRole("button", { name: /Hesabı Sil/i });
+        await user.click(deleteTabButtons[0]);
+        const contentDeleteBtns = await screen.findAllByRole("button", { name: /Hesabı Sil/i });
+        await user.click(contentDeleteBtns[1]);
         await user.click(screen.getByRole("button", { name: "Hesabımı Kalıcı Olarak Sil" }));
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
@@ -180,7 +192,10 @@ describe("Profile", () => {
         renderWithProviders(<Profile />);
 
         await screen.findByDisplayValue("Ayşe");
-        await user.click(screen.getByRole("button", { name: "Hesabı Sil" }));
+        const deleteTabButtons = screen.getAllByRole("button", { name: /Hesabı Sil/i });
+        await user.click(deleteTabButtons[0]);
+        const contentDeleteBtns = await screen.findAllByRole("button", { name: /Hesabı Sil/i });
+        await user.click(contentDeleteBtns[1]);
         await user.click(screen.getByRole("button", { name: "Hesabımı Kalıcı Olarak Sil" }));
 
         expect(screen.getByRole("button", { name: "Hesabımı Kalıcı Olarak Sil..." })).toBeDisabled();
@@ -207,7 +222,10 @@ describe("Profile", () => {
         renderWithProviders(<Profile />);
 
         await screen.findByDisplayValue("Ayşe");
-        await user.click(screen.getByRole("button", { name: "Hesabı Sil" }));
+        const deleteTabButtons = screen.getAllByRole("button", { name: /Hesabı Sil/i });
+        await user.click(deleteTabButtons[0]);
+        const contentDeleteBtns = await screen.findAllByRole("button", { name: /Hesabı Sil/i });
+        await user.click(contentDeleteBtns[1]);
         await user.click(screen.getByRole("button", { name: "Hesabımı Kalıcı Olarak Sil" }));
 
         expect(await screen.findByText("Hesap silinemedi")).toBeInTheDocument();
