@@ -10,6 +10,7 @@ import type { AssignmentStatus, Task, TaskPriority, TaskStatus } from "../types/
 import { canManageTeamProjects, type TeamMember, type TeamRole } from "../types/team";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
 import { navigateForInitialLoadError } from "../utils/routeErrors";
+import "./ProjectDetails.css";
 
 type StoredUser = {
     id: number;
@@ -625,104 +626,114 @@ function ProjectDetails() {
 
     function renderTaskCard(task: Task) {
         return (
-            <div className="task-card" key={task.id} style={{ marginBottom: '15px' }}>
-                <div>
-                    <h3>{task.title}</h3>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: '5px 0' }}>{task.description}</p>
-                </div>
-
-                <span className={getStatusClass(task.status)}>
-                    {getStatusLabel(task.status)}
-                </span>
-
-                <div className="task-meta-row" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '8px 0' }}>
+            <div className={`task-card ${task.status === "TAMAMLANDI" ? "task-completed" : ""}`} key={task.id}>
+                {/* Upper Row: Status badge & Priority Badge & Overdue badge */}
+                <div className="task-card-upper">
+                    <span className={getStatusClass(task.status)}>
+                        {getStatusLabel(task.status)}
+                    </span>
                     <span className={getPriorityClass(task.priority)}>
                         {getPriorityLabel(task.priority)}
                     </span>
-                    <span className={task.overdue ? "badge badge-warning" : "badge badge-blue"}>
-                        Son Tarih: {formatDate(task.dueDate)}
-                    </span>
-                    {
-                        task.overdue && (
-                            <span className="badge badge-warning">Gecikmiş</span>
-                        )
-                    }
+                    {task.overdue && (
+                        <span className="badge badge-warning">Gecikmiş</span>
+                    )}
                 </div>
 
-                {
-                    project?.teamProject && (
-                        <div className="task-assignment-block" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px', marginTop: '8px' }}>
-                            <div className="task-meta-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span className="badge badge-blue">
+                {/* Middle: Title & Description */}
+                <div className="task-card-middle">
+                    <h3>{task.title}</h3>
+                    {task.description && (
+                        <p className="task-card-desc">{task.description}</p>
+                    )}
+                </div>
+
+                {/* Bottom: Due Date & Assignee */}
+                <div className="task-card-bottom">
+                    <div className="task-card-meta-info">
+                        <span className="meta-date">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "4px", display: "inline-block", verticalAlign: "middle" }}>
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                <line x1="16" y1="2" x2="16" y2="6" />
+                                <line x1="8" y1="2" x2="8" y2="6" />
+                                <line x1="3" y1="10" x2="21" y2="10" />
+                            </svg>
+                            Son Tarih: {formatDate(task.dueDate)}
+                        </span>
+                        
+                        {project?.teamProject && (
+                            <div className="task-assignee-info">
+                                <span className="meta-assignee">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "4px", display: "inline-block", verticalAlign: "middle" }}>
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                        <circle cx="12" cy="7" r="4" />
+                                    </svg>
                                     Atanan: {task.assignedUserName || "Atanmamış"}
                                 </span>
                                 <span className={getAssignmentStatusClass(task.assignmentStatus)}>
                                     {getAssignmentStatusLabel(task.assignmentStatus)}
                                 </span>
                             </div>
-                            {
-                                shouldShowRejectionReason(task) && task.rejectionReason && (
-                                    <p className="task-assignment-reason" style={{ fontSize: '0.85rem', color: '#ef4444', marginTop: '5px' }}>
-                                        Mazeret: {task.rejectionReason}
-                                    </p>
-                                )
-                            }
-                            {
-                                canRespondToAssignment(task) && (
-                                    <div className="button-row task-assignment-actions" style={{ display: 'flex', gap: '5px', marginTop: '8px' }}>
-                                        <button
-                                            className="button button-primary"
-                                            type="button"
-                                            style={{ padding: '4px 8px', fontSize: '0.8rem', minHeight: '28px' }}
-                                            disabled={assignmentActionTaskId === task.id}
-                                            onClick={() => acceptTaskAssignment(task)}
-                                        >
-                                            {assignmentActionTaskId === task.id ? "İşleniyor..." : "Kabul Et"}
-                                        </button>
-                                        <button
-                                            className="button button-secondary"
-                                            type="button"
-                                            style={{ padding: '4px 8px', fontSize: '0.8rem', minHeight: '28px' }}
-                                            disabled={assignmentActionTaskId === task.id}
-                                            onClick={() => setRejectAssignment({
-                                                task,
-                                                reason: "",
-                                                error: "",
-                                                submitting: false
-                                            })}
-                                        >
-                                            Reddet
-                                        </button>
-                                    </div>
-                                )
-                            }
-                        </div>
-                    )
-                }
+                        )}
+                    </div>
 
-                <div className="button-row" style={{ marginTop: '10px', display: 'flex', gap: '5px' }}>
-                    <button className="button button-primary" style={{ padding: '5px 10px', fontSize: '0.85rem' }} onClick={() => setSelectedTaskDetail(task)}>
-                        Detay
-                    </button>
-                    {
-                        canMutateTasks && (
-                            <>
-                                <button className="button button-secondary" style={{ padding: '5px 10px', fontSize: '0.85rem' }} onClick={() => editTask(task)}>
-                                    Düzenle
+                    {/* Mazeret (if rejected) */}
+                    {project?.teamProject && shouldShowRejectionReason(task) && task.rejectionReason && (
+                        <p className="task-assignment-reason">
+                            Mazeret: {task.rejectionReason}
+                        </p>
+                    )}
+
+                    {/* Actions row: Accept/Reject & Detail/Edit/Delete */}
+                    <div className="task-card-actions-wrapper">
+                        {project?.teamProject && canRespondToAssignment(task) && (
+                            <div className="task-assignment-actions">
+                                <button
+                                    className="button button-primary button-sm"
+                                    type="button"
+                                    disabled={assignmentActionTaskId === task.id}
+                                    onClick={() => acceptTaskAssignment(task)}
+                                >
+                                    {assignmentActionTaskId === task.id ? "İşleniyor..." : "Kabul Et"}
                                 </button>
                                 <button
-                                    className="button button-danger"
-                                    style={{ padding: '5px 10px', fontSize: '0.85rem' }}
-                                    onClick={() => {
-                                        setDeleteFeedback("");
-                                        setTaskToDelete(task);
-                                    }}
+                                    className="button button-secondary button-sm"
+                                    type="button"
+                                    disabled={assignmentActionTaskId === task.id}
+                                    onClick={() => setRejectAssignment({
+                                        task,
+                                        reason: "",
+                                        error: "",
+                                        submitting: false
+                                    })}
                                 >
-                                    Sil
+                                    Reddet
                                 </button>
-                            </>
-                        )
-                    }
+                            </div>
+                        )}
+
+                        <div className="task-card-actions">
+                            <button className="button button-secondary button-sm" onClick={() => setSelectedTaskDetail(task)}>
+                                Detay
+                            </button>
+                            {canMutateTasks && (
+                                <>
+                                    <button className="button button-secondary button-sm" onClick={() => editTask(task)}>
+                                        Düzenle
+                                    </button>
+                                    <button
+                                        className="button button-danger button-sm"
+                                        onClick={() => {
+                                            setDeleteFeedback("");
+                                            setTaskToDelete(task);
+                                        }}
+                                    >
+                                        Sil
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -730,25 +741,35 @@ function ProjectDetails() {
 
     return (
         <main className="page-shell app-page project-details-page">
-            <section className="page-header app-page-header">
-                <div className="app-page-header-copy">
-                    <span className="eyebrow">Proje</span>
-                    <h1>{project?.projectName || "Proje Detayları"}</h1>
-                    <p>{loadingProject ? "Proje bilgileri yükleniyor..." : getProjectScopeLabel()}</p>
-                    {
-                        project && (
-                            <div style={{ marginTop: "15px", maxWidth: "300px" }}>
-                                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "4px", color: "var(--text-secondary)" }}>
-                                    <span>Tamamlanma Oranı</span>
-                                    <span>%{projectProgress}</span>
-                                </div>
-                                <div style={{ width: "100%", height: "8px", backgroundColor: "rgba(255,255,255,0.1)", borderRadius: "4px", overflow: "hidden" }}>
-                                    <div style={{ width: `${projectProgress}%`, height: "100%", backgroundColor: "#2563eb", borderRadius: "4px", transition: "width 0.3s ease" }} />
-                                </div>
-                            </div>
-                        )
-                    }
+            <section className="project-header-card">
+                <div className="project-header-main">
+                    <div className="project-header-avatar">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                        </svg>
+                    </div>
+                    <div className="project-header-info">
+                        <span className="eyebrow">Proje</span>
+                        <h1>{project?.projectName || "Proje Detayları"}</h1>
+                        <div className="project-header-badges">
+                            <span className={`badge ${project?.teamProject ? "badge-purple" : "badge-blue"}`}>
+                                {loadingProject ? "Yükleniyor..." : getProjectScopeLabel()}
+                            </span>
+                        </div>
+                    </div>
                 </div>
+
+                {project && (
+                    <div className="project-header-progress">
+                        <div className="progress-label-row">
+                            <span>Tamamlanma Oranı</span>
+                            <strong>%{projectProgress}</strong>
+                        </div>
+                        <div className="progress-bar-track">
+                            <div className="progress-bar-fill" style={{ width: `${projectProgress}%` }} />
+                        </div>
+                    </div>
+                )}
             </section>
             {projectFeedback && <InlineFeedback type={projectFeedback.type} message={projectFeedback.message} />}
 
@@ -961,11 +982,10 @@ function ProjectDetails() {
 
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", marginTop: "15px" }}>
                         <h3 style={{ margin: 0 }}>Görevler ({filteredTasks.length})</h3>
-                        <div style={{ display: "flex", gap: "8px" }}>
+                        <div className="view-toggle-container">
                             <button
                                 type="button"
                                 className={`button ${viewMode === "list" ? "button-primary" : "button-secondary"}`}
-                                style={{ padding: "6px 12px", minHeight: "32px", fontSize: "14px" }}
                                 onClick={() => setViewMode("list")}
                             >
                                 Liste
@@ -973,7 +993,6 @@ function ProjectDetails() {
                             <button
                                 type="button"
                                 className={`button ${viewMode === "kanban" ? "button-primary" : "button-secondary"}`}
-                                style={{ padding: "6px 12px", minHeight: "32px", fontSize: "14px" }}
                                 onClick={() => setViewMode("kanban")}
                             >
                                 Kanban

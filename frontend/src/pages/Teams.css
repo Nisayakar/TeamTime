@@ -1,0 +1,312 @@
+/* Teams Layout Style overrides */
+.teams-page {
+    max-width: 1440px;
+    width: 100%;
+    margin-inline: auto;
+    padding: var(--tt-space-10) var(--tt-container-pad) var(--tt-space-16);
+    box-sizing: border-box;
+}
+
+.teams-page-header {
+    margin-bottom: var(--tt-space-8);
+}
+
+.teams-page-header h1 {
+    font-size: var(--tt-font-size-3xl);
+    font-weight: 800;
+    margin: var(--tt-space-1) 0 var(--tt-space-2);
+}
+
+.teams-page-header p {
+    color: var(--tt-text-secondary);
+    font-size: var(--tt-font-size-lg);
+    margin: 0;
+}
+
+.teams-layout-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--tt-space-6);
+    align-items: start;
+}
+
+@media (min-width: 1024px) {
+    .teams-layout-grid {
+        grid-template-columns: 380px 1fr;
+        gap: var(--tt-space-8);
+    }
+}
+
+/* Sidebar Panel */
+.teams-create-sidebar {
+    background: var(--tt-surface);
+    border: 1px solid var(--tt-border);
+    border-radius: var(--tt-radius-lg);
+    padding: var(--tt-space-5);
+    box-shadow: var(--tt-shadow-md);
+}
+
+.teams-create-sidebar h2 {
+    font-size: var(--tt-font-size-xl);
+    font-weight: 700;
+    margin: var(--tt-space-1) 0 var(--tt-space-4);
+}
+
+/* Glass Card style overrides for Dark Theme */
+[data-theme="dark"] .teams-create-sidebar,
+[data-theme="dark"] .team-glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Active Teams Content */
+.teams-list-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tt-space-4);
+}
+
+.teams-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--tt-space-2);
+}
+
+.teams-list-header h2 {
+    font-size: var(--tt-font-size-xl);
+    font-weight: 700;
+    margin: 0;
+}
+
+.teams-grid-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--tt-space-4);
+}
+
+@media (min-width: 768px) {
+    .teams-grid-container {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--tt-space-6);
+    }
+}
+
+/* Team Card */
+.team-glass-card {
+    background: var(--tt-surface);
+    border: 1px solid var(--tt-border);
+    border-radius: var(--tt-radius-lg);
+    padding: var(--tt-space-6); /* 24px padding */
+    display: flex;
+    flex-direction: column;
+    gap: var(--tt-space-4); /* spacing between sections */
+    box-shadow: var(--tt-shadow-sm);
+    transition: transform var(--tt-duration-fast) var(--tt-ease), border-color var(--tt-duration-fast) var(--tt-ease), box-shadow var(--tt-duration-fast) var(--tt-ease);
+}
+
+.team-glass-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--tt-primary);
+    box-shadow: var(--tt-shadow-md);
+}
+
+.team-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+}
+
+.team-card-info-wrap {
+    display: flex;
+    gap: var(--tt-space-3);
+    align-items: center;
+}
+
+.team-card-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--tt-radius-md);
+    background: var(--tt-primary-soft);
+    color: var(--tt-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: var(--tt-font-size-lg);
+    border: 1px solid var(--tt-border-subtle);
+}
+
+[data-theme="dark"] .team-card-avatar {
+    background: rgba(96, 165, 250, 0.15);
+    color: #60a5fa;
+    border-color: rgba(96, 165, 250, 0.25);
+}
+
+.team-card-meta h3 {
+    margin: 0;
+    font-size: var(--tt-font-size-lg);
+    font-weight: 700;
+    color: var(--tt-text);
+}
+
+.team-card-meta .role-badge {
+    font-size: var(--tt-font-size-xs);
+    font-weight: 600;
+    color: var(--tt-text-secondary);
+    background: var(--tt-surface-secondary);
+    padding: 2px 8px;
+    border-radius: var(--tt-radius-sm);
+    display: inline-block;
+    margin-top: 4px;
+}
+
+.team-card-description {
+    font-size: var(--tt-font-size-sm);
+    color: var(--tt-text-secondary);
+    line-height: var(--tt-line-normal);
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.team-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--tt-space-2);
+    margin-top: auto;
+}
+
+/* Edit Team Form Inside Card */
+.team-card-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tt-space-3);
+    width: 100%;
+}
+
+.team-card-edit-form input {
+    width: 100%;
+    background: var(--tt-surface-secondary);
+    border: 1px solid var(--tt-border);
+    border-radius: var(--tt-radius-md);
+    padding: 8px 12px;
+    color: var(--tt-text);
+    font-size: var(--tt-font-size-sm);
+}
+
+.team-card-edit-form input:focus {
+    border-color: var(--tt-primary);
+    outline: none;
+}
+
+/* Create Form Fields styling overrides */
+.teams-create-sidebar form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tt-space-3);
+}
+
+.teams-create-sidebar label {
+    display: block;
+    font-size: var(--tt-font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--tt-tracking-label);
+    color: var(--tt-text-secondary);
+    margin-bottom: var(--tt-space-1);
+}
+
+.teams-create-sidebar input {
+    width: 100%;
+    background: var(--tt-surface-secondary);
+    border: 1px solid var(--tt-border);
+    border-radius: var(--tt-radius-md);
+    padding: 8px 12px;
+    color: var(--tt-text);
+    font-size: var(--tt-font-size-sm);
+    transition: border-color var(--tt-duration-fast) var(--tt-ease);
+}
+
+[data-theme="dark"] .teams-create-sidebar input {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.teams-create-sidebar input:focus {
+    border-color: var(--tt-primary);
+    outline: none;
+}
+
+/* Autocomplete field in sidebar */
+.teams-create-sidebar .autocomplete-field {
+    position: relative;
+}
+
+.teams-create-sidebar .autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: var(--tt-surface-elevated);
+    border: 1px solid var(--tt-border);
+    border-radius: var(--tt-radius-md);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 10;
+    box-shadow: var(--tt-shadow-lg);
+    margin-top: 4px;
+}
+
+.teams-create-sidebar .autocomplete-option {
+    width: 100%;
+    background: transparent;
+    border: none;
+    text-align: left;
+    padding: 8px 12px;
+    color: var(--tt-text);
+    cursor: pointer;
+    transition: background-color var(--tt-duration-fast) var(--tt-ease);
+}
+
+.teams-create-sidebar .autocomplete-option:hover {
+    background: var(--tt-surface-secondary);
+}
+
+/* Chips */
+.teams-create-sidebar .selected-users-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--tt-space-2);
+    margin-top: var(--tt-space-2);
+}
+
+.teams-create-sidebar .selected-users-chips .chip {
+    display: inline-flex;
+    align-items: center;
+    background: var(--tt-surface-secondary);
+    border: 1px solid var(--tt-border);
+    border-radius: var(--tt-radius-full);
+    padding: 4px 12px;
+    font-size: var(--tt-font-size-xs);
+    color: var(--tt-text);
+}
+
+.teams-create-sidebar .selected-users-chips .chip button {
+    background: transparent;
+    border: none;
+    color: var(--tt-text-secondary);
+    margin-left: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.teams-create-sidebar .selected-users-chips .chip button:hover {
+    color: var(--tt-danger);
+}

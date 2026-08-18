@@ -1,0 +1,462 @@
+/* Project Details Page Overrides */
+.project-details-page {
+    max-width: 1400px; /* Horizon container matching desktop limit */
+    width: 100%;
+    margin-inline: auto;
+    padding: var(--tt-space-10) var(--tt-container-pad) var(--tt-space-16);
+    box-sizing: border-box;
+}
+
+/* Page Layout grid - two columns without internal scrollbars */
+.project-details-page .content-grid.two-columns {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px; /* 32px gap between panels */
+    align-items: start;
+    margin-top: var(--tt-space-6);
+}
+
+@media (min-width: 1024px) {
+    .project-details-page .content-grid.two-columns {
+        grid-template-columns: 380px 1fr; /* Sol form ~380px, sag gorev listesi kalan alan */
+    }
+}
+
+/* Left Sidebar Form Section - simplified flow card without sticky scrollbars */
+.project-details-page .form-section {
+    background: var(--tt-surface);
+    border: 1px solid var(--tt-border);
+    border-radius: 16px; /* 16px radius */
+    padding: 24px; /* 24px padding */
+    box-shadow: var(--tt-shadow-sm);
+    position: relative; /* Document normal flow */
+    max-height: none;
+    overflow: visible;
+}
+
+[data-theme="dark"] .project-details-page .form-section {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Right Task Area Panel - transparent list surface to remove box-in-a-box look */
+.project-details-page .tasks-panel {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    max-height: none;
+    overflow: visible;
+}
+
+/* Sidebar Form details */
+.project-details-page .form-section .stacked-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px; /* Field groups spacing 18px */
+    margin-top: var(--tt-space-4);
+}
+
+.project-details-page .form-section .stacked-form label {
+    font-size: var(--tt-font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--tt-tracking-label);
+    color: var(--tt-text-secondary);
+    margin-bottom: -10px; /* label/input spacing ~8px */
+}
+
+.project-details-page .form-section .ghost-input {
+    width: 100%;
+    background: var(--tt-surface-secondary);
+    border: 1px solid var(--tt-border);
+    border-radius: var(--tt-radius-md);
+    padding: 10px 14px;
+    color: var(--tt-text);
+    font-size: var(--tt-font-size-sm);
+    box-sizing: border-box;
+    transition: border-color var(--tt-duration-fast) var(--tt-ease);
+}
+
+[data-theme="dark"] .project-details-page .form-section .ghost-input {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.project-details-page .form-section .ghost-input:focus {
+    border-color: var(--tt-primary);
+    outline: none;
+}
+
+/* Autocomplete within sidebar */
+.project-details-page .form-section .autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: var(--tt-surface-elevated);
+    border: 1px solid var(--tt-border);
+    border-radius: var(--tt-radius-md);
+    max-height: 180px;
+    overflow-y: auto;
+    z-index: 20;
+    box-shadow: var(--tt-shadow-lg);
+    margin-top: 4px;
+}
+
+.project-details-page .form-section .autocomplete-option {
+    width: 100%;
+    background: transparent;
+    border: none;
+    text-align: left;
+    padding: 8px 12px;
+    color: var(--tt-text);
+    cursor: pointer;
+    transition: background-color var(--tt-duration-fast) var(--tt-ease);
+}
+
+.project-details-page .form-section .autocomplete-option:hover {
+    background: var(--tt-surface-secondary);
+}
+
+/* Segmented Toggle Control for List/Kanban view */
+.project-details-page .view-toggle-container {
+    display: inline-flex;
+    background: var(--tt-surface-secondary);
+    border: 1px solid var(--tt-border);
+    border-radius: var(--tt-radius-md);
+    padding: 2px;
+    gap: 2px;
+}
+
+[data-theme="dark"] .project-details-page .view-toggle-container {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.project-details-page .view-toggle-container button {
+    border: none !important;
+    border-radius: calc(var(--tt-radius-md) - 2px) !important;
+    padding: 6px 14px !important;
+    min-height: 28px !important;
+    font-size: var(--tt-font-size-sm) !important;
+    font-weight: 600 !important;
+    background: transparent !important;
+    color: var(--tt-text-secondary) !important;
+    box-shadow: none !important;
+    transition: background-color var(--tt-duration-fast) var(--tt-ease), color var(--tt-duration-fast) var(--tt-ease);
+}
+
+.project-details-page .view-toggle-container button.button-primary {
+    background: var(--tt-surface) !important;
+    color: var(--tt-text) !important;
+    box-shadow: var(--tt-shadow-xs) !important;
+}
+
+[data-theme="dark"] .project-details-page .view-toggle-container button.button-primary {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+}
+
+/* Compact Toolbar Filter Area */
+.project-details-page .task-filter-panel {
+    background: var(--tt-surface);
+    border: 1px solid var(--tt-border);
+    border-radius: 12px; /* 12-14px radius */
+    padding: 16px; /* 16px padding */
+    margin-bottom: var(--tt-space-5);
+    box-shadow: var(--tt-shadow-xs);
+}
+
+[data-theme="dark"] .project-details-page .task-filter-panel {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.project-details-page .task-filter-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--tt-space-3);
+    align-items: flex-end;
+}
+
+.project-details-page .task-filter-grid > div {
+    flex: 1 1 180px; /* flex row wrapping cleanly */
+}
+
+.project-details-page .task-filter-grid label {
+    font-size: var(--tt-font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--tt-text-secondary);
+    display: block;
+    margin-bottom: var(--tt-space-1);
+}
+
+.project-details-page .task-filter-grid .ghost-input {
+    padding: 8px 12px;
+    font-size: var(--tt-font-size-sm);
+}
+
+/* Compact Task Card Style */
+.project-details-page .task-card {
+    background: var(--tt-surface);
+    border: 1px solid var(--tt-border);
+    border-radius: 14px; /* 14-16px radius */
+    padding: 20px; /* 20px padding */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: var(--tt-shadow-xs);
+    transition: transform var(--tt-duration-fast) var(--tt-ease), border-color var(--tt-duration-fast) var(--tt-ease), box-shadow var(--tt-duration-fast) var(--tt-ease);
+}
+
+[data-theme="dark"] .project-details-page .task-card {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+.project-details-page .task-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--tt-primary);
+    box-shadow: var(--tt-shadow-sm);
+}
+
+/* Card Upper Row */
+.project-details-page .task-card-upper {
+    display: flex;
+    align-items: center;
+    gap: var(--tt-space-3);
+}
+
+/* Card Middle Row */
+.project-details-page .task-card-middle h3 {
+    margin: 0 0 var(--tt-space-1) 0;
+    font-size: var(--tt-font-size-lg);
+    font-weight: 700;
+    color: var(--tt-text);
+}
+
+.project-details-page .task-card-desc {
+    font-size: var(--tt-font-size-sm);
+    color: var(--tt-text-secondary);
+    line-height: var(--tt-line-normal);
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Card Bottom Row */
+.project-details-page .task-card-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tt-space-3);
+    border-top: 1px solid var(--tt-border-subtle);
+    padding-top: var(--tt-space-3);
+    margin-top: 4px; /* No margin-top: auto that stretches layout on empty desc */
+}
+
+.project-details-page .task-card-meta-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--tt-space-4);
+    font-size: var(--tt-font-size-xs);
+    color: var(--tt-text-secondary);
+}
+
+.project-details-page .meta-date,
+.project-details-page .meta-assignee {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--tt-space-1);
+}
+
+.project-details-page .task-assignee-info {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--tt-space-2);
+}
+
+/* Rejected Reason */
+.project-details-page .task-assignment-reason {
+    font-size: var(--tt-font-size-sm);
+    color: var(--tt-danger);
+    margin: 0;
+}
+
+/* Action buttons inside card */
+.project-details-page .task-card-actions-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--tt-space-3);
+    margin-top: var(--tt-space-1);
+}
+
+.project-details-page .task-assignment-actions,
+.project-details-page .task-card-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--tt-space-2);
+}
+
+/* Completed task card treatment */
+.project-details-page .task-card.task-completed {
+    opacity: 0.75;
+}
+
+.project-details-page .task-card.task-completed .task-card-middle h3 {
+    text-decoration: line-through;
+    color: var(--tt-text-muted);
+}
+
+/* Project Header Card Styling */
+.project-details-page .project-header-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--tt-space-4);
+    background: var(--tt-surface);
+    border: 1px solid var(--tt-border);
+    border-radius: 16px;
+    padding: var(--tt-space-6);
+    box-shadow: var(--tt-shadow-xs);
+    margin-bottom: var(--tt-space-2);
+}
+
+[data-theme="dark"] .project-details-page .project-header-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+@media (min-width: 768px) {
+    .project-details-page .project-header-card {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+/* Header main details left side */
+.project-details-page .project-header-main {
+    display: flex;
+    align-items: center;
+    gap: var(--tt-space-4);
+}
+
+.project-details-page .project-header-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    background: var(--tt-primary-soft);
+    color: var(--tt-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--tt-border-subtle);
+    flex-shrink: 0;
+}
+
+.project-details-page .project-header-avatar span {
+    font-size: 28px;
+}
+
+[data-theme="dark"] .project-details-page .project-header-avatar {
+    background: rgba(96, 165, 250, 0.15);
+    color: #60a5fa;
+    border-color: rgba(96, 165, 250, 0.25);
+}
+
+.project-details-page .project-header-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.project-details-page .project-header-info .eyebrow {
+    font-size: var(--tt-font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--tt-tracking-label);
+    color: var(--tt-text-muted);
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.project-details-page .project-header-info h1 {
+    font-size: var(--tt-font-size-2xl);
+    font-weight: 800;
+    color: var(--tt-text);
+    margin: 0 0 6px 0;
+    line-height: var(--tt-line-tight);
+}
+
+.project-details-page .project-header-badges {
+    display: flex;
+    gap: var(--tt-space-2);
+}
+
+/* Progress indicator widget right side */
+.project-details-page .project-header-progress {
+    width: 100%;
+    max-width: 280px;
+    background: var(--tt-surface-secondary);
+    border: 1px solid var(--tt-border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    box-sizing: border-box;
+}
+
+[data-theme="dark"] .project-details-page .project-header-progress {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.project-details-page .project-header-progress .progress-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: var(--tt-font-size-xs);
+    color: var(--tt-text-secondary);
+    margin-bottom: 6px;
+}
+
+.project-details-page .project-header-progress .progress-label-row strong {
+    font-size: var(--tt-font-size-sm);
+    color: var(--tt-primary);
+}
+
+[data-theme="dark"] .project-details-page .project-header-progress .progress-label-row strong {
+    color: #60a5fa;
+}
+
+.project-details-page .project-header-progress .progress-bar-track {
+    width: 100%;
+    height: 8px;
+    background: var(--tt-surface-container);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+[data-theme="dark"] .project-details-page .project-header-progress .progress-bar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.project-details-page .project-header-progress .progress-bar-fill {
+    height: 100%;
+    background: var(--tt-primary);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+[data-theme="dark"] .project-details-page .project-header-progress .progress-bar-fill {
+    background: #60a5fa;
+}
