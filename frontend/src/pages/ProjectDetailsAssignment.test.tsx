@@ -17,14 +17,16 @@ describe("ProjectDetails task assignment", () => {
     });
 
     it("shows team member names without ids in OWNER assignment select", async () => {
+        const user = userEvent.setup();
         setStoredUser(1);
         vi.stubGlobal("fetch", projectDetailsFetchMock({ teamProject: true, role: "OWNER" }));
 
         renderProjectDetails();
 
-        const assigneeSelect = await screen.findByLabelText("Atanan Kişi");
-        expect(within(assigneeSelect).getByRole("option", { name: "Nisa Yakar" })).toBeInTheDocument();
-        expect(within(assigneeSelect).getByRole("option", { name: "Ahmet Kaya" })).toBeInTheDocument();
+        const assigneeInput = await screen.findByLabelText("Atanan Kişi");
+        await user.type(assigneeInput, "nisa");
+        expect(await screen.findByRole("button", { name: /Nisa Yakar/ })).toBeInTheDocument();
+        
         expect(screen.queryByText("userId")).not.toBeInTheDocument();
     });
 
@@ -47,7 +49,8 @@ describe("ProjectDetails task assignment", () => {
         renderProjectDetails();
 
         await user.click(await screen.findByRole("button", { name: "Düzenle" }));
-        await user.selectOptions(screen.getByLabelText("Atanan Kişi"), "2");
+        await user.type(screen.getByLabelText("Atanan Kişi"), "nisa");
+        await user.click(await screen.findByRole("button", { name: /Nisa Yakar/ }));
         await user.click(screen.getByRole("button", { name: "Güncelle" }));
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(

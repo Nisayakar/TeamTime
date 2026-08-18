@@ -37,6 +37,8 @@ function ProjectDetails() {
     const [priority, setPriority] = useState<TaskPriority>("MEDIUM");
     const [dueDate, setDueDate] = useState("");
     const [assignedUserId, setAssignedUserId] = useState("");
+    const [assigneeSearch, setAssigneeSearch] = useState("");
+    const [assigneeResults, setAssigneeResults] = useState<TeamMember[]>([]);
     const [editId, setEditId] = useState<number | null>(null);
     const [savingTask, setSavingTask] = useState(false);
     const [currentTeamRole, setCurrentTeamRole] = useState<TeamRole | undefined>();
@@ -391,6 +393,30 @@ function ProjectDetails() {
         }
     }
 
+    function handleAssigneeSearchChange(value: string) {
+        setAssigneeSearch(value);
+        setAssignedUserId("");
+
+        const query = value.trim().toLowerCase();
+        if (query === "") {
+            setAssigneeResults([]);
+            return;
+        }
+
+        const filtered = teamMembers.filter(m => 
+            m.userName.toLowerCase().includes(query) ||
+            (m.username && m.username.toLowerCase().includes(query)) ||
+            (m.userEmail && m.userEmail.toLowerCase().includes(query))
+        );
+        setAssigneeResults(filtered);
+    }
+
+    function selectAssignee(member: TeamMember) {
+        setAssigneeSearch(`${member.userName} (@${member.username})`);
+        setAssignedUserId(String(member.userId));
+        setAssigneeResults([]);
+    }
+
     function editTask(task: Task) {
         if (!canMutateTasks) {
             return;
@@ -402,7 +428,20 @@ function ProjectDetails() {
         setStatus(task.status);
         setPriority(task.priority);
         setDueDate(task.dueDate || "");
-        setAssignedUserId(task.assignedUserId ? String(task.assignedUserId) : "");
+        
+        if (task.assignedUserId) {
+            setAssignedUserId(String(task.assignedUserId));
+            const member = teamMembers.find(m => m.userId === task.assignedUserId);
+            if (member) {
+                setAssigneeSearch(`${member.userName} (@${member.username})`);
+            } else {
+                setAssigneeSearch("");
+            }
+        } else {
+            setAssignedUserId("");
+            setAssigneeSearch("");
+        }
+        setAssigneeResults([]);
     }
 
     function clearForm() {
@@ -412,6 +451,8 @@ function ProjectDetails() {
         setPriority("MEDIUM");
         setDueDate("");
         setAssignedUserId("");
+        setAssigneeSearch("");
+        setAssigneeResults([]);
         setEditId(null);
     }
 
@@ -616,19 +657,35 @@ function ProjectDetails() {
                                     canAssignTasks && (
                                         <>
                                             <label style={{ marginTop: "16px", display: "block" }} htmlFor="task-assignee">Atanan Kişi</label>
-                                            <select
-                                                className="ghost-input"
-                                                id="task-assignee"
-                                                value={assignedUserId}
-                                                onChange={(e) => setAssignedUserId(e.target.value)}
-                                            >
-                                                <option value="">Atanmamış</option>
-                                                {teamMembers.map(member => (
-                                                    <option key={member.userId} value={member.userId}>
-                                                        {member.userName} {member.username ? `(@${member.username})` : ''} {member.userEmail ? `· ${member.userEmail}` : ''}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                            <div style={{ position: "relative" }}>
+                                                <input
+                                                    className="ghost-input"
+                                                    id="task-assignee"
+                                                    placeholder="Kullanıcı adı veya e-posta ile ara..."
+                                                    type="text"
+                                                    value={assigneeSearch}
+                                                    onChange={(e) => handleAssigneeSearchChange(e.target.value)}
+                                                    autoComplete="off"
+                                                />
+                                                {assigneeResults.length > 0 && (
+                                                    <div className="autocomplete-list">
+                                                        {assigneeResults.map(member => (
+                                                            <button
+                                                                className="autocomplete-option"
+                                                                key={member.userId}
+                                                                type="button"
+                                                                onClick={() => selectAssignee(member)}
+                                                                style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "2px", padding: "8px 12px" }}
+                                                            >
+                                                                <div style={{ fontWeight: 500 }}>{member.userName}</div>
+                                                                <div style={{ fontSize: "0.85em", color: "var(--text-muted, #888)" }}>
+                                                                    @{member.username} {member.userEmail && `· ${member.userEmail}`}
+                                                                </div>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </>
                                     )
                                 }

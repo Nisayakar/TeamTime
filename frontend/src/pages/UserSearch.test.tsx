@@ -40,21 +40,21 @@ describe("User Search and Selection UI", () => {
         await screen.findByText("Henüz takım yok");
 
         const inputs = screen.getAllByRole("textbox");
-        await user.type(inputs[0], "My Team");
-        await user.type(inputs[1], "My Desc");
-        await user.type(screen.getByPlaceholderText("Kullanıcı adı veya e-posta ile ara..."), "nisa");
+        await userEvent.type(inputs[0], "My Team");
+        await userEvent.type(inputs[1], "My Desc");
+        await userEvent.type(screen.getByPlaceholderText("Kullanıcı adı veya e-posta ile ara..."), "nisa");
 
         // Autocomplete option should display name, @username, and email
         const option = await screen.findByRole("button", { name: /Nisa Yakar.*@nisayakar.*nisa\.yakar@gmail\.com/ });
         expect(option).toBeInTheDocument();
         
-        await user.click(option);
+        await userEvent.click(option);
 
         // Selected chip should show username
         expect(screen.getByText(/Nisa Yakar.*@nisayakar/)).toBeInTheDocument();
 
         // Submit team
-        await user.click(screen.getByRole("button", { name: "Takımı Oluştur" }));
+        await userEvent.click(screen.getByRole("button", { name: "Takımı Oluştur" }));
 
         await waitFor(() => {
             const postCall = fetchMock.mock.calls.find(call => call[0].toString().endsWith("/teams") && call[1]?.method === "POST");
@@ -107,20 +107,20 @@ describe("User Search and Selection UI", () => {
         await screen.findByText("Takım Üyeleri");
 
         // Type in search
-        await user.type(screen.getByPlaceholderText("Kullanıcı adı veya e-posta ile ara..."), "ahmet");
+        await userEvent.type(screen.getByPlaceholderText("Kullanıcı adı veya e-posta ile ara..."), "ahmet");
 
         // Option
         const option = await screen.findByRole("button", { name: /Ahmet Yilmaz.*@ahmet.*ahmet@gmail\.com/ });
         expect(option).toBeInTheDocument();
         
-        await user.click(option);
+        await userEvent.click(option);
 
         // Selected display
         expect(screen.getByText("Ahmet Yilmaz (@ahmet)")).toBeInTheDocument();
         expect(screen.getByText(/ahmet@gmail\.com/)).toBeInTheDocument();
 
         // Send invitation
-        await user.click(screen.getByRole("button", { name: "Davet Gönder" }));
+        await userEvent.click(screen.getByRole("button", { name: "Davet Gönder" }));
 
         await waitFor(() => {
             const postCall = fetchMock.mock.calls.find(call => call[0].toString().endsWith("/team-invitations/team/1") && call[1]?.method === "POST");
@@ -161,12 +161,19 @@ describe("User Search and Selection UI", () => {
 
         await screen.findByText("Proje Detayları");
 
-        // Select should have options with username and email
-        const select = await screen.findByLabelText("Atanan Kişi");
-        expect(select).toBeInTheDocument();
+        // Input should be present
+        const input = await screen.findByLabelText("Atanan Kişi");
+        expect(input).toBeInTheDocument();
 
-        const aliOption = screen.getByRole("option", { name: /Ali Veli.*@aliveli.*ali@veli\.com/ });
+        // Search for Ali Veli
+        await userEvent.type(input, "ali");
+        
+        // Autocomplete option should show username and email
+        const aliOption = await screen.findByRole("button", { name: /Ali Veli.*@aliveli.*ali@veli\.com/ });
         expect(aliOption).toBeInTheDocument();
-        expect((aliOption as HTMLOptionElement).value).toBe("2"); // ID
+        
+        // Select it
+        await userEvent.click(aliOption);
+        expect(input).toHaveValue("Ali Veli (@aliveli)");
     });
 });

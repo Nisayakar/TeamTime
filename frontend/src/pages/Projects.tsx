@@ -118,6 +118,18 @@ function Projects() {
         return canManageTeamProjects(teamRoles[project.teamId]);
     }
 
+    function canDeleteProject(project: Project) {
+        if (!project.teamProject) {
+            return true;
+        }
+
+        if (project.teamId === null) {
+            return false;
+        }
+
+        return teamRoles[project.teamId] === "OWNER";
+    }
+
     async function confirmDeleteProject() {
         if (!projectToDelete || deletingProject) {
             return;
@@ -222,14 +234,14 @@ function Projects() {
                                                         Görevleri Gör
                                                     </button>
                                                     {canManageProject(project) && (
-                                                        <>
-                                                            <button className="cp-btn-cancel" style={{ padding: "6px 12px", fontSize: "13px", minHeight: "32px" }} onClick={() => navigate(`/edit-project/${project.id}`)}>
-                                                                Düzenle
-                                                            </button>
-                                                            <button className="cp-btn-cancel" style={{ padding: "6px 12px", fontSize: "13px", minHeight: "32px", color: "var(--tt-danger, #e11d48)" }} onClick={() => { setDeleteFeedback(""); setProjectToDelete(project); }}>
-                                                                Sil
-                                                            </button>
-                                                        </>
+                                                        <button className="cp-btn-cancel" style={{ padding: "6px 12px", fontSize: "13px", minHeight: "32px" }} onClick={() => navigate(`/edit-project/${project.id}`)}>
+                                                            Düzenle
+                                                        </button>
+                                                    )}
+                                                    {canDeleteProject(project) && (
+                                                        <button className="cp-btn-cancel" style={{ padding: "6px 12px", fontSize: "13px", minHeight: "32px", color: "var(--tt-danger, #e11d48)" }} onClick={() => { setDeleteFeedback(""); setProjectToDelete(project); }}>
+                                                            Sil
+                                                        </button>
                                                     )}
                                                 </div>
                                             </div>

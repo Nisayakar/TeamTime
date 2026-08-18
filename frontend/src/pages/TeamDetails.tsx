@@ -39,7 +39,7 @@ type StoredUser = {
 }
 
 type TeamInvitationResponse = {
-    id: number;
+    invitationId: number;
     teamId: number;
     teamName: string;
     invitedByFullName: string;
@@ -56,6 +56,7 @@ function TeamDetails() {
     const [team, setTeam] = useState<Team | null>(null);
     const [members, setMembers] = useState<TeamMember[]>([]);
     const [pendingInvitations, setPendingInvitations] = useState<TeamInvitationResponse[]>([]);
+    const [pendingInvitationsLoading, setPendingInvitationsLoading] = useState(true);
     const [userSearch, setUserSearch] = useState("");
     const [userResults, setUserResults] = useState<UserSearchResult[]>([]);
     const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
@@ -65,6 +66,8 @@ function TeamDetails() {
     const [promotingMember, setPromotingMember] = useState(false);
     const [memberToTransfer, setMemberToTransfer] = useState<TeamMember | null>(null);
     const [transferringOwnership, setTransferringOwnership] = useState(false);
+    const [invitationToRevoke, setInvitationToRevoke] = useState<TeamInvitationResponse | null>(null);
+    const [revokingInvitation, setRevokingInvitation] = useState(false);
 
     useEffect(() => {
         const query = userSearch.trim();
@@ -91,7 +94,9 @@ function TeamDetails() {
                 });
         }, 250);
 
-        return () => {
+
+
+    return () => {
             window.clearTimeout(timeoutId);
         };
     }, [userSearch, selectedUser]);
@@ -105,7 +110,9 @@ function TeamDetails() {
             "id" in storedUser &&
             typeof (storedUser as StoredUser).id === "number"
         ) {
-            return (storedUser as StoredUser).id;
+
+
+    return (storedUser as StoredUser).id;
         }
 
         return null;
@@ -117,6 +124,29 @@ function TeamDetails() {
         : members.find(member => member.userId === currentUserId);
     const currentUserRole = currentMember?.role;
     const canManageMembers = currentUserRole === "OWNER" || currentUserRole === "ADMIN";
+
+    useEffect(() => {
+        if (canManageMembers && id) {
+            setPendingInvitationsLoading(true);
+            apiFetch(`/team-invitations/team/${id}`)
+                .then(res => {
+                    if (res.ok) return res.json();
+                    return [];
+                })
+                .then(invData => {
+                    setPendingInvitations(invData);
+                })
+                .catch(() => {
+                    setPendingInvitations([]);
+                })
+                .finally(() => {
+                    setPendingInvitationsLoading(false);
+                });
+        } else {
+            setPendingInvitations([]);
+            setPendingInvitationsLoading(false);
+        }
+    }, [id, canManageMembers]);
 
 
     function getFullName(user: UserSearchResult) {
@@ -186,14 +216,6 @@ function TeamDetails() {
                 }
 
                 setMembers(Array.isArray(data) ? data : []);
-                
-                apiFetch(`/teams/${id}/invitations`)
-                    .then(res => {
-                        if (res.ok) return res.json();
-                        return [];
-                    })
-                    .then(invData => setPendingInvitations(invData))
-                    .catch(() => setPendingInvitations([]));
             })
             .catch(() => {
                 setMembers([]);
@@ -358,6 +380,25 @@ function TeamDetails() {
         }
     }
 
+    async function confirmRevokeInvitation() {
+        if (!invitationToRevoke || revokingInvitation) return;
+        setRevokingInvitation(true);
+        try {
+            const response = await apiFetch(`/team-invitations/${invitationToRevoke.invitationId}`, { method: "DELETE" });
+            if (!response.ok) {
+                showToast({ type: "error", message: await parseApiError(response, "Davet geri çekilemedi") });
+                return;
+            }
+            setPendingInvitations(current => current.filter(inv => inv.invitationId !== invitationToRevoke.invitationId));
+            showToast({ type: "success", message: "Takım daveti geri çekildi." });
+            setInvitationToRevoke(null);
+        } catch (error) {
+            showToast({ type: "error", message: getErrorMessage(error, "Davet geri çekilemedi") });
+        } finally {
+            setRevokingInvitation(false);
+        }
+    }
+
     return (
         <main className="page-shell app-page team-details-page">
             <section className="hero-card team-profile app-page-header">
@@ -435,27 +476,38 @@ function TeamDetails() {
                 }
 
                 {
-                    canManageMembers && pendingInvitations.length > 0 && (
+                    canManageMembers && (
                         <div className="panel">
                             <div className="section-heading">
                                 <span className="eyebrow">Davetler</span>
                                 <h2>Bekleyen Davetler</h2>
                             </div>
-                            {pendingInvitations.map(inv => (
-                                <div className="member-card team-member-card" key={inv.id}>
-                                    <div className="user-avatar">{inv.invitedUserFullName.substring(0, 2).toUpperCase()}</div>
-                                    <div className="team-member-main">
-                                        <h3>{inv.invitedUserFullName}</h3>
-                                        <p>Davet bekleniyor</p>
+                            {pendingInvitationsLoading ? (
+                                <p className="empty-state">Yükleniyor...</p>
+                            ) : pendingInvitations.length === 0 ? (
+                                <p className="empty-state">Bekleyen davet yok</p>
+                            ) : (
+                                pendingInvitations.map(inv => (
+                                    <div className="member-card team-member-card" key={inv.invitationId}>
+                                        <div className="user-avatar">{inv.invitedUserFullName.substring(0, 2).toUpperCase()}</div>
+                                        <div className="team-member-main">
+                                            <h3>{inv.invitedUserFullName}</h3>
+                                            <p>Davet bekleniyor</p>
+                                        </div>
+                                        <div className="team-member-meta">
+                                            <span className="badge badge-purple">Davet Edildi</span>
+                                        </div>
+                                        <div className="team-member-actions">
+                                            <span className="cp-label">{new Date(inv.createdAt).toLocaleDateString()}</span>
+                                            {canManageMembers && (
+                                                <button className="button button-danger" onClick={() => setInvitationToRevoke(inv)} style={{ marginLeft: "8px" }}>
+                                                    Geri Çek
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="team-member-meta">
-                                        <span className="badge badge-purple">Davet Edildi</span>
-                                    </div>
-                                    <div className="team-member-actions">
-                                        <span className="cp-label">{new Date(inv.createdAt).toLocaleDateString()}</span>
-                                    </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
                     )
                 }
@@ -540,8 +592,19 @@ function TeamDetails() {
                 onConfirm={confirmTransferOwnership}
                 onCancel={() => setMemberToTransfer(null)}
             />
+            <ConfirmModal
+                open={invitationToRevoke !== null}
+                title="Daveti Geri Çek"
+                message={`${invitationToRevoke?.invitedUserFullName} adlı kullanıcıya gönderilen takım davetini geri çekmek istediğinize emin misiniz?`}
+                confirmLabel={revokingInvitation ? "Geri Çekiliyor" : "Daveti Geri Çek"}
+                variant="danger"
+                loading={revokingInvitation}
+                onConfirm={confirmRevokeInvitation}
+                onCancel={() => setInvitationToRevoke(null)}
+            />
         </main>
     );
 }
 
 export default TeamDetails;
+

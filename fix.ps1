@@ -1,0 +1,1 @@
+(Get-Content C:\Projects\TeamTime\frontend\src\pages\TeamDetails.tsx) -replace 'message=.\$\{invitationToRevoke\?.invitedUserFullName\} adlı kullanıcıya gönderilen takım davetini geri çekmek istediğinize emin misiniz\?\\}', 'REPLACEME' | Set-Content C:\Projects\TeamTime\frontend\src\pages\TeamDetails.tsx

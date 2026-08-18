@@ -60,7 +60,7 @@ describe("project list and edit permissions", () => {
         renderWithProviders(<Projects />);
         expect(await screen.findByText("Takım: Platform Takımı")).toBeInTheDocument();
         expect(screen.getAllByRole("button", { name: "Düzenle" })).toHaveLength(2);
-        expect(screen.getAllByRole("button", { name: "Sil" })).toHaveLength(2);
+        expect(screen.getAllByRole("button", { name: "Sil" })).toHaveLength(1);
     });
 });
 

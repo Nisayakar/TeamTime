@@ -102,8 +102,8 @@ describe("CreateProject", () => {
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
         await user.click(screen.getByRole("radio", { name: /Takım Projesi/ }));
 
-        expect(screen.getByText("Üye Takımı")).toBeInTheDocument();
-        expect(screen.queryByText("Takım projesi oluşturabileceğiniz bir takım bulunmuyor.")).not.toBeInTheDocument();
+        expect(screen.queryByText("Üye Takımı")).not.toBeInTheDocument();
+        expect(screen.getByText("Takım projesi oluşturabileceğiniz bir takım bulunmuyor.")).toBeInTheDocument();
     });
 
     it("requires a selected team for team projects", async () => {

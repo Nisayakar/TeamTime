@@ -93,6 +93,10 @@ function CreateProject() {
                         return null;
                     }
 
+                    if (currentMembership.role !== "OWNER" && currentMembership.role !== "ADMIN") {
+                        return null;
+                    }
+
                     return {
                         ...team,
                         role: currentMembership.role

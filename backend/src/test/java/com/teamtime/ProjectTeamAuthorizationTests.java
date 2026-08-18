@@ -173,7 +173,7 @@ class ProjectTeamAuthorizationTests {
     }
 
     @Test
-    void memberCanCreateTeamProjectAndNonMemberCannot() throws Exception {
+    void memberCannotCreateTeamProjectAndNonMemberCannot() throws Exception {
         Long teamId = createTeam(owner, "Restricted Team");
         addMember(owner, teamId, member.getId(), TeamRole.MEMBER);
 
@@ -181,7 +181,7 @@ class ProjectTeamAuthorizationTests {
                         .header(AUTHORIZATION, bearer(member))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(teamProjectJson(teamId, "Member Attempt")))
-                .andExpect(status().isOk());
+                .andExpect(status().isForbidden());
 
         mockMvc.perform(post("/api/projects")
                         .header(AUTHORIZATION, bearer(outsider))
@@ -236,6 +236,17 @@ class ProjectTeamAuthorizationTests {
         mockMvc.perform(delete("/api/projects/{id}", projectForOwner)
                         .header(AUTHORIZATION, bearer(owner)))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void adminCannotDeleteTeamProject() throws Exception {
+        Long teamId = createTeam(owner, "Admin Delete Team");
+        addMember(owner, teamId, admin.getId(), TeamRole.ADMIN);
+        Long projectId = createTeamProject(owner, teamId, "Admin Delete Target");
+
+        mockMvc.perform(delete("/api/projects/{id}", projectId)
+                        .header(AUTHORIZATION, bearer(admin)))
+                .andExpect(status().isForbidden());
     }
 
     @Test

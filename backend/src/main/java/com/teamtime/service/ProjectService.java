@@ -60,7 +60,7 @@ public class ProjectService {
         if (request.getTeamId() != null) {
             Team team = teamRepository.findById(request.getTeamId())
                     .orElseThrow(() -> new ResourceNotFoundException("Takım bulunamadı"));
-            requireTeamProjectMember(team.getId(), userId);
+            requireTeamProjectManager(team.getId(), userId);
             project.setTeam(team);
         } else {
             project.setTeam(null);
@@ -115,7 +115,7 @@ public class ProjectService {
     public String deleteProject(Long id, Long userId) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Proje bulunamadı"));
-        requireProjectManager(project, userId);
+        requireProjectOwner(project, userId);
 
         taskRepository.deleteByProjectId(id);
         projectRepository.delete(project);
@@ -137,6 +137,20 @@ public class ProjectService {
 
         return toResponse(project);
 
+    }
+
+    private void requireProjectOwner(Project project, Long userId) {
+        if (project.getTeam() == null) {
+            if (!project.getUser().getId().equals(userId)) {
+                throw new ResourceNotFoundException("Proje bulunamadı veya bu proje için yetkiniz yok");
+            }
+            return;
+        }
+
+        TeamRole role = getMembershipRole(project.getTeam().getId(), userId);
+        if (role != TeamRole.OWNER) {
+            throw new AccessDeniedException("Takım projesini silme yetkiniz yok");
+        }
     }
 
     private void requireProjectManager(Project project, Long userId) {

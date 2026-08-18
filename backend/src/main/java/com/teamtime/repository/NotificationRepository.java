@@ -1,6 +1,7 @@
 package com.teamtime.repository;
 
 import com.teamtime.entity.Notification;
+import com.teamtime.entity.NotificationType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,4 +28,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             where notification.recipient.id = :recipientId
             """)
     int markAllAsReadForRecipient(@Param("recipientId") Long recipientId);
+
+    @Modifying
+    @Query("delete from Notification n where n.recipient.id = :recipientId and n.type = :type and n.relatedEntityId = :relatedEntityId")
+    void deleteByRecipientAndTypeAndRelatedEntityId(@Param("recipientId") Long recipientId, @Param("type") NotificationType type, @Param("relatedEntityId") Long relatedEntityId);
 }
+

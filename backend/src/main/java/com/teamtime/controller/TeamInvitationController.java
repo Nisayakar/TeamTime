@@ -44,6 +44,13 @@ public class TeamInvitationController {
         return ResponseEntity.ok().build();
     }
 
+    @org.springframework.web.bind.annotation.DeleteMapping("/{id}")
+    public ResponseEntity<Void> revokeInvitation(@PathVariable Long id, Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        teamInvitationService.revokeInvitation(id, userId);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/team/{teamId}")
     public ResponseEntity<List<TeamInvitationResponse>> getTeamInvitations(@PathVariable Long teamId, Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
@@ -64,3 +71,4 @@ public class TeamInvitationController {
         return ResponseEntity.ok().build();
     }
 }
+

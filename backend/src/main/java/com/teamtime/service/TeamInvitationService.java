@@ -112,7 +112,7 @@ public class TeamInvitationService {
     @Transactional
     public void acceptInvitation(Long invitationId, Long currentUserId) {
         TeamInvitation invitation = teamInvitationRepository.findById(invitationId)
-                .orElseThrow(() -> new ResourceNotFoundException("Davet bulunamadı."));
+                .orElseThrow(() -> new ResourceNotFoundException("Bu davet artık geçerli değil."));
 
         if (!invitation.getInvitedUser().getId().equals(currentUserId)) {
             throw new org.springframework.security.access.AccessDeniedException("Bu daveti kabul etme yetkiniz yok.");
@@ -146,7 +146,7 @@ public class TeamInvitationService {
     @Transactional
     public void rejectInvitation(Long invitationId, Long currentUserId) {
         TeamInvitation invitation = teamInvitationRepository.findById(invitationId)
-                .orElseThrow(() -> new ResourceNotFoundException("Davet bulunamadı."));
+                .orElseThrow(() -> new ResourceNotFoundException("Bu davet artık geçerli değil."));
 
         if (!invitation.getInvitedUser().getId().equals(currentUserId)) {
             throw new org.springframework.security.access.AccessDeniedException("Bu daveti reddetme yetkiniz yok.");
@@ -175,6 +175,27 @@ public class TeamInvitationService {
                 .stream()
                 .map(this::convertToResponse)
                 .toList();
+    }
+
+    @Transactional
+    public void revokeInvitation(Long invitationId, Long requesterId) {
+        TeamInvitation invitation = teamInvitationRepository.findById(invitationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Davet bulunamadı."));
+
+        if (invitation.getStatus() != TeamInvitationStatus.PENDING) {
+            throw new ConflictException("Sadece bekleyen davetler geri çekilebilir.");
+        }
+
+        TeamMember membership = teamMemberRepository.findByTeamIdAndUserId(invitation.getTeam().getId(), requesterId)
+                .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException("Bu işlem için yetkiniz yok"));
+                
+        String role = membership.getRole() == null ? "" : membership.getRole().trim().toUpperCase();
+        if (!role.equals("OWNER") && !role.equals("ADMIN")) {
+            throw new org.springframework.security.access.AccessDeniedException("Bu işlem için sadece Takım Sahibi veya Yönetici yetkilidir");
+        }
+
+        teamInvitationRepository.delete(invitation);
+        notificationService.cleanupPendingInvitationNotification(invitation.getInvitedUser().getId(), invitation.getTeam().getId());
     }
 
     @Transactional(readOnly = true)
@@ -210,3 +231,4 @@ public class TeamInvitationService {
         );
     }
 }
+

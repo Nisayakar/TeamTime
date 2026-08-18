@@ -344,6 +344,11 @@ public class NotificationService {
         eventPublisher.publishEvent(new NotificationEvent(this, saved));
     }
 
+    @Transactional
+    public void cleanupPendingInvitationNotification(Long recipientId, Long teamId) {
+        notificationRepository.deleteByRecipientAndTypeAndRelatedEntityId(recipientId, NotificationType.TEAM_INVITATION, teamId);
+    }
+
     public void notifyTeamInvitationRejected(User teamOwner, User invitedUser, Team team) {
         if (teamOwner.getId().equals(invitedUser.getId())) {
             return;
@@ -365,3 +370,4 @@ public class NotificationService {
         eventPublisher.publishEvent(new NotificationEvent(this, saved));
     }
 }
+
