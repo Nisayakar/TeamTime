@@ -6,11 +6,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import jakarta.mail.internet.MimeMessage;
 
 import java.util.Set;
 
@@ -21,6 +22,7 @@ public class NotificationEmailService {
 
     private final JavaMailSender mailSender;
     private final String senderEmail;
+    private final String frontendUrl;
     
     private static final Set<String> ALLOWED_TYPES = Set.of(
             "TEAM_INVITATION",
@@ -37,10 +39,12 @@ public class NotificationEmailService {
 
     public NotificationEmailService(
             JavaMailSender mailSender,
-            @Value("${spring.mail.username:}") String senderEmail
+            @Value("${spring.mail.username:}") String senderEmail,
+            @Value("${app.frontend.url:}") String frontendUrl
     ) {
         this.mailSender = mailSender;
         this.senderEmail = senderEmail;
+        this.frontendUrl = frontendUrl;
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -63,20 +67,22 @@ public class NotificationEmailService {
             return;
         }
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(senderEmail);
-        message.setTo(notification.getRecipient().getEmail());
-        message.setSubject("TeamTime - " + notification.getTitle());
-        
-        String text = "Merhaba " + notification.getRecipient().getName() + ",\n\n" +
-                      notification.getMessage() + "\n\n" +
-                      "TeamTime hesabınıza giriş yaparak bildirimi görüntüleyebilirsiniz.\n\n" +
-                      "TeamTime";
-                      
-        message.setText(text);
-
         try {
-            mailSender.send(message);
+            NotificationEmailTemplateBuilder.TemplateData data = NotificationEmailTemplateBuilder.getTemplateData(notification);
+            
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+            
+            helper.setFrom(senderEmail);
+            helper.setTo(notification.getRecipient().getEmail());
+            helper.setSubject("TeamTime - " + data.subject);
+            
+            String htmlContent = NotificationEmailTemplateBuilder.buildHtml(notification, data, frontendUrl);
+            String plainText = NotificationEmailTemplateBuilder.buildPlainText(notification, data, frontendUrl);
+            
+            helper.setText(plainText, htmlContent);
+
+            mailSender.send(mimeMessage);
         } catch (MailException e) {
             logger.error("Failed to send notification email to {}. Error: {}", notification.getRecipient().getEmail(), e.getMessage());
         } catch (Exception e) {
@@ -84,3 +90,4 @@ public class NotificationEmailService {
         }
     }
 }
+
