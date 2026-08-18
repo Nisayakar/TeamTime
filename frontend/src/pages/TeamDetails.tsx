@@ -7,6 +7,7 @@ import { getTeamRoleLabel, type TeamRole } from "../types/team";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
 import { navigateForInitialLoadError } from "../utils/routeErrors";
 import { subscribeToSync, broadcastSyncEvent } from "../sync";
+import "./TeamDetails.css";
 
 type Team = {
     id: number;
@@ -481,15 +482,28 @@ function TeamDetails() {
 
     return (
         <main className="page-shell app-page team-details-page">
-            <section className="hero-card team-profile app-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                    <div className="profile-avatar">TM</div>
-
-                    <div>
-                        <span className="eyebrow">Takım profili</span>
+            <section className="team-header-card">
+                <div className="team-header-main">
+                    <div className="team-header-avatar">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                    </div>
+                    <div className="team-header-info">
+                        <span className="eyebrow">Takım Profili</span>
                         <h1>{team ? team.name : "Takım Detayları"}</h1>
-                        <p>{team ? team.description : "Takım bilgisi bulunamadı"}</p>
-                        <span className="badge badge-purple">{members.length} üye</span>
+                        <p>{team?.description || "Takım açıklaması belirtilmemiş."}</p>
+                        <div className="team-header-badges">
+                            <span className="badge badge-purple">{members.length} Üye</span>
+                            {currentUserRole && (
+                                <span className={`badge ${currentUserRole === "OWNER" ? "badge-red" : currentUserRole === "ADMIN" ? "badge-purple" : "badge-blue"}`}>
+                                    Rolünüz: {getTeamRoleLabel(currentUserRole)}
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -497,30 +511,38 @@ function TeamDetails() {
                     currentUserRole === "OWNER" && (
                         <button
                             className="button button-danger"
-                            style={{ alignSelf: 'center', minHeight: '36px' }}
                             onClick={() => {
                                 setDeleteErrorMessage("");
                                 setIsDeleteModalOpen(true);
                             }}
                         >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px", display: "inline-block", verticalAlign: "middle" }}>
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
                             Takımı Sil
                         </button>
                     )
                 }
             </section>
 
-            <section className="content-grid two-columns">
-                {
-                    canManageMembers && (
-                        <div className="panel">
-                            <div className="section-heading">
-                                <span className="eyebrow">Üyelik</span>
-                                <h2>Yeni Üye Ekle</h2>
-                            </div>
+            {canManageMembers && (
+                <section className="team-actions-grid">
+                    <div className="team-details-panel">
+                        <div className="section-heading">
+                            <span className="eyebrow">Üyelik</span>
+                            <h2>Yeni Üye Ekle</h2>
+                        </div>
+                        <p className="section-description">Takıma davet etmek için organizasyon içindeki kullanıcıları arayın.</p>
 
-                            <form className="stacked-form" onSubmit={addMember}>
-                                <div className="autocomplete-field">
-                                    <label>Kullanıcı Ara</label>
+                        <form className="stacked-form" onSubmit={addMember}>
+                            <div className="autocomplete-field">
+                                <label>Kullanıcı Ara</label>
+                                <div className="input-with-icon">
+                                    <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="11" cy="11" r="8" />
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                    </svg>
                                     <input
                                         aria-label="Kullanıcı Ara"
                                         placeholder="Kullanıcı adı veya e-posta ile ara..."
@@ -530,143 +552,154 @@ function TeamDetails() {
                                         autoComplete="off"
                                         required
                                     />
-
-                                    {
-                                        userResults.length > 0 && (
-                                            <div className="autocomplete-list">
-                                                {
-                                                    userResults.map(user => (
-                                                        <button
-                                                            className="autocomplete-option"
-                                                            key={user.id}
-                                                            type="button"
-                                                            onClick={() => selectUser(user)}
-                                                            style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "2px", padding: "8px 12px" }}
-                                                        >
-                                                            <div style={{ fontWeight: 500 }}>{getFullName(user)}</div>
-                                                            <div style={{ fontSize: "0.85em", color: "var(--text-muted, #888)" }}>
-                                                                @{user.username} {user.email && `· ${user.email}`}
-                                                            </div>
-                                                        </button>
-                                                    ))
-                                                }
-                                            </div>
-                                        )
-                                    }
-
-                                    {
-                                        selectedUser && (
-                                            <div className="selected-user" style={{ marginTop: "12px", padding: "12px", background: "var(--surface-low)", borderRadius: "6px", display: "flex", flexDirection: "column", gap: "4px" }}>
-                                                <div style={{ fontWeight: 500 }}>{getFullName(selectedUser)}</div>
-                                                <div style={{ fontSize: "0.85em", color: "var(--text-muted, #888)" }}>
-                                                    @{selectedUser.username} {selectedUser.email && `· ${selectedUser.email}`}
-                                                </div>
-                                            </div>
-                                        )
-                                    }
                                 </div>
 
-                                <button className="button button-primary button-full" type="submit">Davet Gönder</button>
-                            </form>
-                        </div>
-                    )
-                }
+                                {
+                                    userResults.length > 0 && (
+                                        <div className="autocomplete-list">
+                                            {
+                                                userResults.map(user => (
+                                                    <button
+                                                        className="autocomplete-option"
+                                                        key={user.id}
+                                                        type="button"
+                                                        onClick={() => selectUser(user)}
+                                                    >
+                                                        <div className="option-name">{getFullName(user)}</div>
+                                                        <div className="option-sub">
+                                                            @{user.username} {user.email && `· ${user.email}`}
+                                                        </div>
+                                                    </button>
+                                                ))
+                                            }
+                                        </div>
+                                    )
+                                }
 
-                {
-                    canManageMembers && (
-                        <div className="panel">
-                            <div className="section-heading">
-                                <span className="eyebrow">Davetler</span>
-                                <h2>Bekleyen Davetler</h2>
+                                {
+                                    selectedUser && (
+                                        <div className="selected-user-box">
+                                            <div className="box-name">{getFullName(selectedUser)}</div>
+                                            <div className="box-sub">
+                                                @{selectedUser.username} {selectedUser.email && `· ${selectedUser.email}`}
+                                            </div>
+                                        </div>
+                                    )
+                                }
                             </div>
+
+                            <button className="button button-primary button-full" type="submit">Davet Gönder</button>
+                        </form>
+                    </div>
+
+                    <div className="team-details-panel">
+                        <div className="section-heading">
+                            <span className="eyebrow">Davetler</span>
+                            <h2>Bekleyen Davetler</h2>
+                        </div>
+                        <p className="section-description">Gönderilen ve henüz yanıtlanmamış üyelik davetleri.</p>
+                        
+                        <div className="invitations-list-wrapper">
                             {pendingInvitationsLoading ? (
                                 <p className="empty-state">Yükleniyor...</p>
                             ) : pendingInvitations.length === 0 ? (
                                 <p className="empty-state">Bekleyen davet yok</p>
                             ) : (
                                 pendingInvitations.map(inv => (
-                                    <div className="member-card team-member-card" key={inv.invitationId}>
-                                        <div className="user-avatar">{inv.invitedUserFullName.substring(0, 2).toUpperCase()}</div>
-                                        <div className="team-member-main">
-                                            <h3>{inv.invitedUserFullName}</h3>
-                                            <p>Davet bekleniyor</p>
+                                    <div className="invitation-item-row" key={inv.invitationId}>
+                                        <div className="invitation-user-info">
+                                            <div className="invitation-avatar">{inv.invitedUserFullName.substring(0, 2).toUpperCase()}</div>
+                                            <div>
+                                                <h3>{inv.invitedUserFullName}</h3>
+                                                <p>{new Date(inv.createdAt).toLocaleDateString()} tarihinde davet edildi</p>
+                                            </div>
                                         </div>
-                                        <div className="team-member-meta">
-                                            <span className="badge badge-purple">Davet Edildi</span>
-                                        </div>
-                                        <div className="team-member-actions">
-                                            <span className="cp-label">{new Date(inv.createdAt).toLocaleDateString()}</span>
-                                            {canManageMembers && (
-                                                <button className="button button-danger" onClick={() => setInvitationToRevoke(inv)} style={{ marginLeft: "8px" }}>
-                                                    Geri Çek
-                                                </button>
-                                            )}
+                                        <div className="invitation-actions">
+                                            <button className="button button-danger button-sm" onClick={() => setInvitationToRevoke(inv)}>
+                                                Geri Çek
+                                            </button>
                                         </div>
                                     </div>
                                 ))
                             )}
                         </div>
-                    )
-                }
+                    </div>
+                </section>
+            )}
 
-                <div className="panel">
+            <section className="team-members-panel">
+                <div className="panel-header-row">
                     <div className="section-heading">
                         <span className="eyebrow">Takım</span>
                         <h2>Takım Üyeleri</h2>
                     </div>
+                </div>
 
+                <div className="members-list-wrapper">
                     {
                         members.length === 0 ? (
                             <p className="empty-state">Bu takımda henüz üye yok</p>
                         ) : (
                             members.map(member => (
-                                <div className="member-card" key={member.id}>
-                                    <div className="user-avatar">{member.userName?.slice(0, 2).toUpperCase() || "US"}</div>
-
-                                    <div>
-                                        <h3>{member.userName}</h3>
-                                        <p>
-                                            {member.username ? `@${member.username}` : `Kullanıcı Id: ${member.userId}`}
-                                            {member.userId === currentUserId ? " · Siz" : ""}
-                                        </p>
+                                <div className="member-list-item" key={member.id}>
+                                    <div className="member-user-info">
+                                        <div className="member-avatar">
+                                            {member.userName?.slice(0, 2).toUpperCase() || "US"}
+                                        </div>
+                                        <div>
+                                            <h3>
+                                                {member.userName}
+                                                {member.userId === currentUserId && <span className="self-badge">Siz</span>}
+                                            </h3>
+                                            <p>
+                                                {member.username ? `@${member.username}` : `Kullanıcı ID: ${member.userId}`}
+                                            </p>
+                                        </div>
                                     </div>
 
-                                    <span className="badge badge-blue">{getTeamRoleLabel(member.role)}</span>
+                                    <div className="member-actions-wrapper">
+                                        <span className={`badge ${member.role === "OWNER" ? "badge-red" : member.role === "ADMIN" ? "badge-purple" : "badge-blue"}`}>
+                                            {getTeamRoleLabel(member.role)}
+                                        </span>
 
-                                    {
-                                        canRemoveMember(member) && (
-                                            <button className="button button-danger" onClick={() => setMemberToRemove(member)}>
-                                                Çıkar
-                                            </button>
-                                        )
-                                    }
-                                    {
-                                        canPromoteMember(member) && (
-                                            <button className="button button-primary" onClick={() => setMemberToPromote(member)} style={{ marginLeft: '8px' }}>
-                                                Yönetici Yap
-                                            </button>
-                                        )
-                                    }
-                                    {
-                                        canDemoteMember(member) && (
-                                            <button className="button button-secondary" onClick={() => setMemberToDemote(member)} style={{ marginLeft: '8px' }}>
-                                                Üyeye Düşür
-                                            </button>
-                                        )
-                                    }
-                                    {
-                                        canTransferOwnership(member) && (
-                                            <button className="button button-secondary" onClick={() => setMemberToTransfer(member)} style={{ marginLeft: '8px' }}>
-                                                Sahipliği Devret
-                                            </button>
-                                        )
-                                    }
+                                        <div className="member-buttons-group">
+                                            {
+                                                canRemoveMember(member) && (
+                                                    <button className="button button-danger button-sm" onClick={() => setMemberToRemove(member)}>
+                                                        Çıkar
+                                                    </button>
+                                                )
+                                            }
+                                            {
+                                                canPromoteMember(member) && (
+                                                    <button className="button button-primary button-sm" onClick={() => setMemberToPromote(member)}>
+                                                        Yönetici Yap
+                                                    </button>
+                                                )
+                                            }
+                                            {
+                                                canDemoteMember(member) && (
+                                                    <button className="button button-secondary button-sm" onClick={() => setMemberToDemote(member)}>
+                                                        Üyeye Düşür
+                                                    </button>
+                                                )
+                                            }
+                                            {
+                                                canTransferOwnership(member) && (
+                                                    <button className="button button-secondary button-sm" onClick={() => setMemberToTransfer(member)}>
+                                                        Sahipliği Devret
+                                                    </button>
+                                                )
+                                            }
+                                        </div>
+                                    </div>
                                 </div>
                             ))
                         )
                     }
                 </div>
             </section>
+
             <ConfirmModal
                 open={memberToRemove !== null}
                 title="Üyeyi çıkar"
