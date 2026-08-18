@@ -42,6 +42,8 @@ describe("Profile", () => {
         renderWithProviders(<Profile />);
 
         await screen.findByDisplayValue("Ayşe");
+        await user.clear(screen.getByLabelText("Ad"));
+        await user.type(screen.getByLabelText("Ad"), "Ayşe Yeni");
         await user.click(screen.getByRole("button", { name: "Profili Güncelle" }));
 
         expect(await screen.findByText("Bu email adresi ile kayıtlı bir kullanıcı zaten var")).toBeInTheDocument();
@@ -112,7 +114,7 @@ describe("Profile", () => {
 
         await screen.findByDisplayValue("Ayşe");
         await user.clear(screen.getByLabelText("Kullanıcı Adı"));
-        await user.type(screen.getByLabelText("Kullanıcı Adı"), "aysedemir");
+        await user.type(screen.getByLabelText("Kullanıcı Adı"), "aysenew");
         await user.click(screen.getByRole("button", { name: "Profili Güncelle" }));
 
         expect(screen.getByRole("button", { name: "Güncelleniyor..." })).toBeDisabled();
@@ -246,6 +248,24 @@ describe("Profile", () => {
         expect(screen.getByRole("dialog", { name: "Hesabınızı silmek istediğinizden emin misiniz?" })).toBeInTheDocument();
         expect(screen.getByRole("button", { name: "Hesabımı Kalıcı Olarak Sil" })).toBeEnabled();
         expect(screen.queryByText("[object Object]")).not.toBeInTheDocument();
+    });
+
+    it("does not send API request when profile is updated without any changes", async () => {
+        const user = userEvent.setup();
+        const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(mockJsonResponse(profile("Ayşe", "Demir", "ayse@example.com", "aysedemir")));
+        vi.stubGlobal("fetch", fetchMock);
+
+        renderWithProviders(<Profile />);
+        await screen.findByDisplayValue("Ayşe");
+
+        // Click update without changing anything
+        await user.click(screen.getByRole("button", { name: "Profili Güncelle" }));
+
+        // It should show info message
+        expect(await screen.findByText("Değişiklik yapılmadı.")).toBeInTheDocument();
+
+        // fetchMock should only have been called once for the initial load, NOT for the PUT request
+        expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 });
 

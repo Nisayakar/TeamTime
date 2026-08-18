@@ -124,13 +124,20 @@ function Profile() {
     }, [navigate, showToast]);
 
     useEffect(() => {
-        if (!user || username === user.username) {
+        if (!user) {
             setUsernameAvailable(null);
             setIsCheckingUsername(false);
             return;
         }
 
         const trimmed = username.trim().toLowerCase();
+        const originalUsername = (user.username || "").trim().toLowerCase();
+
+        if (trimmed === originalUsername) {
+            setUsernameAvailable(null);
+            setIsCheckingUsername(false);
+            return;
+        }
         if (!/^[a-z0-9_.]+$/.test(trimmed) || trimmed.length < 3 || trimmed.length > 30) {
             setUsernameAvailable(null);
             setIsCheckingUsername(false);
@@ -185,12 +192,16 @@ function Profile() {
             return;
         }
 
-        if (name.trim() === "" || surname.trim() === "") {
+        const trimmedName = name.trim();
+        const trimmedSurname = surname.trim();
+        const trimmedUsername = username.trim();
+
+        if (trimmedName === "" || trimmedSurname === "") {
             setProfileFeedback({ type: "error", message: "Ad ve soyad alanları boş bırakılamaz." });
             return;
         }
 
-        if (username.trim() === "") {
+        if (trimmedUsername === "") {
             setProfileFeedback({ type: "error", message: "Kullanıcı adı boş bırakılamaz." });
             return;
         }
@@ -200,6 +211,20 @@ function Profile() {
             return;
         }
 
+        if (user) {
+            const originalName = (user.name || "").trim();
+            const originalSurname = (user.surname || "").trim();
+            const originalUsername = (user.username || "").trim().toLowerCase();
+
+            if (trimmedName === originalName && 
+                trimmedSurname === originalSurname && 
+                trimmedUsername.toLowerCase() === originalUsername) {
+                
+                setProfileFeedback({ type: "info", message: "Değişiklik yapılmadı." });
+                return;
+            }
+        }
+
         setProfileFeedback(null);
         setSavingProfile(true);
 
@@ -207,9 +232,9 @@ function Profile() {
             const response = await apiFetch("/profile", {
                 method: "PUT",
                 body: JSON.stringify({
-                    name,
-                    surname,
-                    username
+                    name: trimmedName,
+                    surname: trimmedSurname,
+                    username: trimmedUsername
                 })
             });
 
