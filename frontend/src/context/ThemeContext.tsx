@@ -6,6 +6,7 @@ import {
     type ReactNode
 } from "react";
 import { ThemeContext, type ThemePreference, type ResolvedTheme, type ThemeContextValue } from "../context/theme";
+import { broadcastSyncEvent, subscribeToSync } from "../sync";
 
 const STORAGE_KEY = "theme";
 
@@ -49,7 +50,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const [preference, setPreferenceState] = useState<ThemePreference>(() => readStoredPreference());
     const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => resolveTheme(readStoredPreference()));
 
-    const setPreference = useCallback((next: ThemePreference) => {
+    const setPreference = useCallback((next: ThemePreference, isRemote = false) => {
         setPreferenceState(next);
 
         if (typeof window !== "undefined") {
@@ -59,7 +60,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         const resolved = resolveTheme(next);
         setResolvedTheme(resolved);
         applyThemeToDocument(resolved);
+
+        if (!isRemote) {
+            broadcastSyncEvent("THEME_CHANGED", next);
+        }
     }, []);
+
+    useEffect(() => {
+        return subscribeToSync((event) => {
+            if (event.type === "THEME_CHANGED" && event.payload) {
+                setPreference(event.payload as ThemePreference, true);
+            }
+        });
+    }, [setPreference]);
 
     useEffect(() => {
         applyThemeToDocument(resolvedTheme);

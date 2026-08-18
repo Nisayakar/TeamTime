@@ -1,3 +1,5 @@
+import { broadcastSyncEvent, subscribeToSync } from "./sync";
+
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
 const TOKEN_STORAGE_KEY = "token";
 const USER_STORAGE_KEY = "user";
@@ -44,6 +46,8 @@ export function saveAuth(loginUser: LoginUser) {
         })
     );
     window.dispatchEvent(new Event("user-updated"));
+    broadcastSyncEvent("AUTH_CHANGED");
+    broadcastSyncEvent("USER_UPDATED");
 }
 
 export function getToken() {
@@ -88,6 +92,7 @@ export function updateStoredUser(user: {
 }) {
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
     window.dispatchEvent(new Event("user-updated"));
+    broadcastSyncEvent("USER_UPDATED");
 }
 
 export function isAuthenticated() {
@@ -98,6 +103,7 @@ export function clearAuth() {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     localStorage.removeItem(USER_STORAGE_KEY);
     window.dispatchEvent(new Event("user-updated"));
+    broadcastSyncEvent("AUTH_CHANGED");
 }
 
 function isPublicAuthRequest(path: string) {
@@ -150,8 +156,8 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     return response;
 }
 
-window.addEventListener("storage", (event) => {
-    if (event.key === TOKEN_STORAGE_KEY || event.key === USER_STORAGE_KEY) {
+subscribeToSync((event) => {
+    if (event.type === "AUTH_CHANGED" || event.type === "USER_UPDATED") {
         window.dispatchEvent(new Event("user-updated"));
         
         const hasToken = getToken() !== null;

@@ -1,7 +1,7 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { clearAuth, getStoredUser, isAuthenticated } from "../api";
-import { apiFetch, getMediaUrl } from "../api";
+import { apiFetch, clearAuth, getMediaUrl, getStoredUser, isAuthenticated } from "../api";
+import { broadcastSyncEvent, subscribeToSync } from "../sync";
 import type { NotificationItem, NotificationPage } from "../types/notification";
 import ConfirmModal from "./ConfirmModal";
 
@@ -136,6 +136,7 @@ function Navbar() {
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
     const [imageLoadError, setImageLoadError] = useState(false);
+    const [notificationSyncTrigger, setNotificationSyncTrigger] = useState(0);
 
     const [storedUser, setStoredUser] = useState(() => getStoredUser());
     
@@ -143,16 +144,17 @@ function Navbar() {
         function handleUserUpdated() {
             setStoredUser(getStoredUser());
         }
-        function handleStorage(e: StorageEvent) {
-            if (e.key === "user" || e.key === "token" || e.key === null) {
-                setStoredUser(getStoredUser());
-            }
-        }
         window.addEventListener("user-updated", handleUserUpdated);
-        window.addEventListener("storage", handleStorage);
+        
+        const unsubscribe = subscribeToSync((event) => {
+            if (event.type === "NOTIFICATIONS_CHANGED") {
+                setNotificationSyncTrigger(current => current + 1);
+            }
+        });
+
         return () => {
             window.removeEventListener("user-updated", handleUserUpdated);
-            window.removeEventListener("storage", handleStorage);
+            unsubscribe();
         };
     }, []);
 
@@ -218,7 +220,7 @@ function Navbar() {
         return () => {
             ignore = true;
         };
-    }, [isLoggedIn, location.pathname]);
+    }, [isLoggedIn, location.pathname, notificationSyncTrigger]);
 
     useEffect(() => {
         if (!isNotificationsOpen) {
@@ -245,6 +247,12 @@ function Navbar() {
             document.removeEventListener("keydown", handleKeyDown);
         };
     }, [isNotificationsOpen]);
+
+    useEffect(() => {
+        if (isNotificationsOpen && notificationSyncTrigger > 0) {
+            loadNotificationsPage(0, false);
+        }
+    }, [notificationSyncTrigger, isNotificationsOpen]);
 
     useEffect(() => {
         if (!isProfileMenuOpen) {
@@ -339,6 +347,7 @@ function Navbar() {
 
             if (!notification.read) {
                 setUnreadCount(currentCount => Math.max(0, currentCount - 1));
+                broadcastSyncEvent("NOTIFICATIONS_CHANGED");
             }
 
             return true;
@@ -362,6 +371,7 @@ function Navbar() {
             );
             setUnreadCount(0);
             setNotificationError("");
+            broadcastSyncEvent("NOTIFICATIONS_CHANGED");
         } catch (error) {
             setNotificationError(getSafeErrorMessage(error, "Bildirimler okundu olarak işaretlenemedi."));
         }
@@ -377,6 +387,7 @@ function Navbar() {
             setHasLoadedNotifications(true);
             setIsClearModalOpen(false);
             setNotificationError("");
+            broadcastSyncEvent("NOTIFICATIONS_CHANGED");
         } catch (error) {
             setIsClearModalOpen(false);
             setNotificationError(getSafeErrorMessage(error, "Bildirimler temizlenemedi."));

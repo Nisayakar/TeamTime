@@ -2,6 +2,7 @@ import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, clearAuth, updateStoredUser, getMediaUrl } from "../api";
+import { subscribeToSync } from "../sync";
 import { useToast } from "../context/toast";
 import { useTheme } from "../hooks/useTheme";
 import InlineFeedback, { type InlineFeedbackType } from "../components/ui/InlineFeedback";
@@ -122,6 +123,44 @@ function Profile() {
 
         loadProfile();
     }, [navigate, showToast]);
+
+    useEffect(() => {
+        return subscribeToSync(async (event) => {
+            if (event.type === "USER_UPDATED") {
+                try {
+                    const response = await apiFetch("/profile");
+                    if (!response.ok) return;
+                    const data: ProfileUser = await response.json();
+                    
+                    setUser(prevUser => {
+                        if (!prevUser) return data;
+                        
+                        setName(currentName => {
+                            if (currentName === (prevUser.name || "")) return data.name || "";
+                            return currentName;
+                        });
+                        setSurname(currentSurname => {
+                            if (currentSurname === (prevUser.surname || "")) return data.surname || "";
+                            return currentSurname;
+                        });
+                        setUsername(currentUsername => {
+                            if (currentUsername === (prevUser.username || "")) return data.username || "";
+                            return currentUsername;
+                        });
+                        setEmail(data.email || "");
+                        
+                        return data;
+                    });
+                    
+                    setAvatarPreview(() => {
+                        return data.profileImageUrl ? (getMediaUrl(data.profileImageUrl) ?? null) : null;
+                    });
+                } catch {
+                    // Ignore
+                }
+            }
+        });
+    }, []);
 
     useEffect(() => {
         if (!user) {

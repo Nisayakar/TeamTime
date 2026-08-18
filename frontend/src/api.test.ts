@@ -6,6 +6,7 @@ import {
     setUnauthorizedRedirectHandlerForTests
 } from "./api";
 import { mockJsonResponse } from "./test/testUtils";
+import { testSimulateRemoteEvent } from "./sync";
 
 describe("apiFetch", () => {
     afterEach(() => {
@@ -70,7 +71,7 @@ describe("apiFetch", () => {
     });
 });
 
-describe("multi-tab sync via storage event", () => {
+describe("multi-tab sync via broadcast event", () => {
     let originalLocation: Location;
 
     beforeEach(() => {
@@ -99,10 +100,9 @@ describe("multi-tab sync via storage event", () => {
         setUnauthorizedRedirectHandlerForTests(redirect);
 
         localStorage.removeItem("token");
-        const event = new StorageEvent("storage", { key: "token", newValue: null });
-        
         const dispatchEventSpy = vi.spyOn(window, "dispatchEvent");
-        window.dispatchEvent(event);
+        
+        testSimulateRemoteEvent({ type: "AUTH_CHANGED" });
 
         // Check if user-updated event was dispatched
         expect(dispatchEventSpy.mock.calls.some(call => call[0].type === "user-updated")).toBe(true);
@@ -113,10 +113,9 @@ describe("multi-tab sync via storage event", () => {
         window.location.pathname = "/login";
 
         localStorage.setItem("token", "new-token");
-        const event = new StorageEvent("storage", { key: "token", newValue: "new-token" });
-        
         const dispatchEventSpy = vi.spyOn(window, "dispatchEvent");
-        window.dispatchEvent(event);
+        
+        testSimulateRemoteEvent({ type: "AUTH_CHANGED" });
 
         expect(dispatchEventSpy.mock.calls.some(call => call[0].type === "user-updated")).toBe(true);
         expect(window.location.assign).toHaveBeenCalledWith("/dashboard");
@@ -128,9 +127,7 @@ describe("multi-tab sync via storage event", () => {
         setUnauthorizedRedirectHandlerForTests(redirect);
 
         localStorage.removeItem("token");
-        const event = new StorageEvent("storage", { key: "token", newValue: null });
-        
-        window.dispatchEvent(event);
+        testSimulateRemoteEvent({ type: "AUTH_CHANGED" });
 
         expect(redirect).not.toHaveBeenCalled();
         expect(window.location.assign).not.toHaveBeenCalled();
