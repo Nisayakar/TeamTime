@@ -623,30 +623,46 @@ public class UserService {
             return List.of();
         }
 
-        String searchTerm = query.trim().toLowerCase(Locale.ROOT);
+        String tempTerm = query.trim().toLowerCase(Locale.ROOT);
+        if (tempTerm.startsWith("@")) {
+            tempTerm = tempTerm.substring(1);
+        }
+        final String searchTerm = tempTerm;
 
-        List<User> foundUsers = userRepository
-                .findTop10ByUsernameContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(searchTerm, searchTerm, searchTerm);
+        List<User> foundUsers = userRepository.searchUsers(searchTerm, org.springframework.data.domain.PageRequest.of(0, 20));
 
         return foundUsers.stream()
                 .sorted((u1, u2) -> {
-                    boolean exact1 = u1.getUsername().equalsIgnoreCase(searchTerm);
-                    boolean exact2 = u2.getUsername().equalsIgnoreCase(searchTerm);
-                    if (exact1 && !exact2) return -1;
-                    if (!exact1 && exact2) return 1;
+                    boolean exactUser1 = u1.getUsername().equalsIgnoreCase(searchTerm);
+                    boolean exactUser2 = u2.getUsername().equalsIgnoreCase(searchTerm);
+                    if (exactUser1 && !exactUser2) return -1;
+                    if (!exactUser1 && exactUser2) return 1;
 
-                    boolean prefix1 = u1.getUsername().toLowerCase(Locale.ROOT).startsWith(searchTerm);
-                    boolean prefix2 = u2.getUsername().toLowerCase(Locale.ROOT).startsWith(searchTerm);
-                    if (prefix1 && !prefix2) return -1;
-                    if (!prefix1 && prefix2) return 1;
+                    boolean exactEmail1 = u1.getEmail() != null && u1.getEmail().equalsIgnoreCase(searchTerm);
+                    boolean exactEmail2 = u2.getEmail() != null && u2.getEmail().equalsIgnoreCase(searchTerm);
+                    if (exactEmail1 && !exactEmail2) return -1;
+                    if (!exactEmail1 && exactEmail2) return 1;
+
+                    boolean prefixUser1 = u1.getUsername().toLowerCase(Locale.ROOT).startsWith(searchTerm);
+                    boolean prefixUser2 = u2.getUsername().toLowerCase(Locale.ROOT).startsWith(searchTerm);
+                    if (prefixUser1 && !prefixUser2) return -1;
+                    if (!prefixUser1 && prefixUser2) return 1;
+
+                    boolean prefixEmail1 = u1.getEmail() != null && u1.getEmail().toLowerCase(Locale.ROOT).startsWith(searchTerm);
+                    boolean prefixEmail2 = u2.getEmail() != null && u2.getEmail().toLowerCase(Locale.ROOT).startsWith(searchTerm);
+                    if (prefixEmail1 && !prefixEmail2) return -1;
+                    if (!prefixEmail1 && prefixEmail2) return 1;
 
                     return u1.getName().compareToIgnoreCase(u2.getName());
                 })
+                .limit(10)
                 .map(user -> new UserSearchResponse(
                         user.getId(),
                         user.getName(),
                         user.getSurname(),
-                        user.getUsername()))
+                        user.getUsername(),
+                        user.getEmail(),
+                        user.getProfileImagePath()))
                 .toList();
     }
 

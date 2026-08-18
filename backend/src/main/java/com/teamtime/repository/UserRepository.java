@@ -12,7 +12,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
         Optional<User> findByEmailIgnoreCase(String email);
         boolean existsByEmailIgnoreCase(String email);
         boolean existsByUsernameIgnoreCase(String username);
-        List<User> findTop10ByUsernameContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(String username, String name, String surname);
-        //"Email'e göre kullanıcı bul."
+        @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(u.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(u.surname) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
+        List<User> searchUsers(@org.springframework.data.repository.query.Param("searchTerm") String searchTerm, org.springframework.data.domain.Pageable pageable);
 //Spring Data JPA metodun ismine bakarak arka planda otomatik SQL oluşturuyor.
 }

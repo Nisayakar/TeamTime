@@ -30,6 +30,8 @@ type UserSearchResult = {
     name: string;
     surname: string;
     username: string;
+    email?: string;
+    profileImageUrl?: string;
 }
 
 type StoredUser = {
@@ -383,6 +385,7 @@ function TeamDetails() {
                                     <label>Kullanıcı Ara</label>
                                     <input
                                         aria-label="Kullanıcı Ara"
+                                        placeholder="Kullanıcı adı veya e-posta ile ara..."
                                         type="text"
                                         value={userSearch}
                                         onChange={event => handleUserSearchChange(event.target.value)}
@@ -400,8 +403,12 @@ function TeamDetails() {
                                                             key={user.id}
                                                             type="button"
                                                             onClick={() => selectUser(user)}
+                                                            style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "2px", padding: "8px 12px" }}
                                                         >
-                                                            {getFullName(user)}
+                                                            <div style={{ fontWeight: 500 }}>{getFullName(user)}</div>
+                                                            <div style={{ fontSize: "0.85em", color: "var(--text-muted, #888)" }}>
+                                                                @{user.username} {user.email && `· ${user.email}`}
+                                                            </div>
                                                         </button>
                                                     ))
                                                 }
@@ -411,9 +418,12 @@ function TeamDetails() {
 
                                     {
                                         selectedUser && (
-                                            <p className="selected-user">
-                                                {getFullName(selectedUser)}
-                                            </p>
+                                            <div className="selected-user" style={{ marginTop: "12px", padding: "12px", background: "var(--surface-low)", borderRadius: "6px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                                                <div style={{ fontWeight: 500 }}>{getFullName(selectedUser)}</div>
+                                                <div style={{ fontSize: "0.85em", color: "var(--text-muted, #888)" }}>
+                                                    @{selectedUser.username} {selectedUser.email && `· ${selectedUser.email}`}
+                                                </div>
+                                            </div>
                                         )
                                     }
                                 </div>

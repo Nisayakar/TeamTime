@@ -625,7 +625,7 @@ function ProjectDetails() {
                                                 <option value="">Atanmamış</option>
                                                 {teamMembers.map(member => (
                                                     <option key={member.userId} value={member.userId}>
-                                                        {member.userName} {member.username ? `(@${member.username})` : ''}
+                                                        {member.userName} {member.username ? `(@${member.username})` : ''} {member.userEmail ? `· ${member.userEmail}` : ''}
                                                     </option>
                                                 ))}
                                             </select>

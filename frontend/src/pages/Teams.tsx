@@ -25,9 +25,11 @@ type StoredUser = {
 
 type UserSearchResult = {
     id: number;
-    email: string;
-    name?: string;
-    surname?: string;
+    name: string;
+    surname: string;
+    username: string;
+    email?: string;
+    profileImageUrl?: string;
 }
 
 function Teams() {
@@ -48,7 +50,7 @@ function Teams() {
 
     function getFullName(user: UserSearchResult): string {
         if (!user.name && !user.surname) {
-            return user.email;
+            return user.username || user.email || "";
         }
 
         return `${user.name ?? ""} ${user.surname ?? ""}`.trim();
@@ -350,7 +352,7 @@ function Teams() {
                             value={userSearch}
                             onChange={event => setUserSearch(event.target.value)}
                             autoComplete="off"
-                            placeholder="Kişi ara..."
+                            placeholder="Kullanıcı adı veya e-posta ile ara..."
                         />
                         {userResults.length > 0 && (
                             <div className="autocomplete-list">
@@ -360,8 +362,12 @@ function Teams() {
                                         key={user.id}
                                         type="button"
                                         onClick={() => selectUser(user)}
+                                        style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "2px", padding: "8px 12px" }}
                                     >
-                                        {getFullName(user)}
+                                        <div style={{ fontWeight: 500 }}>{getFullName(user)}</div>
+                                        <div style={{ fontSize: "0.85em", color: "var(--text-muted, #888)" }}>
+                                            @{user.username} {user.email && `· ${user.email}`}
+                                        </div>
                                     </button>
                                 ))}
                             </div>
@@ -370,7 +376,7 @@ function Teams() {
                             <div className="selected-users-chips" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
                                 {selectedUsers.map(user => (
                                     <span key={user.id} className="chip" style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '16px', padding: '4px 12px', fontSize: '13px' }}>
-                                        {getFullName(user)}
+                                        {getFullName(user)} &middot; @{user.username}
                                         <button 
                                             type="button" 
                                             onClick={() => removeSelectedUser(user.id)}
