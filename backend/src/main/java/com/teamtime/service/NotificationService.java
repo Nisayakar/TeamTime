@@ -18,6 +18,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
+import com.teamtime.event.NotificationEvent;
+
 @Service
 public class NotificationService {
 
@@ -30,17 +33,20 @@ public class NotificationService {
     private final UserRepository userRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final com.teamtime.repository.TaskRepository taskRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public NotificationService(
             NotificationRepository notificationRepository,
             UserRepository userRepository,
             TeamMemberRepository teamMemberRepository,
-            com.teamtime.repository.TaskRepository taskRepository
+            com.teamtime.repository.TaskRepository taskRepository,
+            ApplicationEventPublisher eventPublisher
     ) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
         this.teamMemberRepository = teamMemberRepository;
         this.taskRepository = taskRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -60,7 +66,9 @@ public class NotificationService {
         notification.setRelatedEntityId(relatedEntityId);
         notification.setRelatedEntityType(relatedEntityType);
 
-        return notificationRepository.save(notification);
+        Notification saved = notificationRepository.save(notification);
+        eventPublisher.publishEvent(new NotificationEvent(this, saved));
+        return saved;
     }
 
     @Transactional
@@ -332,8 +340,8 @@ public class NotificationService {
         notification.setRelatedEntityId(team.getId());
         notification.setRelatedEntityType("TEAM");
         notification.setRead(false);
-        
-        notificationRepository.save(notification);
+        Notification saved = notificationRepository.save(notification);
+        eventPublisher.publishEvent(new NotificationEvent(this, saved));
     }
 
     public void notifyTeamInvitationRejected(User teamOwner, User invitedUser, Team team) {
@@ -353,7 +361,7 @@ public class NotificationService {
         notification.setRelatedEntityId(team.getId());
         notification.setRelatedEntityType("TEAM");
         notification.setRead(false);
-        
-        notificationRepository.save(notification);
+        Notification saved = notificationRepository.save(notification);
+        eventPublisher.publishEvent(new NotificationEvent(this, saved));
     }
 }
