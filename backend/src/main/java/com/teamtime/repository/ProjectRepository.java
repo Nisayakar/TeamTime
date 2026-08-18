@@ -23,6 +23,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     List<Project> findByTeam_IdAndUserId(Long teamId, Long userId);
 
+    List<Project> findByTeam_Id(Long teamId);
+
     Optional<Project> findByIdAndUserId(Long id, Long userId);
 
     void deleteByUserId(Long userId);

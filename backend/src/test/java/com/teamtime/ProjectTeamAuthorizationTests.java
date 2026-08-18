@@ -404,6 +404,83 @@ class ProjectTeamAuthorizationTests {
                 """.formatted(title, description, status);
     }
 
+    @Test
+    void testRemovedMemberTaskCleanup() throws Exception {
+        // 1. Create a Team
+        Long teamId = createTeam(owner, "Cleanup Team");
+        // 2. Add member to the Team
+        addMember(owner, teamId, member.getId(), TeamRole.MEMBER);
+        
+        // 3. Create a Project for the Team
+        Long projectId = createTeamProject(owner, teamId, "Cleanup Project");
+        
+        // 4. Create tasks in the project
+        Long taskPendingId = createTask(owner, projectId);
+        Long taskAcceptedId = createTask(owner, projectId);
+        Long taskRejectedId = createTask(owner, projectId);
+        
+        // 5. Assign tasks to the member
+        mockMvc.perform(put("/api/tasks/{id}/assignee", taskPendingId)
+                        .header(AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"userId\": %d}".formatted(member.getId())))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put("/api/tasks/{id}/assignee", taskAcceptedId)
+                        .header(AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"userId\": %d}".formatted(member.getId())))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put("/api/tasks/{id}/assignee", taskRejectedId)
+                        .header(AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"userId\": %d}".formatted(member.getId())))
+                .andExpect(status().isOk());
+
+        // 6. Member accepts taskAcceptedId
+        mockMvc.perform(post("/api/tasks/{id}/assignment/accept", taskAcceptedId)
+                        .header(AUTHORIZATION, bearer(member)))
+                .andExpect(status().isOk());
+
+        // 7. Member rejects taskRejectedId
+        mockMvc.perform(post("/api/tasks/{id}/assignment/reject", taskRejectedId)
+                        .header(AUTHORIZATION, bearer(member))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\": \"Too busy\"}"))
+                .andExpect(status().isOk());
+
+        // Create tasks in another team/project for the same member to verify isolation
+        Long otherTeamId = createTeam(owner, "Other Team");
+        addMember(owner, otherTeamId, member.getId(), TeamRole.MEMBER);
+        Long otherProjectId = createTeamProject(owner, otherTeamId, "Other Project");
+        Long otherTaskId = createTask(owner, otherProjectId);
+        mockMvc.perform(put("/api/tasks/{id}/assignee", otherTaskId)
+                        .header(AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"userId\": %d}".formatted(member.getId())))
+                .andExpect(status().isOk());
+
+        // 8. Owner removes the member from "Cleanup Team"
+        mockMvc.perform(delete("/api/teams/{teamId}/members/{userId}", teamId, member.getId())
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isNoContent());
+
+        // 9. Verify taskPendingId, taskAcceptedId, taskRejectedId are now UNASSIGNED and have assignedUser == null
+        org.assertj.core.api.Assertions.assertThat(taskRepository.findById(taskPendingId).orElseThrow().getAssignedUser()).isNull();
+        org.assertj.core.api.Assertions.assertThat(taskRepository.findById(taskPendingId).orElseThrow().getAssignmentStatus()).isEqualTo(com.teamtime.entity.AssignmentStatus.UNASSIGNED);
+
+        org.assertj.core.api.Assertions.assertThat(taskRepository.findById(taskAcceptedId).orElseThrow().getAssignedUser()).isNull();
+        org.assertj.core.api.Assertions.assertThat(taskRepository.findById(taskAcceptedId).orElseThrow().getAssignmentStatus()).isEqualTo(com.teamtime.entity.AssignmentStatus.UNASSIGNED);
+
+        org.assertj.core.api.Assertions.assertThat(taskRepository.findById(taskRejectedId).orElseThrow().getAssignedUser()).isNull();
+        org.assertj.core.api.Assertions.assertThat(taskRepository.findById(taskRejectedId).orElseThrow().getAssignmentStatus()).isEqualTo(com.teamtime.entity.AssignmentStatus.UNASSIGNED);
+        org.assertj.core.api.Assertions.assertThat(taskRepository.findById(taskRejectedId).orElseThrow().getRejectionReason()).isNull();
+
+        // 10. Verify otherTaskId still has assignedUser == member
+        org.assertj.core.api.Assertions.assertThat(taskRepository.findById(otherTaskId).orElseThrow().getAssignedUser().getId()).isEqualTo(member.getId());
+    }
+
     private String bearer(User user) {
         return "Bearer " + jwtService.generateToken(user);
     }

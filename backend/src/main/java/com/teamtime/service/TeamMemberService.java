@@ -24,13 +24,15 @@ public class TeamMemberService {
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final TaskService taskService;
 
     public TeamMemberService(TeamMemberRepository teamMemberRepository, TeamRepository teamRepository,
-            UserRepository userRepository, NotificationService notificationService) {
+            UserRepository userRepository, NotificationService notificationService, TaskService taskService) {
         this.teamMemberRepository = teamMemberRepository;
         this.teamRepository = teamRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
+        this.taskService = taskService;
     }
 
     @Transactional
@@ -94,6 +96,7 @@ public class TeamMemberService {
             throw new org.springframework.security.access.AccessDeniedException("Yönetici başka bir yöneticiyi çıkaramaz");
         }
 
+        taskService.cleanupTasksForRemovedMember(teamId, userId);
         notificationService.notifyTeamMemberRemoved(teamMember.getUser(), teamMember.getTeam());
         teamMemberRepository.delete(teamMember);
     }
@@ -106,6 +109,7 @@ public class TeamMemberService {
             throw new ConflictException("Takımdan çıkmadan önce takım sahipliğini başka bir üyeye devretmelisiniz.");
         }
 
+        taskService.cleanupTasksForRemovedMember(teamId, currentUserId);
         teamMemberRepository.delete(currentMembership);
     }
 

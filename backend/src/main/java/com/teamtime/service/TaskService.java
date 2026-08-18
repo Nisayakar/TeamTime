@@ -227,11 +227,7 @@ public class TaskService {
 
         requireTeamTaskMutationAccess(task.getProject(), currentUserId);
 
-        task.setAssignedUser(null);
-        task.setAssignmentStatus(AssignmentStatus.UNASSIGNED);
-        task.setRejectionReason(null);
-        task.setAssignedAt(null);
-        task.setRespondedAt(null);
+        clearTaskAssignment(task);
 
         return convertToResponse(taskRepository.save(task));
     }
@@ -332,6 +328,9 @@ public class TaskService {
             throw new AccessDeniedException("Bu görev size atanmamış");
         }
 
+        teamMemberRepository.findByTeamIdAndUserId(project.getTeam().getId(), currentUserId)
+                .orElseThrow(() -> new AccessDeniedException("Bu takımın artık üyesi değilsiniz, görevi kabul/red edemezsiniz"));
+
         if (task.getAssignmentStatus() != AssignmentStatus.PENDING) {
             throw new ConflictException("Bu görev ataması yanıt beklemiyor");
         }
@@ -425,4 +424,31 @@ public class TaskService {
                 && !"TAMAMLANDI".equals(task.getStatus());
     }
 
+    @Transactional
+    public void cleanupTasksForRemovedMember(Long teamId, Long userId) {
+        // Find all tasks assigned to the removed user in projects belonging to the specified team
+        List<Project> teamProjects = projectRepository.findByTeam_Id(teamId);
+        if (teamProjects.isEmpty()) {
+            return;
+        }
+
+        List<Task> tasksToClean = taskRepository.findByProjectIdInAndAssignedUserId(
+                teamProjects.stream().map(Project::getId).toList(),
+                userId
+        );
+
+        for (Task task : tasksToClean) {
+            clearTaskAssignment(task);
+        }
+        
+        taskRepository.saveAll(tasksToClean);
+    }
+
+    private void clearTaskAssignment(Task task) {
+        task.setAssignedUser(null);
+        task.setAssignmentStatus(AssignmentStatus.UNASSIGNED);
+        task.setRejectionReason(null);
+        task.setAssignedAt(null);
+        task.setRespondedAt(null);
+    }
 }

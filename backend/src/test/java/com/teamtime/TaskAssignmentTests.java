@@ -13,8 +13,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.teamtime.entity.AssignmentStatus;
 import com.teamtime.entity.NotificationType;
 import com.teamtime.entity.Project;
+import com.teamtime.entity.Task;
 import com.teamtime.entity.Team;
 import com.teamtime.entity.TeamMember;
 import com.teamtime.entity.TeamRole;
@@ -26,6 +28,7 @@ import com.teamtime.repository.TeamMemberRepository;
 import com.teamtime.repository.TeamRepository;
 import com.teamtime.repository.UserRepository;
 import com.teamtime.security.JwtService;
+import com.teamtime.service.TaskService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,6 +80,9 @@ class TaskAssignmentTests {
 
     @Autowired
     private NotificationRepository notificationRepository;
+
+    @Autowired
+    private TaskService taskService;
 
     private User owner;
     private User admin;
@@ -188,6 +194,16 @@ class TaskAssignmentTests {
     }
 
     @Test
+    void removedMemberCannotAcceptAssignment() throws Exception {
+        assign(owner, teamTaskId, member).andExpect(status().isOk());
+        removeMembership(team, member);
+
+        mockMvc.perform(post("/api/tasks/{id}/assignment/accept", teamTaskId)
+                        .header(AUTHORIZATION, bearer(member)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void assignedUserCanRejectWithReasonAndNotificationIsCreated() throws Exception {
         assign(owner, teamTaskId, member).andExpect(status().isOk());
 
@@ -207,6 +223,15 @@ class TaskAssignmentTests {
         mockMvc.perform(getNotifications(owner))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[?(@.type == 'TASK_ASSIGNMENT_REJECTED')]", hasSize(1)));
+    }
+
+    @Test
+    void removedMemberCannotRejectAssignment() throws Exception {
+        assign(owner, teamTaskId, member).andExpect(status().isOk());
+        removeMembership(team, member);
+
+        reject(member, teamTaskId, "Artık takımda değilim")
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -258,6 +283,33 @@ class TaskAssignmentTests {
                 .andExpect(jsonPath("$.rejectionReason").value(nullValue()))
                 .andExpect(jsonPath("$.assignedAt").value(nullValue()))
                 .andExpect(jsonPath("$.respondedAt").value(nullValue()));
+    }
+
+    @Test
+    void cleanupRemovedMemberAssignmentsOnlyClearsTasksInThatTeam() throws Exception {
+        assign(owner, teamTaskId, member).andExpect(status().isOk());
+
+        Team otherTeam = teamRepository.save(team("Other Cleanup Team"));
+        addMember(otherTeam, owner, TeamRole.OWNER);
+        addMember(otherTeam, member, TeamRole.MEMBER);
+        Long otherProjectId = projectRepository.save(project("Other Cleanup Project", owner, otherTeam)).getId();
+        Long otherTaskId = createTask(owner, otherProjectId, "Other cleanup task", "BEKLIYOR");
+        assign(owner, otherTaskId, member).andExpect(status().isOk());
+
+        taskService.cleanupTasksForRemovedMember(team.getId(), member.getId());
+
+        Task cleanedTask = taskRepository.findById(teamTaskId).orElseThrow();
+        Task untouchedTask = taskRepository.findById(otherTaskId).orElseThrow();
+
+        org.assertj.core.api.Assertions.assertThat(cleanedTask.getAssignedUser()).isNull();
+        org.assertj.core.api.Assertions.assertThat(cleanedTask.getAssignmentStatus()).isEqualTo(AssignmentStatus.UNASSIGNED);
+        org.assertj.core.api.Assertions.assertThat(cleanedTask.getRejectionReason()).isNull();
+        org.assertj.core.api.Assertions.assertThat(cleanedTask.getAssignedAt()).isNull();
+        org.assertj.core.api.Assertions.assertThat(cleanedTask.getRespondedAt()).isNull();
+
+        org.assertj.core.api.Assertions.assertThat(untouchedTask.getAssignedUser()).isNotNull();
+        org.assertj.core.api.Assertions.assertThat(untouchedTask.getAssignedUser().getId()).isEqualTo(member.getId());
+        org.assertj.core.api.Assertions.assertThat(untouchedTask.getAssignmentStatus()).isEqualTo(AssignmentStatus.PENDING);
     }
 
     @Test
@@ -410,6 +462,11 @@ class TaskAssignmentTests {
         teamMember.setUser(user);
         teamMember.setRole(role.name());
         teamMemberRepository.save(teamMember);
+    }
+
+    private void removeMembership(Team targetTeam, User user) {
+        TeamMember membership = teamMemberRepository.findByTeamIdAndUserId(targetTeam.getId(), user.getId()).orElseThrow();
+        teamMemberRepository.delete(membership);
     }
 
     private Team team(String name) {
