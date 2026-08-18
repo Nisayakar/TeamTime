@@ -152,6 +152,16 @@ class GlobalExceptionHandlerTests {
                 .andExpect(jsonPath("$.path").value("/test/forbidden"));
     }
 
+    @Test
+    void optimisticLockExceptionReturnsConflict() throws Exception {
+        mockMvc.perform(get("/test/optimistic-lock"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.error").value("Conflict"))
+                .andExpect(jsonPath("$.message").value("Görev başka bir kullanıcı tarafından güncellendi. Lütfen sayfayı yenileyip tekrar deneyin."))
+                .andExpect(jsonPath("$.path").value("/test/optimistic-lock"));
+    }
+
     @RestController
     static class TestExceptionController {
 
@@ -168,6 +178,11 @@ class GlobalExceptionHandlerTests {
         @GetMapping("/test/forbidden")
         void forbidden() {
             throw new AccessDeniedException("forbidden test detail");
+        }
+
+        @GetMapping("/test/optimistic-lock")
+        void optimisticLock() {
+            throw new org.springframework.orm.ObjectOptimisticLockingFailureException(com.teamtime.entity.Task.class, 1L);
         }
     }
 }

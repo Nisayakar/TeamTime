@@ -13,6 +13,9 @@ public class Task {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private Long version;
+
     private String title;
 
     private String description;
@@ -190,5 +193,13 @@ public class Task {
 
     public void setRespondedAt(LocalDateTime respondedAt) {
         this.respondedAt = respondedAt;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }
