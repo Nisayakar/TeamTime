@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import "./CreateProject.css";
 import { apiFetch, getStoredUser } from "../api";
+import { subscribeToSync, broadcastSyncEvent } from "../sync";
 import InlineFeedback, { type InlineFeedbackType } from "../components/ui/InlineFeedback";
 import type { ProjectRequest } from "../types/project";
 import { getTeamRoleLabel, type Team, type TeamMember, type TeamRole } from "../types/team";
@@ -119,6 +120,15 @@ function CreateProject() {
         loadManageableTeams();
     }, [loadManageableTeams]);
 
+    useEffect(() => {
+        const unsubscribe = subscribeToSync((event) => {
+            if (event.type === "TEAM_CHANGED") {
+                loadManageableTeams();
+            }
+        });
+        return unsubscribe;
+    }, [loadManageableTeams]);
+
     async function createProject(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
@@ -130,7 +140,6 @@ function CreateProject() {
             setFormFeedback({ type: "warning", message: "Lütfen bir takım seçin." });
             return;
         }
-
         const project: ProjectRequest = {
             projectName,
             description: projectDescription,
@@ -155,6 +164,7 @@ function CreateProject() {
 
             const data = await response.text();
             setFormFeedback({ type: "success", message: data || "Proje başarıyla oluşturuldu." });
+            broadcastSyncEvent("PROJECT_CHANGED");
         } catch {
             setFormFeedback({ type: "error", message: "Sunucuya bağlanılamadı" });
         } finally {

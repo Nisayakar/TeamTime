@@ -14,7 +14,6 @@ describe("User Search and Selection UI", () => {
     });
 
     it("Create Team - user picker displays username and email and sends id", async () => {
-        const user = userEvent.setup();
         const fetchMock = vi.fn<typeof fetch>().mockImplementation((url, init) => {
             const urlStr = url.toString();
             console.log("CreateTeam fetch:", urlStr, init?.method);
@@ -66,7 +65,6 @@ describe("User Search and Selection UI", () => {
     });
 
     it("TeamDetails - user picker displays username and email and sends id", async () => {
-        const user = userEvent.setup();
         const fetchMock = vi.fn<typeof fetch>().mockImplementation((url, init) => {
             const urlStr = url.toString();
             console.log("TeamDetails fetch:", urlStr);

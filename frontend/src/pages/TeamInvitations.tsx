@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api";
+import { broadcastSyncEvent } from "../sync";
 import InlineFeedback from "../components/ui/InlineFeedback";
 
 type TeamInvitation = {
@@ -50,6 +51,12 @@ export default function TeamInvitations() {
             if (!response.ok) {
                 throw new Error();
             }
+            const invitation = invitations.find(inv => inv.invitationId === id);
+            if (invitation) {
+                broadcastSyncEvent("TEAM_CHANGED", { teamId: invitation.teamId });
+            } else {
+                broadcastSyncEvent("TEAM_CHANGED");
+            }
             navigate("/teams");
         } catch {
             setFeedback({ type: "error", message: "Davet kabul edilemedi." });
@@ -62,6 +69,12 @@ export default function TeamInvitations() {
             const response = await apiFetch(`/team-invitations/${id}/reject`, { method: "POST" });
             if (!response.ok) {
                 throw new Error();
+            }
+            const invitation = invitations.find(inv => inv.invitationId === id);
+            if (invitation) {
+                broadcastSyncEvent("TEAM_CHANGED", { teamId: invitation.teamId });
+            } else {
+                broadcastSyncEvent("TEAM_CHANGED");
             }
             navigate("/teams");
         } catch {

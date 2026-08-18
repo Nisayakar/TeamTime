@@ -32,4 +32,8 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
     long countDistinctTeamsForUser(@Param("userId") Long userId);
 
     void deleteByTeamId(Long teamId);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select tm from TeamMember tm where tm.team.id = :teamId")
+    List<TeamMember> findByTeamIdForWrite(@Param("teamId") Long teamId);
 }

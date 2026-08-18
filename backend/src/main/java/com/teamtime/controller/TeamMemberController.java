@@ -77,6 +77,16 @@ public class TeamMemberController {
         return ResponseEntity.ok(teamMemberService.promoteToAdmin(teamId, userId, currentUserId));
     }
 
+    @PutMapping("/teams/{teamId}/members/{userId}/member")
+    public ResponseEntity<TeamMemberResponse> demoteToMember(
+            @PathVariable Long teamId,
+            @PathVariable Long userId,
+            Authentication authentication
+    ) {
+        Long currentUserId = (Long) authentication.getPrincipal();
+        return ResponseEntity.ok(teamMemberService.demoteToMember(teamId, userId, currentUserId));
+    }
+
     @GetMapping("/teams/{teamId}/members")
     public ResponseEntity<List<TeamMemberResponse>> getTeamMembers(@PathVariable Long teamId, Authentication authentication) {
         Long currentUserId = (Long) authentication.getPrincipal();

@@ -34,3 +34,12 @@ export type Task = {
     assignedAt: string | null;
     respondedAt: string | null;
 };
+
+export type TaskAttachment = {
+    id: number;
+    taskId: number;
+    fileName: string;
+    contentType: string;
+    fileSize: number;
+    createdAt: string;
+};

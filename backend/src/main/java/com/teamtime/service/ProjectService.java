@@ -8,6 +8,7 @@ import com.teamtime.entity.Project;
 import com.teamtime.entity.Team;
 import com.teamtime.entity.TeamMember;
 import com.teamtime.entity.TeamRole;
+import com.teamtime.entity.Task;
 import com.teamtime.entity.User;
 import com.teamtime.exception.ConflictException;
 import com.teamtime.exception.ResourceNotFoundException;
@@ -33,15 +34,18 @@ public class ProjectService {
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final NotificationService notificationService;
+    private final TaskAttachmentService taskAttachmentService;
 
     public ProjectService(ProjectRepository projectRepository, TaskRepository taskRepository, UserRepository userRepository,
-            TeamRepository teamRepository, TeamMemberRepository teamMemberRepository, NotificationService notificationService) {
+            TeamRepository teamRepository, TeamMemberRepository teamMemberRepository, NotificationService notificationService,
+            TaskAttachmentService taskAttachmentService) {
         this.projectRepository = projectRepository;
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
         this.teamRepository = teamRepository;
         this.teamMemberRepository = teamMemberRepository;
         this.notificationService = notificationService;
+        this.taskAttachmentService = taskAttachmentService;
     }
 
     @Transactional
@@ -117,6 +121,11 @@ public class ProjectService {
                 .orElseThrow(() -> new ResourceNotFoundException("Proje bulunamadı"));
         requireProjectOwner(project, userId);
 
+        List<Task> projectTasks = taskRepository.findByProjectId(id);
+        for (Task task : projectTasks) {
+            taskAttachmentService.deleteAttachmentsForTask(task.getId());
+        }
+
         taskRepository.deleteByProjectId(id);
         projectRepository.delete(project);
         return "Proje başarıyla silindi";
@@ -185,6 +194,13 @@ public class ProjectService {
     }
 
     public ProjectResponse toResponse(Project project) {
+        List<Task> tasks = taskRepository.findByProjectId(project.getId());
+        int progress = 0;
+        if (!tasks.isEmpty()) {
+            long completedCount = tasks.stream().filter(t -> "TAMAMLANDI".equals(t.getStatus())).count();
+            progress = (int) Math.round((double) completedCount / tasks.size() * 100);
+        }
+
         return new ProjectResponse(
                 project.getId(),
                 project.getProjectName(),
@@ -193,7 +209,8 @@ public class ProjectService {
                 project.getEndDate(),
                 project.getTeamId(),
                 project.getTeamName(),
-                project.isTeamProject());
+                project.isTeamProject(),
+                progress);
     }
 
     private List<ProjectResponse> toResponseList(List<Project> projects) {

@@ -163,6 +163,28 @@ public class NotificationService {
                 respondingUserId);
     }
 
+    @Transactional
+    public void notifyTaskDueSoon(User recipient, Long taskId, String taskTitle) {
+        createNotification(
+                recipient,
+                "Görev Bitiş Tarihi Yaklaşıyor",
+                "'%s' görevinin bitiş tarihine 24 saatten az kaldı.".formatted(taskTitle),
+                NotificationType.DUE_SOON,
+                taskId,
+                TASK_ENTITY);
+    }
+
+    @Transactional
+    public void notifyTaskOverdue(User recipient, Long taskId, String taskTitle) {
+        createNotification(
+                recipient,
+                "Görev Gecikti",
+                "'%s' görevinin bitiş tarihi geçti.".formatted(taskTitle),
+                NotificationType.OVERDUE,
+                taskId,
+                TASK_ENTITY);
+    }
+
     public NotificationPageResponse getCurrentUserNotifications(Long currentUserId, int page, int size) {
         requireUser(currentUserId);
         validatePageRequest(page, size);
@@ -316,7 +338,7 @@ public class NotificationService {
             case TEAM_MEMBER_ADDED -> "/teams/" + notification.getRelatedEntityId();
             case TEAM_MEMBER_REMOVED -> "/teams";
             case TEAM_PROJECT_CREATED -> "/project/" + notification.getRelatedEntityId();
-            case TEAM_TASK_CREATED, TASK_ASSIGNED, TASK_ASSIGNMENT_ACCEPTED, TASK_ASSIGNMENT_REJECTED -> {
+            case TEAM_TASK_CREATED, TASK_ASSIGNED, TASK_ASSIGNMENT_ACCEPTED, TASK_ASSIGNMENT_REJECTED, DUE_SOON, OVERDUE -> {
                 Long projectId = taskProjectIdMap.get(notification.getRelatedEntityId());
                 yield projectId != null ? "/project/" + projectId : null;
             }

@@ -201,13 +201,19 @@ class TeamAuthorizationTests {
                         .header(AUTHORIZATION, bearer(owner)))
                 .andExpect(status().isConflict());
 
+        // Transferring to a MEMBER should fail with 409 (Conflict)
         mockMvc.perform(put("/api/teams/{teamId}/members/{userId}/owner", teamId, member.getId())
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isConflict());
+
+        // Transferring to an ADMIN should succeed
+        mockMvc.perform(put("/api/teams/{teamId}/members/{userId}/owner", teamId, admin.getId())
                         .header(AUTHORIZATION, bearer(owner)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(3)));
 
         TeamMember previousOwner = teamMemberRepository.findByTeamIdAndUserId(teamId, owner.getId()).orElseThrow();
-        TeamMember newOwner = teamMemberRepository.findByTeamIdAndUserId(teamId, member.getId()).orElseThrow();
+        TeamMember newOwner = teamMemberRepository.findByTeamIdAndUserId(teamId, admin.getId()).orElseThrow();
 
         org.assertj.core.api.Assertions.assertThat(previousOwner.getRole()).isEqualTo(TeamRole.ADMIN.name());
         org.assertj.core.api.Assertions.assertThat(newOwner.getRole()).isEqualTo(TeamRole.OWNER.name());
@@ -239,7 +245,7 @@ class TeamAuthorizationTests {
                 .isEmpty();
 
         Long ownerLeaveTeamId = createTeam(owner, "Owner Leave Team");
-        addMember(owner, ownerLeaveTeamId, member.getId(), TeamRole.MEMBER);
+        addMember(owner, ownerLeaveTeamId, member.getId(), TeamRole.ADMIN);
 
         mockMvc.perform(delete("/api/teams/{teamId}/members/me", ownerLeaveTeamId)
                         .header(AUTHORIZATION, bearer(owner)))
@@ -354,7 +360,7 @@ class TeamAuthorizationTests {
     @Test
     void ownerCanTransferOwnershipAndBecomesAdmin() throws Exception {
         Long teamId = createTeam(owner, "Transfer Team");
-        addMember(owner, teamId, member.getId(), TeamRole.MEMBER);
+        addMember(owner, teamId, member.getId(), TeamRole.ADMIN);
 
         mockMvc.perform(put("/api/teams/{teamId}/members/{userId}/owner", teamId, member.getId())
                         .header(AUTHORIZATION, bearer(owner)))
@@ -367,6 +373,50 @@ class TeamAuthorizationTests {
         org.assertj.core.api.Assertions.assertThat(
             teamMemberRepository.findByTeamIdAndUserId(teamId, owner.getId()).get().getRole()
         ).isEqualTo("ADMIN");
+    }
+
+    @Test
+    void roleManagementRulesAndRestrictions() throws Exception {
+        Long teamId = createTeam(owner, "Role Team");
+        addMember(owner, teamId, admin.getId(), TeamRole.ADMIN);
+        addMember(owner, teamId, member.getId(), TeamRole.MEMBER);
+
+        // 1. OWNER can promote MEMBER -> ADMIN
+        mockMvc.perform(put("/api/teams/{teamId}/members/{userId}/admin", teamId, member.getId())
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk());
+
+        org.assertj.core.api.Assertions.assertThat(
+            teamMemberRepository.findByTeamIdAndUserId(teamId, member.getId()).get().getRole()
+        ).isEqualTo("ADMIN");
+
+        // 2. OWNER can demote ADMIN -> MEMBER
+        mockMvc.perform(put("/api/teams/{teamId}/members/{userId}/member", teamId, member.getId())
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk());
+
+        org.assertj.core.api.Assertions.assertThat(
+            teamMemberRepository.findByTeamIdAndUserId(teamId, member.getId()).get().getRole()
+        ).isEqualTo("MEMBER");
+
+        // 3. OWNER cannot demote himself
+        mockMvc.perform(put("/api/teams/{teamId}/members/{userId}/member", teamId, owner.getId())
+                        .header(AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isConflict());
+
+        // 4. ADMIN cannot promote or demote
+        mockMvc.perform(put("/api/teams/{teamId}/members/{userId}/admin", teamId, member.getId())
+                        .header(AUTHORIZATION, bearer(admin)))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(put("/api/teams/{teamId}/members/{userId}/member", teamId, member.getId())
+                        .header(AUTHORIZATION, bearer(admin)))
+                .andExpect(status().isForbidden());
+
+        // 5. MEMBER cannot promote or demote
+        mockMvc.perform(put("/api/teams/{teamId}/members/{userId}/admin", teamId, admin.getId())
+                        .header(AUTHORIZATION, bearer(member)))
+                .andExpect(status().isForbidden());
     }
 
     private Long createTeam(User creator, String name) throws Exception {

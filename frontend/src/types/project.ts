@@ -7,6 +7,7 @@ export type Project = {
     teamId: number | null;
     teamName: string | null;
     teamProject: boolean;
+    progress?: number;
 }
 
 export type ProjectRequest = {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch, getStoredUser } from "../api";
+import { broadcastSyncEvent } from "../sync";
 import InlineFeedback, { type InlineFeedbackType } from "../components/ui/InlineFeedback";
 import type { Project, ProjectRequest } from "../types/project";
 import { canManageTeamProjects, getTeamRoleLabel, type TeamMember, type TeamRole } from "../types/team";
@@ -138,6 +139,7 @@ function EditProject() {
 
             const data = await response.text();
             setFormFeedback({ type: "success", message: data || "Proje başarıyla güncellendi." });
+            broadcastSyncEvent("PROJECT_CHANGED", { projectId: Number(id) });
             navigate("/projects");
         } catch {
             setFormFeedback({ type: "error", message: "Sunucuya bağlanılamadı" });

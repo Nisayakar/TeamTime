@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import ConfirmModal from "../components/ConfirmModal";
 import { apiFetch, getStoredUser } from "../api";
+import { subscribeToSync, broadcastSyncEvent } from "../sync";
 import InlineFeedback, { type InlineFeedbackType } from "../components/ui/InlineFeedback";
 import type { Project } from "../types/project";
 import { canManageTeamProjects, type TeamMember, type TeamRole } from "../types/team";
@@ -106,6 +107,15 @@ function Projects() {
         loadProjects();
     }, [loadProjects]);
 
+    useEffect(() => {
+        const unsubscribe = subscribeToSync((event) => {
+            if (event.type === "PROJECT_CHANGED" || event.type === "TEAM_CHANGED") {
+                loadProjects();
+            }
+        });
+        return unsubscribe;
+    }, [loadProjects]);
+
     function canManageProject(project: Project) {
         if (!project.teamProject) {
             return true;
@@ -150,6 +160,7 @@ function Projects() {
             const data = await response.text();
             setSectionFeedback({ type: "success", message: data || "Proje başarıyla silindi." });
             setProjects(currentProjects => currentProjects.filter(project => project.id !== projectToDelete.id));
+            broadcastSyncEvent("PROJECT_CHANGED", { projectId: projectToDelete.id });
             setProjectToDelete(null);
         } catch (error) {
             setDeleteFeedback(getErrorMessage(error, "Proje silinemedi"));
@@ -227,6 +238,16 @@ function Projects() {
                                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                                                         <strong>Bitiş:</strong> {project.endDate || "-"}
                                                     </span>
+                                                </div>
+
+                                                <div className="project-progress-container" style={{ margin: "4px 0" }}>
+                                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "4px", color: "var(--tt-text-secondary)" }}>
+                                                        <span>İlerleme</span>
+                                                        <span>%{project.progress ?? 0}</span>
+                                                    </div>
+                                                    <div style={{ width: "100%", height: "6px", backgroundColor: "rgba(255,255,255,0.1)", borderRadius: "3px", overflow: "hidden" }}>
+                                                        <div style={{ width: `${project.progress ?? 0}%`, height: "100%", backgroundColor: "#2563eb", borderRadius: "3px", transition: "width 0.3s ease" }} />
+                                                    </div>
                                                 </div>
 
                                                 <div className="project-row-actions button-row" style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>

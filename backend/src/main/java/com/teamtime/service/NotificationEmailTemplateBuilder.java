@@ -66,6 +66,16 @@ public class NotificationEmailTemplateBuilder {
                 data.title = "Takımda yeni bir görev oluşturuldu";
                 data.accentColor = "#2563EB"; // blue
                 break;
+            case "DUE_SOON":
+                data.subject = "Görev bitiş tarihi yaklaşıyor";
+                data.title = "Görevinizin bitiş tarihi yaklaşıyor";
+                data.accentColor = "#D97706"; // amber
+                break;
+            case "OVERDUE":
+                data.subject = "Görev gecikti";
+                data.title = "Göreviniz gecikti";
+                data.accentColor = "#DC2626"; // red
+                break;
             default:
                 data.subject = notification.getTitle();
                 data.title = notification.getTitle();
@@ -168,7 +178,9 @@ public class NotificationEmailTemplateBuilder {
             case "TASK_ASSIGNED":
             case "TASK_ASSIGNMENT_ACCEPTED":
             case "TASK_ASSIGNMENT_REJECTED":
-                return null; 
+            case "DUE_SOON":
+            case "OVERDUE":
+                return null;
         }
         return null;
     }

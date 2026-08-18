@@ -133,5 +133,12 @@ public class TaskController {
         Long userId = (Long) authentication.getPrincipal();
         return taskService.rejectAssignment(id, request.getReason(), userId);
     }
-
+    @GetMapping("/{id}/assignment-history")
+    public ResponseEntity<List<com.teamtime.dto.TaskAssignmentHistoryResponse>> getTaskAssignmentHistory(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        Long userId = (Long) authentication.getPrincipal();
+        return ResponseEntity.ok(taskService.getTaskAssignmentHistory(id, userId));
+    }
 }

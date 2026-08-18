@@ -1,7 +1,9 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ConfirmModal from "../components/ConfirmModal";
+import TaskDetailModal from "../components/TaskDetailModal";
 import { apiFetch, getStoredUser } from "../api";
+import { subscribeToSync, broadcastSyncEvent } from "../sync";
 import InlineFeedback, { type InlineFeedbackType } from "../components/ui/InlineFeedback";
 import type { Project } from "../types/project";
 import type { AssignmentStatus, Task, TaskPriority, TaskStatus } from "../types/task";
@@ -55,6 +57,8 @@ function ProjectDetails() {
     const [assignmentActionTaskId, setAssignmentActionTaskId] = useState<number | null>(null);
     const [rejectAssignment, setRejectAssignment] = useState<RejectAssignmentState | null>(null);
     const [deletingTask, setDeletingTask] = useState(false);
+    const [selectedTaskDetail, setSelectedTaskDetail] = useState<Task | null>(null);
+    const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
     const [projectFeedback, setProjectFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
     const [taskFormFeedback, setTaskFormFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
     const [taskListFeedback, setTaskListFeedback] = useState<{ type: InlineFeedbackType; message: string } | null>(null);
@@ -64,6 +68,12 @@ function ProjectDetails() {
         ? !project.teamProject || canManageTeamProjects(currentTeamRole)
         : false;
     const canAssignTasks = Boolean(project?.teamProject && canManageTeamProjects(currentTeamRole));
+
+    const projectProgress = useMemo(() => {
+        if (tasks.length === 0) return 0;
+        const completedCount = tasks.filter(t => t.status === "TAMAMLANDI").length;
+        return Math.round((completedCount / tasks.length) * 100);
+    }, [tasks]);
 
     const hasActiveTaskFilters = taskSearch.trim() !== ""
         || statusFilter !== "ALL"
@@ -220,6 +230,29 @@ function ProjectDetails() {
         getTasks();
     }, [getCurrentUserId, getTasks, loadProject]);
 
+    useEffect(() => {
+        const unsubscribe = subscribeToSync((event) => {
+            if (event.type === "TASK_CHANGED") {
+                const payload = event.payload as { projectId: number; taskId?: number } | undefined;
+                if (payload && payload.projectId === Number(id)) {
+                    getTasks();
+                }
+            } else if (event.type === "PROJECT_CHANGED") {
+                const payload = event.payload as { projectId: number } | undefined;
+                if (payload && payload.projectId === Number(id)) {
+                    loadProject();
+                    getTasks();
+                }
+            } else if (event.type === "TEAM_CHANGED") {
+                const payload = event.payload as { teamId: number } | undefined;
+                if (!project || (payload && payload.teamId === project.teamId)) {
+                    loadProject();
+                }
+            }
+        });
+        return unsubscribe;
+    }, [id, getTasks, loadProject, project]);
+
     async function saveTask() {
         if (!canMutateTasks) {
             setTaskFormFeedback({ type: "warning", message: "Bu işlem için yetkiniz yok" });
@@ -264,6 +297,7 @@ function ProjectDetails() {
             setTaskFormFeedback({ type: "success", message: editId ? "Görev başarıyla güncellendi." : "Görev başarıyla oluşturuldu." });
             clearForm();
             getTasks();
+            broadcastSyncEvent("TASK_CHANGED", { projectId: Number(id), taskId: savedTask.id });
         } catch (error) {
             setTaskFormFeedback({ type: "error", message: getErrorMessage(error, "Görev kaydedilemedi") });
         } finally {
@@ -297,6 +331,7 @@ function ProjectDetails() {
             setTaskListFeedback({ type: "success", message: data || "Görev başarıyla silindi." });
             setTaskToDelete(null);
             getTasks();
+            broadcastSyncEvent("TASK_CHANGED", { projectId: Number(id), taskId: taskToDelete.id });
         } catch (error) {
             setDeleteFeedback(getErrorMessage(error, "Görev silinemedi"));
         } finally {
@@ -319,6 +354,7 @@ function ProjectDetails() {
 
             setTaskListFeedback({ type: "success", message: "Görev ataması kabul edildi." });
             getTasks();
+            broadcastSyncEvent("TASK_CHANGED", { projectId: Number(id), taskId: task.id });
         } catch (error) {
             setTaskListFeedback({ type: "error", message: getErrorMessage(error, "Görev ataması kabul edilemedi") });
         } finally {
@@ -357,8 +393,10 @@ function ProjectDetails() {
             }
 
             setTaskListFeedback({ type: "success", message: "Görev ataması reddedildi." });
+            const rejectedTaskId = rejectAssignment.task.id;
             setRejectAssignment(null);
             getTasks();
+            broadcastSyncEvent("TASK_CHANGED", { projectId: Number(id), taskId: rejectedTaskId });
         } catch (error) {
             setRejectAssignment({
                 ...rejectAssignment,
@@ -585,6 +623,111 @@ function ProjectDetails() {
             : "Kişisel Proje";
     }
 
+    function renderTaskCard(task: Task) {
+        return (
+            <div className="task-card" key={task.id} style={{ marginBottom: '15px' }}>
+                <div>
+                    <h3>{task.title}</h3>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: '5px 0' }}>{task.description}</p>
+                </div>
+
+                <span className={getStatusClass(task.status)}>
+                    {getStatusLabel(task.status)}
+                </span>
+
+                <div className="task-meta-row" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '8px 0' }}>
+                    <span className={getPriorityClass(task.priority)}>
+                        {getPriorityLabel(task.priority)}
+                    </span>
+                    <span className={task.overdue ? "badge badge-warning" : "badge badge-blue"}>
+                        Son Tarih: {formatDate(task.dueDate)}
+                    </span>
+                    {
+                        task.overdue && (
+                            <span className="badge badge-warning">Gecikmiş</span>
+                        )
+                    }
+                </div>
+
+                {
+                    project?.teamProject && (
+                        <div className="task-assignment-block" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px', marginTop: '8px' }}>
+                            <div className="task-meta-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span className="badge badge-blue">
+                                    Atanan: {task.assignedUserName || "Atanmamış"}
+                                </span>
+                                <span className={getAssignmentStatusClass(task.assignmentStatus)}>
+                                    {getAssignmentStatusLabel(task.assignmentStatus)}
+                                </span>
+                            </div>
+                            {
+                                shouldShowRejectionReason(task) && task.rejectionReason && (
+                                    <p className="task-assignment-reason" style={{ fontSize: '0.85rem', color: '#ef4444', marginTop: '5px' }}>
+                                        Mazeret: {task.rejectionReason}
+                                    </p>
+                                )
+                            }
+                            {
+                                canRespondToAssignment(task) && (
+                                    <div className="button-row task-assignment-actions" style={{ display: 'flex', gap: '5px', marginTop: '8px' }}>
+                                        <button
+                                            className="button button-primary"
+                                            type="button"
+                                            style={{ padding: '4px 8px', fontSize: '0.8rem', minHeight: '28px' }}
+                                            disabled={assignmentActionTaskId === task.id}
+                                            onClick={() => acceptTaskAssignment(task)}
+                                        >
+                                            {assignmentActionTaskId === task.id ? "İşleniyor..." : "Kabul Et"}
+                                        </button>
+                                        <button
+                                            className="button button-secondary"
+                                            type="button"
+                                            style={{ padding: '4px 8px', fontSize: '0.8rem', minHeight: '28px' }}
+                                            disabled={assignmentActionTaskId === task.id}
+                                            onClick={() => setRejectAssignment({
+                                                task,
+                                                reason: "",
+                                                error: "",
+                                                submitting: false
+                                            })}
+                                        >
+                                            Reddet
+                                        </button>
+                                    </div>
+                                )
+                            }
+                        </div>
+                    )
+                }
+
+                <div className="button-row" style={{ marginTop: '10px', display: 'flex', gap: '5px' }}>
+                    <button className="button button-primary" style={{ padding: '5px 10px', fontSize: '0.85rem' }} onClick={() => setSelectedTaskDetail(task)}>
+                        Detay
+                    </button>
+                    {
+                        canMutateTasks && (
+                            <>
+                                <button className="button button-secondary" style={{ padding: '5px 10px', fontSize: '0.85rem' }} onClick={() => editTask(task)}>
+                                    Düzenle
+                                </button>
+                                <button
+                                    className="button button-danger"
+                                    style={{ padding: '5px 10px', fontSize: '0.85rem' }}
+                                    onClick={() => {
+                                        setDeleteFeedback("");
+                                        setTaskToDelete(task);
+                                    }}
+                                >
+                                    Sil
+                                </button>
+                            </>
+                        )
+                    }
+                </div>
+            </div>
+        );
+    }
+
     return (
         <main className="page-shell app-page project-details-page">
             <section className="page-header app-page-header">
@@ -592,6 +735,19 @@ function ProjectDetails() {
                     <span className="eyebrow">Proje</span>
                     <h1>{project?.projectName || "Proje Detayları"}</h1>
                     <p>{loadingProject ? "Proje bilgileri yükleniyor..." : getProjectScopeLabel()}</p>
+                    {
+                        project && (
+                            <div style={{ marginTop: "15px", maxWidth: "300px" }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "4px", color: "var(--text-secondary)" }}>
+                                    <span>Tamamlanma Oranı</span>
+                                    <span>%{projectProgress}</span>
+                                </div>
+                                <div style={{ width: "100%", height: "8px", backgroundColor: "rgba(255,255,255,0.1)", borderRadius: "4px", overflow: "hidden" }}>
+                                    <div style={{ width: `${projectProgress}%`, height: "100%", backgroundColor: "#2563eb", borderRadius: "4px", transition: "width 0.3s ease" }} />
+                                </div>
+                            </div>
+                        )
+                    }
                 </div>
             </section>
             {projectFeedback && <InlineFeedback type={projectFeedback.type} message={projectFeedback.message} />}
@@ -803,6 +959,28 @@ function ProjectDetails() {
                         }
                     </div>
 
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", marginTop: "15px" }}>
+                        <h3 style={{ margin: 0 }}>Görevler ({filteredTasks.length})</h3>
+                        <div style={{ display: "flex", gap: "8px" }}>
+                            <button
+                                type="button"
+                                className={`button ${viewMode === "list" ? "button-primary" : "button-secondary"}`}
+                                style={{ padding: "6px 12px", minHeight: "32px", fontSize: "14px" }}
+                                onClick={() => setViewMode("list")}
+                            >
+                                Liste
+                            </button>
+                            <button
+                                type="button"
+                                className={`button ${viewMode === "kanban" ? "button-primary" : "button-secondary"}`}
+                                style={{ padding: "6px 12px", minHeight: "32px", fontSize: "14px" }}
+                                onClick={() => setViewMode("kanban")}
+                            >
+                                Kanban
+                            </button>
+                        </div>
+                    </div>
+
                     {
                         loadingTasks ? (
                             <p className="empty-state app-empty-state">Görevler yükleniyor...</p>
@@ -815,101 +993,61 @@ function ProjectDetails() {
                         ) : (
                             <>
                                 {taskListFeedback && <InlineFeedback type={taskListFeedback.type} message={taskListFeedback.message} />}
-                                {filteredTasks.map(task => (
-                                    <div className="task-card" key={task.id}>
-                                        <div>
-                                            <h3>{task.title}</h3>
-                                            <p>{task.description}</p>
+                                {viewMode === "list" ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                        {filteredTasks.map(task => renderTaskCard(task))}
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginTop: '15px', alignItems: 'start' }}>
+                                        {/* Kolon 1: BEKLIYOR */}
+                                        <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <h3 style={{ borderBottom: '2px solid var(--text-secondary)', paddingBottom: '8px', marginBottom: '15px', display: 'flex', justifyContent: 'space-between' }}>
+                                                <span>Bekliyor</span>
+                                                <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                                                    {filteredTasks.filter(t => t.status === "BEKLIYOR").length}
+                                                </span>
+                                            </h3>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                {filteredTasks.filter(t => t.status === "BEKLIYOR").map(task => renderTaskCard(task))}
+                                                {filteredTasks.filter(t => t.status === "BEKLIYOR").length === 0 && (
+                                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', textAlign: 'center', margin: '20px 0' }}>Görev yok</p>
+                                                )}
+                                            </div>
                                         </div>
 
-                                    <span className={getStatusClass(task.status)}>
-                                        {getStatusLabel(task.status)}
-                                    </span>
-
-                                    <div className="task-meta-row">
-                                        <span className={getPriorityClass(task.priority)}>
-                                            {getPriorityLabel(task.priority)}
-                                        </span>
-                                        <span className={task.overdue ? "badge badge-warning" : "badge badge-blue"}>
-                                            Son Tarih: {formatDate(task.dueDate)}
-                                        </span>
-                                        {
-                                            task.overdue && (
-                                                <span className="badge badge-warning">Gecikmiş</span>
-                                            )
-                                        }
-                                    </div>
-
-                                    {
-                                        project?.teamProject && (
-                                            <div className="task-assignment-block">
-                                                <div className="task-meta-row">
-                                                    <span className="badge badge-blue">
-                                                        Atanan: {task.assignedUserName || "Atanmamış"}
-                                                    </span>
-                                                    <span className={getAssignmentStatusClass(task.assignmentStatus)}>
-                                                        {getAssignmentStatusLabel(task.assignmentStatus)}
-                                                    </span>
-                                                </div>
-                                                {
-                                                    shouldShowRejectionReason(task) && task.rejectionReason && (
-                                                        <p className="task-assignment-reason">
-                                                            Mazeret: {task.rejectionReason}
-                                                        </p>
-                                                    )
-                                                }
-                                                {
-                                                    canRespondToAssignment(task) && (
-                                                        <div className="button-row task-assignment-actions">
-                                                            <button
-                                                                className="button button-primary"
-                                                                type="button"
-                                                                disabled={assignmentActionTaskId === task.id}
-                                                                onClick={() => acceptTaskAssignment(task)}
-                                                            >
-                                                                {assignmentActionTaskId === task.id ? "İşleniyor..." : "Kabul Et"}
-                                                            </button>
-                                                            <button
-                                                                className="button button-secondary"
-                                                                type="button"
-                                                                disabled={assignmentActionTaskId === task.id}
-                                                                onClick={() => setRejectAssignment({
-                                                                    task,
-                                                                    reason: "",
-                                                                    error: "",
-                                                                    submitting: false
-                                                                })}
-                                                            >
-                                                                Reddet
-                                                            </button>
-                                                        </div>
-                                                    )
-                                                }
+                                        {/* Kolon 2: DEVAM_EDIYOR */}
+                                        <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <h3 style={{ borderBottom: '2px solid #2563eb', paddingBottom: '8px', marginBottom: '15px', display: 'flex', justifyContent: 'space-between' }}>
+                                                <span>Devam Ediyor</span>
+                                                <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                                                    {filteredTasks.filter(t => t.status === "DEVAM_EDIYOR").length}
+                                                </span>
+                                            </h3>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                {filteredTasks.filter(t => t.status === "DEVAM_EDIYOR").map(task => renderTaskCard(task))}
+                                                {filteredTasks.filter(t => t.status === "DEVAM_EDIYOR").length === 0 && (
+                                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', textAlign: 'center', margin: '20px 0' }}>Görev yok</p>
+                                                )}
                                             </div>
-                                        )
-                                    }
+                                        </div>
 
-                                    {
-                                        canMutateTasks && (
-                                            <div className="button-row">
-                                                <button className="button button-secondary" onClick={() => editTask(task)}>
-                                                    Düzenle
-                                                </button>
-
-                                                <button
-                                                    className="button button-danger"
-                                                    onClick={() => {
-                                                        setDeleteFeedback("");
-                                                        setTaskToDelete(task);
-                                                    }}
-                                                >
-                                                    Sil
-                                                </button>
+                                        {/* Kolon 3: TAMAMLANDI */}
+                                        <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <h3 style={{ borderBottom: '2px solid #16a34a', paddingBottom: '8px', marginBottom: '15px', display: 'flex', justifyContent: 'space-between' }}>
+                                                <span>Tamamlandı</span>
+                                                <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                                                    {filteredTasks.filter(t => t.status === "TAMAMLANDI").length}
+                                                </span>
+                                            </h3>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                {filteredTasks.filter(t => t.status === "TAMAMLANDI").map(task => renderTaskCard(task))}
+                                                {filteredTasks.filter(t => t.status === "TAMAMLANDI").length === 0 && (
+                                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', textAlign: 'center', margin: '20px 0' }}>Görev yok</p>
+                                                )}
                                             </div>
-                                        )
-                                    }
+                                        </div>
                                     </div>
-                                ))}
+                                )}
                             </>
                         )
                     }
@@ -979,6 +1117,15 @@ function ProjectDetails() {
                             </div>
                         </div>
                     </div>
+                )
+            }
+            {
+                selectedTaskDetail && (
+                    <TaskDetailModal
+                        open={selectedTaskDetail !== null}
+                        task={selectedTaskDetail}
+                        onClose={() => setSelectedTaskDetail(null)}
+                    />
                 )
             }
         </main>

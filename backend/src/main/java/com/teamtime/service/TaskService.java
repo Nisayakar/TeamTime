@@ -23,6 +23,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import com.teamtime.repository.UserRepository;
+import com.teamtime.repository.TaskAssignmentHistoryRepository;
+import com.teamtime.entity.TaskAssignmentHistory;
+import com.teamtime.entity.TaskAssignmentHistoryEventType;
+import com.teamtime.entity.User;
+
 @Service
 public class TaskService {
 
@@ -31,19 +37,26 @@ public class TaskService {
     private final ProjectRepository projectRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final NotificationService notificationService;
-
+    private final UserRepository userRepository;
+    private final TaskAssignmentHistoryRepository taskAssignmentHistoryRepository;
+    private final TaskAttachmentService taskAttachmentService;
 
 
     public TaskService(TaskRepository taskRepository,
                        ProjectRepository projectRepository,
                        TeamMemberRepository teamMemberRepository,
-                       NotificationService notificationService) {
+                       NotificationService notificationService,
+                       UserRepository userRepository,
+                       TaskAssignmentHistoryRepository taskAssignmentHistoryRepository,
+                       TaskAttachmentService taskAttachmentService) {
 
         this.taskRepository = taskRepository;
         this.projectRepository = projectRepository;
         this.teamMemberRepository = teamMemberRepository;
         this.notificationService = notificationService;
-
+        this.userRepository = userRepository;
+        this.taskAssignmentHistoryRepository = taskAssignmentHistoryRepository;
+        this.taskAttachmentService = taskAttachmentService;
     }
 
 
@@ -187,8 +200,9 @@ public class TaskService {
         Task existingTask = task.get();
         requireTaskMutationAccess(existingTask.getProject(), userId);
 
-        taskRepository.delete(existingTask);
+        taskAttachmentService.deleteAttachmentsForTask(id);
 
+        taskRepository.delete(existingTask);
     }
 
     @Transactional
@@ -201,14 +215,21 @@ public class TaskService {
         TeamMember targetMembership = teamMemberRepository.findByTeamIdAndUserId(project.getTeam().getId(), assignedUserId)
                 .orElseThrow(() -> new AccessDeniedException("Atanacak kullanıcı bu takımın üyesi değil"));
 
+        User previousAssignee = task.getAssignedUser();
         task.setAssignedUser(targetMembership.getUser());
         task.setRejectionReason(null);
+
+        TaskAssignmentHistoryEventType type = previousAssignee == null ? TaskAssignmentHistoryEventType.ASSIGNED : TaskAssignmentHistoryEventType.REASSIGNED;
 
         if (assignedUserId.equals(currentUserId)) {
             task.setAssignmentStatus(AssignmentStatus.ACCEPTED);
             task.setAssignedAt(LocalDateTime.now());
             task.setRespondedAt(LocalDateTime.now());
             Task savedTask = taskRepository.save(task);
+            
+            recordHistory(savedTask, currentUserId, targetMembership.getUser(), type, null);
+            recordHistory(savedTask, currentUserId, targetMembership.getUser(), TaskAssignmentHistoryEventType.ACCEPTED, null);
+            
             return convertToResponse(savedTask);
         } else {
             task.setAssignmentStatus(AssignmentStatus.PENDING);
@@ -216,6 +237,9 @@ public class TaskService {
             task.setRespondedAt(null);
             
             Task savedTask = taskRepository.save(task);
+            
+            recordHistory(savedTask, currentUserId, targetMembership.getUser(), type, null);
+            
             notificationService.notifyTaskAssigned(targetMembership.getUser(), savedTask.getProject().getTeam(), savedTask.getId(), savedTask.getTitle());
             return convertToResponse(savedTask);
         }
@@ -227,9 +251,13 @@ public class TaskService {
 
         requireTeamTaskMutationAccess(task.getProject(), currentUserId);
 
+        User previousAssignee = task.getAssignedUser();
         clearTaskAssignment(task);
+        Task savedTask = taskRepository.save(task);
 
-        return convertToResponse(taskRepository.save(task));
+        recordHistory(savedTask, currentUserId, previousAssignee, TaskAssignmentHistoryEventType.UNASSIGNED, null);
+
+        return convertToResponse(savedTask);
     }
 
     @Transactional
@@ -243,6 +271,9 @@ public class TaskService {
 
         Task savedTask = taskRepository.save(task);
         String responderName = "%s %s".formatted(savedTask.getAssignedUser().getName(), savedTask.getAssignedUser().getSurname()).trim();
+        
+        recordHistory(savedTask, currentUserId, savedTask.getAssignedUser(), TaskAssignmentHistoryEventType.ACCEPTED, null);
+        
         notificationService.notifyTaskAssignmentAccepted(
                 savedTask.getProject().getTeam(),
                 savedTask.getId(),
@@ -265,6 +296,9 @@ public class TaskService {
 
         Task savedTask = taskRepository.save(task);
         String responderName = "%s %s".formatted(savedTask.getAssignedUser().getName(), savedTask.getAssignedUser().getSurname()).trim();
+        
+        recordHistory(savedTask, currentUserId, savedTask.getAssignedUser(), TaskAssignmentHistoryEventType.REJECTED, normalizedReason);
+        
         notificationService.notifyTaskAssignmentRejected(
                 savedTask.getProject().getTeam(),
                 savedTask.getId(),
@@ -274,6 +308,18 @@ public class TaskService {
                 currentUserId);
 
         return convertToResponse(savedTask);
+    }
+
+    private void recordHistory(Task task, Long assignedById, User assignedTo, TaskAssignmentHistoryEventType eventType, String reason) {
+        User assignedBy = assignedById != null ? userRepository.findById(assignedById).orElse(null) : null;
+        TaskAssignmentHistory history = new TaskAssignmentHistory();
+        history.setTask(task);
+        history.setAssignedBy(assignedBy);
+        history.setAssignedTo(assignedTo);
+        history.setEventType(eventType);
+        history.setReason(reason);
+        history.setCreatedAt(LocalDateTime.now());
+        taskAssignmentHistoryRepository.save(history);
     }
 
     private void requireTaskViewAccess(Project project, Long userId) {
@@ -438,10 +484,43 @@ public class TaskService {
         );
 
         for (Task task : tasksToClean) {
+            User previousAssignee = task.getAssignedUser();
             clearTaskAssignment(task);
+            recordHistory(task, null, previousAssignee, TaskAssignmentHistoryEventType.UNASSIGNED, "Üye takımdan çıkarıldığı için atama kaldırıldı.");
         }
         
         taskRepository.saveAll(tasksToClean);
+    }
+
+    public List<com.teamtime.dto.TaskAssignmentHistoryResponse> getTaskAssignmentHistory(Long taskId, Long currentUserId) {
+        Task task = requireTask(taskId);
+        requireTaskViewAccess(task.getProject(), currentUserId);
+
+        return taskAssignmentHistoryRepository.findByTaskIdOrderByCreatedAtDesc(taskId)
+                .stream()
+                .map(history -> {
+                    User by = history.getAssignedBy();
+                    User to = history.getAssignedTo();
+                    String byName = by != null ? "%s %s".formatted(by.getName(), by.getSurname()).trim() : "Sistem";
+                    String byUsername = by != null ? by.getUsername() : null;
+                    String toName = to != null ? "%s %s".formatted(to.getName(), to.getSurname()).trim() : null;
+                    String toUsername = to != null ? to.getUsername() : null;
+
+                    return new com.teamtime.dto.TaskAssignmentHistoryResponse(
+                            history.getId(),
+                            history.getTask().getId(),
+                            by != null ? by.getId() : null,
+                            byName,
+                            byUsername,
+                            to != null ? to.getId() : null,
+                            toName,
+                            toUsername,
+                            history.getEventType(),
+                            history.getReason(),
+                            history.getCreatedAt()
+                    );
+                })
+                .toList();
     }
 
     private void clearTaskAssignment(Task task) {

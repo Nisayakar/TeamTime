@@ -115,7 +115,12 @@ public class TeamMemberService {
 
     @Transactional
     public List<TeamMemberResponse> transferOwnership(Long teamId, Long targetUserId, Long currentUserId) {
-        TeamMember currentMembership = requireMembership(teamId, currentUserId);
+        List<TeamMember> teamMembers = teamMemberRepository.findByTeamIdForWrite(teamId);
+
+        TeamMember currentMembership = teamMembers.stream()
+                .filter(m -> m.getUser().getId().equals(currentUserId))
+                .findFirst()
+                .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException("Bu takım için yetkiniz yok"));
 
         if (TeamRole.from(currentMembership.getRole()) != TeamRole.OWNER) {
             throw new org.springframework.security.access.AccessDeniedException("Takım sahipliğini devretme yetkiniz yok");
@@ -125,10 +130,15 @@ public class TeamMemberService {
             throw new ConflictException("Takım sahipliği mevcut sahibine devredilemez.");
         }
 
-        TeamMember targetMembership = teamMemberRepository.findByTeamIdAndUserId(teamId, targetUserId)
+        TeamMember targetMembership = teamMembers.stream()
+                .filter(m -> m.getUser().getId().equals(targetUserId))
+                .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Hedef kullanıcı takım üyesi değil"));
 
-        List<TeamMember> teamMembers = teamMemberRepository.findByTeamId(teamId);
+        if (TeamRole.from(targetMembership.getRole()) != TeamRole.ADMIN) {
+            throw new ConflictException("Takım sahipliği yalnızca bir yöneticiye (ADMIN) devredilebilir.");
+        }
+
         teamMembers.forEach(member -> {
             if (member.getId().equals(targetMembership.getId())) {
                 member.setRole(TeamRole.OWNER.name());
@@ -214,6 +224,31 @@ public class TeamMemberService {
         }
 
         targetMembership.setRole(TeamRole.ADMIN.name());
+        return convertToResponse(teamMemberRepository.save(targetMembership), true);
+    }
+
+    @Transactional
+    public TeamMemberResponse demoteToMember(Long teamId, Long targetUserId, Long currentUserId) {
+        TeamMember currentMembership = requireMembership(teamId, currentUserId);
+
+        if (TeamRole.from(currentMembership.getRole()) != TeamRole.OWNER) {
+            throw new org.springframework.security.access.AccessDeniedException("Bu işlem için yetkiniz yok");
+        }
+
+        TeamMember targetMembership = teamMemberRepository.findByTeamIdAndUserId(teamId, targetUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Hedef kullanıcı takım üyesi değil"));
+
+        TeamRole targetRole = TeamRole.from(targetMembership.getRole());
+
+        if (targetRole == TeamRole.OWNER) {
+            throw new ConflictException("Takım sahibinin rolü bu endpoint üzerinden değiştirilemez.");
+        }
+
+        if (targetRole == TeamRole.MEMBER) {
+            throw new ConflictException("Kullanıcı zaten üye.");
+        }
+
+        targetMembership.setRole(TeamRole.MEMBER.name());
         return convertToResponse(teamMemberRepository.save(targetMembership), true);
     }
 }

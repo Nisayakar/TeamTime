@@ -6,6 +6,7 @@ import { useToast } from "../context/toast";
 import { getTeamRoleLabel, type TeamRole } from "../types/team";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
 import { navigateForInitialLoadError } from "../utils/routeErrors";
+import { subscribeToSync, broadcastSyncEvent } from "../sync";
 
 type Team = {
     id: number;
@@ -68,6 +69,11 @@ function TeamDetails() {
     const [transferringOwnership, setTransferringOwnership] = useState(false);
     const [invitationToRevoke, setInvitationToRevoke] = useState<TeamInvitationResponse | null>(null);
     const [revokingInvitation, setRevokingInvitation] = useState(false);
+    const [memberToDemote, setMemberToDemote] = useState<TeamMember | null>(null);
+    const [demotingMember, setDemotingMember] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deletingTeam, setDeletingTeam] = useState(false);
+    const [deleteErrorMessage, setDeleteErrorMessage] = useState("");
 
     useEffect(() => {
         const query = userSearch.trim();
@@ -227,6 +233,19 @@ function TeamDetails() {
         getMembers();
     }, [getMembers, getTeam]);
 
+    useEffect(() => {
+        const unsubscribe = subscribeToSync((event) => {
+            if (event.type === "TEAM_CHANGED") {
+                const payload = event.payload as { teamId: number } | undefined;
+                if (payload && payload.teamId === Number(id)) {
+                    getTeam();
+                    getMembers();
+                }
+            }
+        });
+        return unsubscribe;
+    }, [id, getTeam, getMembers]);
+
     function addMember(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
@@ -291,10 +310,16 @@ function TeamDetails() {
         return member.role === "MEMBER";
     }
 
+    function canDemoteMember(member: TeamMember) {
+        if (currentUserRole !== "OWNER") return false;
+        if (member.userId === currentUserId) return false;
+        return member.role === "ADMIN";
+    }
+
     function canTransferOwnership(member: TeamMember) {
         if (currentUserRole !== "OWNER") return false;
         if (member.userId === currentUserId) return false;
-        return member.role === "MEMBER" || member.role === "ADMIN";
+        return member.role === "ADMIN";
     }
 
     async function confirmRemoveMember() {
@@ -323,6 +348,7 @@ function TeamDetails() {
                 message: "Üye takımdan çıkarıldı."
             });
             setMemberToRemove(null);
+            broadcastSyncEvent("TEAM_CHANGED", { teamId: Number(id) });
         } catch (error) {
             showToast({
                 type: "error",
@@ -346,10 +372,32 @@ function TeamDetails() {
             setMembers(current => current.map(m => m.id === updatedMember.id ? updatedMember : m));
             showToast({ type: "success", message: "Üye başarıyla yönetici yapıldı." });
             setMemberToPromote(null);
+            broadcastSyncEvent("TEAM_CHANGED", { teamId: Number(id) });
         } catch (error) {
             showToast({ type: "error", message: getErrorMessage(error, "İşlem başarısız") });
         } finally {
             setPromotingMember(false);
+        }
+    }
+
+    async function confirmDemoteMember() {
+        if (!memberToDemote || demotingMember) return;
+        setDemotingMember(true);
+        try {
+            const response = await apiFetch(`/teams/${id}/members/${memberToDemote.userId}/member`, { method: "PUT" });
+            if (!response.ok) {
+                showToast({ type: "error", message: await parseApiError(response, "Üye rütbesi düşürülemedi") });
+                return;
+            }
+            const updatedMember: TeamMember = await response.json();
+            setMembers(current => current.map(m => m.id === updatedMember.id ? updatedMember : m));
+            showToast({ type: "success", message: "Üye başarıyla üyeliğe düşürüldü." });
+            setMemberToDemote(null);
+            broadcastSyncEvent("TEAM_CHANGED", { teamId: Number(id) });
+        } catch (error) {
+            showToast({ type: "error", message: getErrorMessage(error, "İşlem başarısız") });
+        } finally {
+            setDemotingMember(false);
         }
     }
 
@@ -373,6 +421,7 @@ function TeamDetails() {
             });
             showToast({ type: "success", message: "Takım sahipliği başarıyla devredildi." });
             setMemberToTransfer(null);
+            broadcastSyncEvent("TEAM_CHANGED", { teamId: Number(id) });
         } catch (error) {
             showToast({ type: "error", message: getErrorMessage(error, "İşlem başarısız") });
         } finally {
@@ -399,17 +448,65 @@ function TeamDetails() {
         }
     }
 
+    async function confirmDeleteTeam() {
+        if (!team || deletingTeam) return;
+
+        setDeletingTeam(true);
+        setDeleteErrorMessage("");
+
+        try {
+            const response = await apiFetch(`/teams/${team.id}`, {
+                method: "DELETE"
+            });
+
+            if (!response.ok) {
+                const errMsg = await parseApiError(response, "Takım silinemedi");
+                setDeleteErrorMessage(errMsg);
+                return;
+            }
+
+            showToast({
+                type: "success",
+                message: "Takım başarıyla silindi."
+            });
+            broadcastSyncEvent("TEAM_CHANGED", { teamId: team.id });
+            setIsDeleteModalOpen(false);
+            navigate("/teams");
+        } catch (error) {
+            setDeleteErrorMessage(getErrorMessage(error, "Takım silinemedi"));
+        } finally {
+            setDeletingTeam(false);
+        }
+    }
+
     return (
         <main className="page-shell app-page team-details-page">
-            <section className="hero-card team-profile app-page-header">
-                <div className="profile-avatar">TM</div>
+            <section className="hero-card team-profile app-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                    <div className="profile-avatar">TM</div>
 
-                <div>
-                    <span className="eyebrow">Takım profili</span>
-                    <h1>{team ? team.name : "Takım Detayları"}</h1>
-                    <p>{team ? team.description : "Takım bilgisi bulunamadı"}</p>
-                    <span className="badge badge-purple">{members.length} üye</span>
+                    <div>
+                        <span className="eyebrow">Takım profili</span>
+                        <h1>{team ? team.name : "Takım Detayları"}</h1>
+                        <p>{team ? team.description : "Takım bilgisi bulunamadı"}</p>
+                        <span className="badge badge-purple">{members.length} üye</span>
+                    </div>
                 </div>
+
+                {
+                    currentUserRole === "OWNER" && (
+                        <button
+                            className="button button-danger"
+                            style={{ alignSelf: 'center', minHeight: '36px' }}
+                            onClick={() => {
+                                setDeleteErrorMessage("");
+                                setIsDeleteModalOpen(true);
+                            }}
+                        >
+                            Takımı Sil
+                        </button>
+                    )
+                }
             </section>
 
             <section className="content-grid two-columns">
@@ -551,6 +648,13 @@ function TeamDetails() {
                                         )
                                     }
                                     {
+                                        canDemoteMember(member) && (
+                                            <button className="button button-secondary" onClick={() => setMemberToDemote(member)} style={{ marginLeft: '8px' }}>
+                                                Üyeye Düşür
+                                            </button>
+                                        )
+                                    }
+                                    {
                                         canTransferOwnership(member) && (
                                             <button className="button button-secondary" onClick={() => setMemberToTransfer(member)} style={{ marginLeft: '8px' }}>
                                                 Sahipliği Devret
@@ -583,9 +687,18 @@ function TeamDetails() {
                 onCancel={() => setMemberToPromote(null)}
             />
             <ConfirmModal
+                open={memberToDemote !== null}
+                title="Üyeliğe Düşür"
+                message={`${memberToDemote?.userName ?? "Bu kullanıcı"} takım üyeliğine düşürülecek. Devam etmek istiyor musunuz?`}
+                confirmLabel={demotingMember ? "İşleniyor" : "Üyeye Düşür"}
+                loading={demotingMember}
+                onConfirm={confirmDemoteMember}
+                onCancel={() => setMemberToDemote(null)}
+            />
+            <ConfirmModal
                 open={memberToTransfer !== null}
                 title="Sahipliği Devret"
-                message={`Takım sahipliğini ${memberToTransfer?.userName ?? "bu kullanıcı"} adlı kullanıcıya devretmek istediğinize emin misiniz? (Siz yönetici olarak kalacaksınız.)`}
+                message={`Takım sahipliğini @${memberToTransfer?.username ?? memberToTransfer?.userName} kullanıcısına devretmek istediğinize emin misiniz?`}
                 confirmLabel={transferringOwnership ? "İşleniyor" : "Devret"}
                 variant="danger"
                 loading={transferringOwnership}
@@ -601,6 +714,20 @@ function TeamDetails() {
                 loading={revokingInvitation}
                 onConfirm={confirmRevokeInvitation}
                 onCancel={() => setInvitationToRevoke(null)}
+            />
+            <ConfirmModal
+                open={isDeleteModalOpen}
+                title="Takımı Sil"
+                message={`"${team?.name ?? "Bu takım"}" adlı takımı kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+                confirmLabel={deletingTeam ? "Siliniyor" : "Sil"}
+                variant="danger"
+                loading={deletingTeam}
+                errorMessage={deleteErrorMessage}
+                onConfirm={confirmDeleteTeam}
+                onCancel={() => {
+                    setIsDeleteModalOpen(false);
+                    setDeleteErrorMessage("");
+                }}
             />
         </main>
     );

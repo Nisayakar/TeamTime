@@ -6,6 +6,7 @@ import { useToast } from "../context/toast";
 import type { TeamRole } from "../types/team";
 import { getErrorMessage, parseApiError } from "../utils/apiError";
 import { navigateForInitialLoadError } from "../utils/routeErrors";
+import { subscribeToSync, broadcastSyncEvent } from "../sync";
 
 type Team = {
     id: number;
@@ -138,6 +139,15 @@ function Teams() {
     }, [getTeams]);
 
     useEffect(() => {
+        const unsubscribe = subscribeToSync((event) => {
+            if (event.type === "TEAM_CHANGED") {
+                getTeams();
+            }
+        });
+        return unsubscribe;
+    }, [getTeams]);
+
+    useEffect(() => {
         const query = userSearch.trim();
 
         if (query === "") {
@@ -205,6 +215,7 @@ function Teams() {
                 type: "success",
                 message: "Takım başarıyla oluşturuldu."
             });
+            broadcastSyncEvent("TEAM_CHANGED", { teamId: createdTeam.id });
         } catch {
             showToast({
                 type: "error",
@@ -269,6 +280,7 @@ function Teams() {
             type: "success",
             message: "Takım başarıyla güncellendi."
         });
+        broadcastSyncEvent("TEAM_CHANGED", { teamId: updatedTeam.id });
     }
 
     async function confirmDeleteTeam() {
@@ -296,6 +308,7 @@ function Teams() {
                 type: "success",
                 message: "Takım başarıyla silindi."
             });
+            broadcastSyncEvent("TEAM_CHANGED", { teamId: teamToDelete.id });
             setTeamToDelete(null);
         } catch (error) {
             showToast({

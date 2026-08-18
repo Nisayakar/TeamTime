@@ -35,7 +35,9 @@ public class DatabaseMigrationRunner implements CommandLineRunner {
                     "'TEAM_INVITATION_REJECTED'," +
                     "'TASK_ASSIGNED'," +
                     "'TASK_ASSIGNMENT_ACCEPTED'," +
-                    "'TASK_ASSIGNMENT_REJECTED'))");
+                    "'TASK_ASSIGNMENT_REJECTED'," +
+                    "'DUE_SOON'," +
+                    "'OVERDUE'))");
             
             // 2. Username Migration
             migrateUsernames();

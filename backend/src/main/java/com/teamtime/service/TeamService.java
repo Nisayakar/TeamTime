@@ -109,7 +109,7 @@ public class TeamService {
         }
 
         if (projectRepository.existsByTeam_Id(id)) {
-            throw new ConflictException("Bu takıma bağlı projeler varken takım silinemez.");
+            throw new ConflictException("Bu takıma bağlı projeler bulunmaktadır. Önce projeleri silmeniz veya başka bir takıma taşımanız gerekir.");
         }
 
         teamInvitationRepository.deleteByTeamId(id);

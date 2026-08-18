@@ -2,7 +2,10 @@ export type SyncEventType =
     | "AUTH_CHANGED"
     | "USER_UPDATED"
     | "NOTIFICATIONS_CHANGED"
-    | "THEME_CHANGED";
+    | "THEME_CHANGED"
+    | "TEAM_CHANGED"
+    | "PROJECT_CHANGED"
+    | "TASK_CHANGED";
 
 export interface SyncEvent {
     type: SyncEventType;

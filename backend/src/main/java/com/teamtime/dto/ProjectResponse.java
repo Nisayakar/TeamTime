@@ -12,6 +12,7 @@ public class ProjectResponse {
     private Long teamId;
     private String teamName;
     private boolean teamProject;
+    private int progress;
 
     public ProjectResponse() {
     }
@@ -26,6 +27,20 @@ public class ProjectResponse {
             String teamName,
             boolean teamProject
     ) {
+        this(id, projectName, description, startDate, endDate, teamId, teamName, teamProject, 0);
+    }
+
+    public ProjectResponse(
+            Long id,
+            String projectName,
+            String description,
+            LocalDate startDate,
+            LocalDate endDate,
+            Long teamId,
+            String teamName,
+            boolean teamProject,
+            int progress
+    ) {
         this.id = id;
         this.projectName = projectName;
         this.description = description;
@@ -34,6 +49,7 @@ public class ProjectResponse {
         this.teamId = teamId;
         this.teamName = teamName;
         this.teamProject = teamProject;
+        this.progress = progress;
     }
 
     public Long getId() {
@@ -98,5 +114,13 @@ public class ProjectResponse {
 
     public void setTeamProject(boolean teamProject) {
         this.teamProject = teamProject;
+    }
+
+    public int getProgress() {
+        return progress;
+    }
+
+    public void setProgress(int progress) {
+        this.progress = progress;
     }
 }
