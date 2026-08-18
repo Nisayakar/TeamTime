@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
     apiFetch,
     clearAuth,
@@ -67,5 +67,72 @@ describe("apiFetch", () => {
         await apiFetch("/login", { method: "POST" });
 
         expect(redirect).not.toHaveBeenCalled();
+    });
+});
+
+describe("multi-tab sync via storage event", () => {
+    let originalLocation: Location;
+
+    beforeEach(() => {
+        originalLocation = window.location;
+        // Mock window.location
+        const mockLocation = { ...originalLocation, assign: vi.fn(), pathname: "" } as unknown as Location;
+        Object.defineProperty(window, "location", {
+            configurable: true,
+            value: mockLocation,
+        });
+    });
+
+    afterEach(() => {
+        clearAuth();
+        resetUnauthorizedRedirectHandlerForTests();
+        Object.defineProperty(window, "location", {
+            configurable: true,
+            value: originalLocation,
+        });
+        vi.restoreAllMocks();
+    });
+
+    it("redirects to login when token is removed on a private route", () => {
+        window.location.pathname = "/dashboard";
+        const redirect = vi.fn();
+        setUnauthorizedRedirectHandlerForTests(redirect);
+
+        localStorage.removeItem("token");
+        const event = new StorageEvent("storage", { key: "token", newValue: null });
+        
+        const dispatchEventSpy = vi.spyOn(window, "dispatchEvent");
+        window.dispatchEvent(event);
+
+        // Check if user-updated event was dispatched
+        expect(dispatchEventSpy.mock.calls.some(call => call[0].type === "user-updated")).toBe(true);
+        expect(redirect).toHaveBeenCalledTimes(1);
+    });
+
+    it("redirects to dashboard when token is added on a public auth route", () => {
+        window.location.pathname = "/login";
+
+        localStorage.setItem("token", "new-token");
+        const event = new StorageEvent("storage", { key: "token", newValue: "new-token" });
+        
+        const dispatchEventSpy = vi.spyOn(window, "dispatchEvent");
+        window.dispatchEvent(event);
+
+        expect(dispatchEventSpy.mock.calls.some(call => call[0].type === "user-updated")).toBe(true);
+        expect(window.location.assign).toHaveBeenCalledWith("/dashboard");
+    });
+
+    it("does not redirect when token is removed on a public auth route", () => {
+        window.location.pathname = "/login";
+        const redirect = vi.fn();
+        setUnauthorizedRedirectHandlerForTests(redirect);
+
+        localStorage.removeItem("token");
+        const event = new StorageEvent("storage", { key: "token", newValue: null });
+        
+        window.dispatchEvent(event);
+
+        expect(redirect).not.toHaveBeenCalled();
+        expect(window.location.assign).not.toHaveBeenCalled();
     });
 });

@@ -149,3 +149,18 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
 
     return response;
 }
+
+window.addEventListener("storage", (event) => {
+    if (event.key === TOKEN_STORAGE_KEY || event.key === USER_STORAGE_KEY) {
+        window.dispatchEvent(new Event("user-updated"));
+        
+        const hasToken = getToken() !== null;
+        const path = window.location.pathname;
+        
+        if (!hasToken && !isPublicAuthRequest(path) && path !== "/") {
+            redirectToLoginAfterUnauthorized();
+        } else if (hasToken && isPublicAuthRequest(path)) {
+            window.location.assign("/dashboard");
+        }
+    }
+});
