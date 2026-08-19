@@ -150,7 +150,11 @@ public class GlobalExceptionHandler {
             MaxUploadSizeExceededException exception,
             HttpServletRequest request
     ) {
-        return buildResponse(HttpStatus.PAYLOAD_TOO_LARGE, "Profil fotoğrafı en fazla 5 MB olabilir.", request);
+        String uri = request.getRequestURI();
+        String message = (uri != null && uri.contains("/profile/avatar"))
+                ? "Profil fotoğrafı en fazla 5 MB olabilir."
+                : "Dosya en fazla 5 MB olabilir.";
+        return buildResponse(HttpStatus.PAYLOAD_TOO_LARGE, message, request);
     }
 
     @ExceptionHandler(EmailDeliveryException.class)

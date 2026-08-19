@@ -1,0 +1,309 @@
+/* Projects.css */
+
+.projects-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: var(--tt-space-6) var(--tt-container-pad);
+    width: 100%;
+}
+
+/* Header Section */
+.projects-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tt-space-4);
+    margin-bottom: var(--tt-space-8);
+}
+
+@media (min-width: 768px) {
+    .projects-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+}
+
+.projects-header-info h1 {
+    font-size: var(--tt-font-size-3xl);
+    line-height: var(--tt-line-tight);
+    font-weight: 700;
+    color: var(--tt-text);
+    margin: 0 0 var(--tt-space-2) 0;
+}
+
+.projects-header-info p {
+    font-size: var(--tt-font-size-lg);
+    color: var(--tt-text-secondary);
+    margin: 0;
+    max-width: 600px;
+}
+
+.btn-create-project {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--tt-secondary);
+    color: var(--tt-secondary-contrast);
+    font-size: var(--tt-font-size-sm);
+    font-weight: 600;
+    padding: var(--tt-space-3) var(--tt-space-6);
+    border-radius: var(--tt-radius-md);
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(19, 105, 106, 0.2);
+    transition: all var(--tt-duration) var(--tt-ease);
+}
+
+.btn-create-project:hover {
+    background-color: var(--tt-primary);
+    color: var(--tt-primary-contrast);
+    box-shadow: 0 4px 14px rgba(0, 74, 198, 0.3);
+    transform: translateY(-1px);
+}
+
+/* Projects Grid */
+.projects-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--tt-space-6);
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .projects-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .projects-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Project Card */
+.project-card {
+    background-color: var(--tt-surface);
+    border: 1px solid var(--tt-border-subtle);
+    border-radius: var(--tt-radius-lg);
+    padding: var(--tt-space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--tt-space-4);
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--tt-shadow-sm);
+    transition: all var(--tt-duration) var(--tt-ease);
+    min-height: 280px;
+}
+
+[data-theme="dark"] .project-card {
+    border-color: rgba(255, 255, 255, 0.06);
+    background-color: var(--tt-surface-secondary);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+
+/* Hover effects */
+.project-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--tt-shadow-md);
+    border-color: var(--tt-primary-soft);
+}
+
+[data-theme="dark"] .project-card:hover {
+    border-color: rgba(96, 165, 250, 0.3);
+}
+
+/* Top accent line */
+.project-card-accent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(to right, var(--tt-secondary), var(--tt-primary));
+    opacity: 0.3;
+    transition: opacity var(--tt-duration) var(--tt-ease);
+}
+
+.project-card:hover .project-card-accent {
+    opacity: 1;
+}
+
+/* Card Header */
+.project-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--tt-space-2);
+}
+
+.project-card-header h2 {
+    font-size: var(--tt-font-size-xl);
+    line-height: var(--tt-line-tight);
+    font-weight: 600;
+    color: var(--tt-text);
+    margin: 0;
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Card Badges */
+.project-card-header .badge {
+    font-size: var(--tt-font-size-xs);
+    font-weight: 600;
+    padding: var(--tt-space-1) var(--tt-space-3);
+    border-radius: var(--tt-radius-full);
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+
+.project-card-header .badge-personal {
+    background-color: var(--tt-primary-soft);
+    color: var(--tt-primary);
+    border-color: rgba(0, 74, 198, 0.1);
+}
+
+.project-card-header .badge-team {
+    background-color: var(--tt-secondary-soft);
+    color: var(--tt-secondary);
+    border-color: rgba(19, 105, 106, 0.1);
+}
+
+/* Card Body */
+.project-card-desc {
+    font-size: var(--tt-font-size-sm);
+    color: var(--tt-text-secondary);
+    margin: 0;
+    line-height: var(--tt-line-normal);
+    flex-grow: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Card Date */
+.project-card-dates {
+    display: flex;
+    align-items: center;
+    gap: var(--tt-space-2);
+    font-size: var(--tt-font-size-sm);
+    color: var(--tt-text-secondary);
+    background-color: var(--tt-surface-secondary);
+    padding: var(--tt-space-2) var(--tt-space-3);
+    border-radius: var(--tt-radius-sm);
+    width: fit-content;
+}
+
+[data-theme="dark"] .project-card-dates {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.project-card-dates svg {
+    color: var(--tt-text-muted);
+    flex-shrink: 0;
+}
+
+/* Progress bar */
+.project-card-progress {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tt-space-1);
+    margin-top: auto;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--tt-font-size-xs);
+    font-weight: 500;
+    color: var(--tt-text-secondary);
+}
+
+.progress-bar-track {
+    width: 100%;
+    height: 6px;
+    background-color: var(--tt-border-subtle);
+    border-radius: var(--tt-radius-full);
+    overflow: hidden;
+}
+
+[data-theme="dark"] .progress-bar-track {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background-color: var(--tt-primary);
+    border-radius: var(--tt-radius-full);
+    transition: width var(--tt-duration) var(--tt-ease);
+}
+
+/* Card Actions */
+.project-card-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--tt-space-2);
+    margin-top: var(--tt-space-2);
+    border-top: 1px solid var(--tt-border-subtle);
+    padding-top: var(--tt-space-4);
+}
+
+[data-theme="dark"] .project-card-actions {
+    border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+.btn-view-tasks {
+    flex-grow: 1;
+    background-color: var(--tt-primary-soft);
+    color: var(--tt-primary);
+    border: 1px solid rgba(0, 74, 198, 0.1);
+    font-size: var(--tt-font-size-sm);
+    font-weight: 600;
+    padding: var(--tt-space-2) var(--tt-space-4);
+    border-radius: var(--tt-radius-md);
+    cursor: pointer;
+    text-align: center;
+    transition: all var(--tt-duration) var(--tt-ease);
+}
+
+.btn-view-tasks:hover {
+    background-color: var(--tt-primary);
+    color: var(--tt-primary-contrast);
+    transform: translateY(-1px);
+}
+
+.btn-edit-project,
+.btn-delete-project {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--tt-border);
+    color: var(--tt-text-secondary);
+    padding: var(--tt-space-2);
+    border-radius: var(--tt-radius-md);
+    cursor: pointer;
+    transition: all var(--tt-duration) var(--tt-ease);
+}
+
+.btn-edit-project:hover {
+    border-color: var(--tt-primary);
+    color: var(--tt-primary);
+    background-color: var(--tt-primary-soft);
+}
+
+.btn-delete-project {
+    color: var(--tt-danger);
+    border-color: var(--tt-border);
+}
+
+.btn-delete-project:hover {
+    border-color: var(--tt-danger);
+    background-color: var(--tt-danger-soft);
+    color: var(--tt-danger);
+}

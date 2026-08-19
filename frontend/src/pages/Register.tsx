@@ -273,11 +273,22 @@ function Register() {
         if (contentType.includes("application/json")) {
             const data = await response.json();
 
-            if (data.errors) {
-                backendMessage = Object.values(data.errors).join("\n");
-            } else {
-                backendMessage = data.message || "";
+            let extractedMessage = "";
+            if (data && typeof data === "object" && data.fieldErrors && typeof data.fieldErrors === "object") {
+                extractedMessage = Object.values(data.fieldErrors)
+                    .filter((value): value is string => typeof value === "string" && value.trim() !== "")
+                    .join("\n");
             }
+
+            if (!extractedMessage && data && typeof data === "object" && data.errors) {
+                extractedMessage = Object.values(data.errors).join("\n");
+            }
+
+            if (!extractedMessage && data && typeof data === "object") {
+                extractedMessage = data.message || "";
+            }
+
+            backendMessage = extractedMessage;
         } else {
             backendMessage = await response.text();
         }
