@@ -23,6 +23,7 @@ import TeamDetails from "./pages/TeamDetails";
 import TeamInvitations from "./pages/TeamInvitations";
 import Forbidden from "./pages/Forbidden";
 import NotFound from "./pages/NotFound";
+import './styles/auth-layout.css'
 
 
 function App() {

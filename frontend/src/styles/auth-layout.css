@@ -1,0 +1,413 @@
+/* Authenticated page alignment layer. Keep scoped to signed-in app pages. */
+
+.dashboard-v2-container,
+.projects-container,
+.project-details-page,
+.glass-page,
+.edit-project-page,
+.teams-page,
+.team-details-page,
+.my-tasks-page {
+    width: 100%;
+    max-width: var(--tt-container-max);
+    margin-inline: auto;
+    padding: 36px var(--tt-container-pad) 56px;
+    box-sizing: border-box;
+}
+
+.profile-page-v2 .profile-content-area {
+    padding: 36px var(--tt-container-pad) 56px;
+}
+
+.profile-page-v2 .profile-content-container {
+    max-width: min(1040px, 100%);
+}
+
+.profile-page-v2 .profile-content-container.password-max,
+.profile-page-v2 .profile-content-container.delete-max {
+    max-width: min(920px, 100%);
+}
+
+.dashboard-v2-container,
+.projects-container,
+.project-details-page,
+.glass-page,
+.edit-project-page,
+.teams-page,
+.team-details-page,
+.my-tasks-page,
+.profile-page-v2 {
+    background: var(--tt-background);
+    color: var(--tt-text);
+}
+
+.projects-header,
+.project-details-page .project-header-card,
+.teams-page-header,
+.team-details-page .team-header-card,
+.dashboard-v2-welcome,
+.my-tasks-header,
+.glass-page .page-header,
+.edit-project-header,
+.profile-page-v2 .content-header {
+    margin-bottom: 28px;
+}
+
+.projects-header-info h1,
+.teams-page-header h1,
+.dashboard-v2-title,
+.glass-page .page-header h1,
+.edit-project-header-copy h1,
+.profile-page-v2 .content-header h1 {
+    color: var(--tt-text);
+    font-size: clamp(30px, 3.2vw, 42px);
+    font-weight: 800;
+    line-height: 1.12;
+    letter-spacing: 0;
+}
+
+.project-details-page .project-header-info h1,
+.team-details-page .team-header-info h1 {
+    color: var(--tt-text);
+    font-size: clamp(24px, 2.4vw, 34px);
+    font-weight: 800;
+    line-height: 1.14;
+}
+
+.projects-header-info p,
+.teams-page-header p,
+.dashboard-v2-subtitle,
+.glass-page .page-header p,
+.edit-project-header-copy p,
+.profile-page-v2 .content-header p,
+.team-details-page .team-header-info p {
+    color: var(--tt-text-secondary);
+    font-size: clamp(15px, 1.4vw, 17px);
+    line-height: 1.55;
+}
+
+.eyebrow,
+.app-page .eyebrow,
+.project-details-page .project-header-info .eyebrow,
+.team-details-page .team-header-info .eyebrow {
+    color: var(--tt-primary);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.dashboard-v2-card,
+.dashboard-v2-gauge-card,
+.dashboard-v2-status-card,
+.dashboard-v2-list-section,
+.dashboard-v2-project-card,
+.project-card,
+.project-details-page .form-section,
+.project-details-page .task-filter-panel,
+.project-details-page .task-card,
+.glass-section,
+.edit-project-surface,
+.teams-create-sidebar,
+.team-glass-card,
+.team-details-page .team-header-card,
+.team-details-page .team-details-panel,
+.team-details-page .team-members-panel,
+.profile-page-v2 .glass-panel,
+.profile-page-v2 .password-form-wrapper,
+.profile-page-v2 .theme-card {
+    border: 1px solid var(--tt-border);
+    border-radius: var(--tt-radius-lg);
+    background: var(--tt-surface);
+    box-shadow: var(--tt-shadow-sm);
+}
+
+[data-theme="dark"] .dashboard-v2-card,
+[data-theme="dark"] .dashboard-v2-gauge-card,
+[data-theme="dark"] .dashboard-v2-status-card,
+[data-theme="dark"] .dashboard-v2-list-section,
+[data-theme="dark"] .dashboard-v2-project-card,
+[data-theme="dark"] .project-card,
+[data-theme="dark"] .project-details-page .form-section,
+[data-theme="dark"] .project-details-page .task-filter-panel,
+[data-theme="dark"] .project-details-page .task-card,
+[data-theme="dark"] .glass-section,
+[data-theme="dark"] .edit-project-surface,
+[data-theme="dark"] .teams-create-sidebar,
+[data-theme="dark"] .team-glass-card,
+[data-theme="dark"] .team-details-page .team-header-card,
+[data-theme="dark"] .team-details-page .team-details-panel,
+[data-theme="dark"] .team-details-page .team-members-panel,
+[data-theme="dark"] .profile-page-v2 .glass-panel,
+[data-theme="dark"] .profile-page-v2 .password-form-wrapper,
+[data-theme="dark"] .profile-page-v2 .theme-card {
+    border-color: var(--tt-border);
+    background: var(--tt-surface);
+    box-shadow: var(--tt-shadow-sm);
+}
+
+.project-card,
+.glass-section,
+.edit-project-surface,
+.teams-create-sidebar,
+.team-glass-card,
+.team-details-page .team-details-panel,
+.profile-page-v2 .glass-panel {
+    padding: 24px;
+}
+
+:is(
+    .dashboard-v2-container,
+    .projects-container,
+    .project-details-page,
+    .glass-page,
+    .edit-project-page,
+    .teams-page,
+    .team-details-page,
+    .my-tasks-page,
+    .profile-page-v2
+) :is(
+    .button,
+    .ui-button,
+    .btn-create-project,
+    .btn-view-tasks,
+    .cp-btn-gradient,
+    .cp-btn-cancel,
+    .btn-primary,
+    .btn-outline,
+    .btn-cancel,
+    .danger-btn,
+    .dashboard-v2-create-btn
+) {
+    min-height: 42px;
+    border-radius: 11px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+:is(
+    .dashboard-v2-container,
+    .projects-container,
+    .project-details-page,
+    .glass-page,
+    .edit-project-page,
+    .teams-page,
+    .team-details-page,
+    .my-tasks-page,
+    .profile-page-v2
+) :is(.button-primary, .btn-create-project, .cp-btn-gradient, .btn-primary, .dashboard-v2-create-btn) {
+    border: 1px solid var(--tt-primary);
+    background: var(--tt-primary);
+    color: var(--tt-primary-contrast);
+    box-shadow: var(--tt-shadow-sm);
+}
+
+:is(
+    .dashboard-v2-container,
+    .projects-container,
+    .project-details-page,
+    .glass-page,
+    .edit-project-page,
+    .teams-page,
+    .team-details-page,
+    .my-tasks-page,
+    .profile-page-v2
+) :is(.button-secondary, .button-ghost, .cp-btn-cancel, .btn-outline, .btn-cancel) {
+    border: 1px solid var(--tt-border);
+    background: var(--tt-surface-secondary);
+    color: var(--tt-text);
+}
+
+:is(
+    .dashboard-v2-container,
+    .projects-container,
+    .project-details-page,
+    .glass-page,
+    .edit-project-page,
+    .teams-page,
+    .team-details-page,
+    .my-tasks-page,
+    .profile-page-v2
+) :is(input, select, textarea, .ghost-input, .edit-project-control, .password-input, .input-wrapper) {
+    min-height: 44px;
+    border: 1px solid var(--tt-border-strong);
+    border-radius: var(--tt-radius-md);
+    background: var(--tt-surface-container-lowest);
+    color: var(--tt-text);
+    font-size: 14px;
+}
+
+:is(
+    .dashboard-v2-container,
+    .projects-container,
+    .project-details-page,
+    .glass-page,
+    .edit-project-page,
+    .teams-page,
+    .team-details-page,
+    .my-tasks-page,
+    .profile-page-v2
+) :is(textarea, .edit-project-textarea) {
+    min-height: 104px;
+}
+
+:is(
+    .dashboard-v2-container,
+    .projects-container,
+    .project-details-page,
+    .glass-page,
+    .edit-project-page,
+    .teams-page,
+    .team-details-page,
+    .my-tasks-page,
+    .profile-page-v2
+) :is(input:focus, select:focus, textarea:focus, .ghost-input:focus, .edit-project-control:focus, .input-wrapper:focus-within) {
+    border-color: var(--tt-primary);
+    box-shadow: 0 0 0 3px var(--tt-focus-ring);
+    outline: none;
+}
+
+:is(
+    .dashboard-v2-container,
+    .projects-container,
+    .project-details-page,
+    .glass-page,
+    .edit-project-page,
+    .teams-page,
+    .team-details-page,
+    .my-tasks-page,
+    .profile-page-v2
+) :is(.badge, .ui-badge, .role-badge, .self-badge) {
+    border-radius: var(--tt-radius-full);
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.projects-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+    gap: 24px;
+}
+
+@media (min-width: 1280px) {
+    .projects-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.project-details-page .content-grid.two-columns {
+    gap: 28px;
+}
+
+@media (min-width: 1100px) {
+    .project-details-page .content-grid.two-columns {
+        grid-template-columns: minmax(400px, 440px) minmax(0, 1fr);
+    }
+}
+
+.project-details-page .tasks-panel {
+    min-width: 0;
+}
+
+.edit-project-page,
+.glass-page {
+    max-width: var(--tt-container-max);
+}
+
+.glass-page form {
+    gap: 24px;
+}
+
+.glass-section {
+    overflow: visible;
+}
+
+.cp-section-flex {
+    gap: 28px;
+}
+
+@media (min-width: 1024px) {
+    .cp-section-flex {
+        gap: 36px;
+    }
+}
+
+.cp-grid-2,
+.edit-project-date-grid {
+    gap: 16px;
+}
+
+@media (min-width: 1024px) {
+    .teams-layout-grid {
+        grid-template-columns: minmax(380px, 420px) minmax(0, 1fr);
+        gap: 28px;
+    }
+}
+
+.teams-grid-container {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+}
+
+.team-details-page .team-actions-grid {
+    gap: 24px;
+}
+
+.team-details-page .member-list-item {
+    padding: 18px 24px;
+}
+
+@media (max-width: 900px) {
+    .dashboard-v2-container,
+    .projects-container,
+    .project-details-page,
+    .glass-page,
+    .edit-project-page,
+    .teams-page,
+    .team-details-page,
+    .my-tasks-page {
+        padding: 28px 24px 48px;
+    }
+
+    .project-details-page .content-grid.two-columns,
+    .edit-project-layout,
+    .teams-layout-grid,
+    .team-details-page .team-actions-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .dashboard-v2-container,
+    .projects-container,
+    .project-details-page,
+    .glass-page,
+    .edit-project-page,
+    .teams-page,
+    .team-details-page,
+    .my-tasks-page,
+    .profile-page-v2 .profile-content-area {
+        padding: 24px 16px 40px;
+    }
+
+    .projects-header,
+    .dashboard-v2-welcome,
+    .team-details-page .team-header-card,
+    .project-details-page .project-header-card {
+        align-items: stretch;
+    }
+
+    :is(
+        .dashboard-v2-container,
+        .projects-container,
+        .project-details-page,
+        .glass-page,
+        .edit-project-page,
+        .teams-page,
+        .team-details-page,
+        .my-tasks-page,
+        .profile-page-v2
+    ) :is(.button, .ui-button, .btn-create-project, .dashboard-v2-create-btn, .cp-btn-gradient) {
+        width: 100%;
+        white-space: normal;
+    }
+}
