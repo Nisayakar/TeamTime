@@ -266,6 +266,41 @@
     outline: none;
 }
 
+.profile-page-v2 .input-wrapper {
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    box-shadow: none;
+}
+
+.profile-page-v2 .input-wrapper input,
+.profile-page-v2 .input-wrapper input:focus {
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+}
+
+.profile-page-v2 .input-wrapper:focus-within {
+    border-color: var(--outline);
+    box-shadow: none;
+}
+
+.profile-page-v2 .glass-panel {
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .profile-page-v2 .glass-panel {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .profile-page-v2 .input-wrapper {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
 :is(
     .dashboard-v2-container,
     .projects-container,
