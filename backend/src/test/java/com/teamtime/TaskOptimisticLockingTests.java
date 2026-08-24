@@ -27,25 +27,20 @@ class TaskOptimisticLockingTests {
 
     @Test
     void testOptimisticLockingOnConcurrentTaskUpdate() {
-        // 1. Task DB'ye kaydedilir.
         Task task = new Task();
         task.setTitle("Original Task Title");
         task.setStatus("BEKLIYOR");
         task = taskRepository.saveAndFlush(task);
         Long taskId = task.getId();
 
-        // 2. Aynı Task iki ayrı persistence context/entity instance olarak yüklenir.
         Task task1 = taskRepository.findById(taskId).orElseThrow();
         Task task2 = taskRepository.findById(taskId).orElseThrow();
 
-        // 3. İlk instance güncellenir ve saveAndFlush edilir.
         task1.setTitle("Updated Title 1");
         taskRepository.saveAndFlush(task1);
 
-        // 4. İkinci stale instance başka bir değişiklik yapıp flush etmeye çalışır.
         task2.setTitle("Updated Title 2");
 
-        // 5. Optimistic locking exception oluşması doğrulanır.
         assertThatExceptionOfType(ObjectOptimisticLockingFailureException.class)
                 .isThrownBy(() -> {
                     taskRepository.saveAndFlush(task2);
