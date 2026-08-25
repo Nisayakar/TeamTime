@@ -173,12 +173,13 @@ function CreateProject() {
     }
 
     return (
-        <main className="page-shell glass-page">
-            <section className="page-header app-page-header">
-                <div className="app-page-header-copy">
-                    <span className="eyebrow">Proje</span>
-                    <h1>Proje Oluştur</h1>
-                    <p>Yeni bir proje alanı aç ve takım planını zaman çizelgesiyle başlat.</p>
+        <main className="dashboard-v2-container glass-page">
+            <section className="dashboard-v2-welcome" style={{ marginBottom: '24px' }}>
+                <div className="dashboard-v2-welcome-text">
+                    <h1 className="dashboard-v2-title">Proje Oluştur</h1>
+                    <p className="dashboard-v2-subtitle">
+                        Yeni bir proje alanı aç ve takım planını zaman çizelgesiyle başlat.
+                    </p>
                 </div>
             </section>
 

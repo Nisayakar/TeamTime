@@ -187,15 +187,15 @@ function MyTasks() {
     }
 
     return (
-        <main className="dashboard-page my-tasks-page">
-            <header className="dashboard-header my-tasks-header">
-                <div className="dashboard-header-content">
-                    <h1 className="dashboard-header-title">Görevlerim</h1>
-                    <p className="dashboard-header-subtitle">
+        <main className="dashboard-v2-container my-tasks-page">
+            <section className="dashboard-v2-welcome" style={{ marginBottom: '24px' }}>
+                <div className="dashboard-v2-welcome-text">
+                    <h1 className="dashboard-v2-title">Görevlerim</h1>
+                    <p className="dashboard-v2-subtitle">
                         Size atanan görevleri, durumlarını ve son tarihlerini takip edin.
                     </p>
                 </div>
-            </header>
+            </section>
 
             <section className="dashboard-v2-status-grid my-tasks-summary" aria-label="Görevlerim özeti">
                 <div className="dashboard-v2-status-card">

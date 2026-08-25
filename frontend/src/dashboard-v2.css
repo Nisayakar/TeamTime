@@ -48,7 +48,8 @@
     font-size: clamp(32px, 4vw, 44px);
     line-height: 1.15;
     letter-spacing: -0.02em;
-    font-weight: 700;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    font-weight: 700 !important;
     margin-bottom: 0.75rem;
     color: var(--text);
 }

@@ -663,7 +663,7 @@ function Profile() {
             
             {/* Content Area */}
             <section className="profile-content-area">
-                <div className={`profile-content-container ${activeSection === "password" ? "password-max" : activeSection === "delete" ? "delete-max" : ""}`}>
+                <div className="profile-content-container">
                     
                     {activeSection === "profile" && (
                         <>

@@ -1,11 +1,11 @@
-import './App.css'
+import './App.css'
 import './styles/phase1.css'
+import './dashboard-v2.css'
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import CreateProject from "./pages/CreateProject";
-
 
 import { Routes, Route } from "react-router-dom"
 import Dashboard from './pages/Dashboard';

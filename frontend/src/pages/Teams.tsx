@@ -322,12 +322,13 @@ function Teams() {
     }
 
     return (
-        <main className="page-shell app-page teams-page">
-            <section className="page-header app-page-header">
-                <div className="app-page-header-copy">
-                    <span className="eyebrow">Takımlar</span>
-                    <h1>Takımlarım</h1>
-                    <p>Üyeleri, rolleri ve ekip odaklarını düzenli bir alanda yönet.</p>
+        <main className="dashboard-v2-container teams-page">
+            <section className="dashboard-v2-welcome" style={{ marginBottom: '24px' }}>
+                <div className="dashboard-v2-welcome-text">
+                    <h1 className="dashboard-v2-title">Takımlarım</h1>
+                    <p className="dashboard-v2-subtitle">
+                        Üyeleri, rolleri ve ekip odaklarını düzenli bir alanda yönet.
+                    </p>
                 </div>
             </section>
 

@@ -169,20 +169,21 @@ function Projects() {
     }
 
     return (
-        <main className="projects-container">
-            <header className="projects-header">
-                <div className="projects-header-info">
-                    <h1>Projelerim</h1>
-                    <p>Aktif proje portföyünü, ekipleri ve tarih aralıklarını takip et.</p>
+        <main className="dashboard-v2-container projects-page">
+            <section className="dashboard-v2-welcome" style={{ marginBottom: '24px' }}>
+                <div className="dashboard-v2-welcome-text">
+                    <h1 className="dashboard-v2-title">Projelerim</h1>
+                    <p className="dashboard-v2-subtitle">
+                        Aktif proje portföyünü, ekipleri ve tarih aralıklarını takip et.
+                    </p>
                 </div>
-
-                <Link to="/create-project" className="projects-create-link" style={{ textDecoration: 'none' }}>
-                    <button className="btn-create-project">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ marginRight: "8px" }}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <Link to="/create-project" style={{ textDecoration: 'none' }}>
+                    <button className="dashboard-v2-create-btn" type="button">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Yeni Proje
                     </button>
                 </Link>
-            </header>
+            </section>
             
             {sectionFeedback && sectionFeedback.type !== "error" && (
                 <div style={{ marginBottom: "16px" }}>
