@@ -355,14 +355,7 @@ function Register() {
 
             <section className="auth-panel auth-form-panel login-design-form-panel">
                 <div className="form-card login-design-card register-card">
-                    <div className="register-stepper" aria-label="Kayıt adımları">
-                        <span className={step === "details" ? "register-step is-active" : "register-step is-complete"}>
-                            1 Bilgiler
-                        </span>
-                        <span className={step === "verification" ? "register-step is-active" : "register-step"}>
-                            2 Doğrulama
-                        </span>
-                    </div>
+
 
                     {
                         message &&
@@ -470,7 +463,7 @@ function Register() {
                                 </div>
 
                                 <button className="button button-primary button-full" type="submit" disabled={isSendingCode}>
-                                    {isSendingCode ? "Kod gönderiliyor..." : "Doğrulama Kodu Gönder"}
+                                    {isSendingCode ? "Kod gönderiliyor..." : "Kayıt Ol"}
                                 </button>
 
                                 <p className="auth-switch">Zaten hesabın var mı?</p>
