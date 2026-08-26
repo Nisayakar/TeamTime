@@ -35,10 +35,13 @@ public class ProjectService {
     private final TeamMemberRepository teamMemberRepository;
     private final NotificationService notificationService;
     private final TaskAttachmentService taskAttachmentService;
+    private final com.teamtime.repository.TaskCommentRepository taskCommentRepository;
+    private final com.teamtime.repository.TaskAssignmentHistoryRepository taskAssignmentHistoryRepository;
 
     public ProjectService(ProjectRepository projectRepository, TaskRepository taskRepository, UserRepository userRepository,
             TeamRepository teamRepository, TeamMemberRepository teamMemberRepository, NotificationService notificationService,
-            TaskAttachmentService taskAttachmentService) {
+            TaskAttachmentService taskAttachmentService, com.teamtime.repository.TaskCommentRepository taskCommentRepository,
+            com.teamtime.repository.TaskAssignmentHistoryRepository taskAssignmentHistoryRepository) {
         this.projectRepository = projectRepository;
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
@@ -46,6 +49,8 @@ public class ProjectService {
         this.teamMemberRepository = teamMemberRepository;
         this.notificationService = notificationService;
         this.taskAttachmentService = taskAttachmentService;
+        this.taskCommentRepository = taskCommentRepository;
+        this.taskAssignmentHistoryRepository = taskAssignmentHistoryRepository;
     }
 
     @Transactional
@@ -124,10 +129,12 @@ public class ProjectService {
         List<Task> projectTasks = taskRepository.findByProjectId(id);
         for (Task task : projectTasks) {
             taskAttachmentService.deleteAttachmentsForTask(task.getId());
+            taskCommentRepository.deleteByTaskId(task.getId());
+            taskAssignmentHistoryRepository.deleteByTaskId(task.getId());
         }
 
         taskRepository.deleteByProjectId(id);
-        projectRepository.delete(project);
+        projectRepository.deleteById(id);
         return "Proje başarıyla silindi";
     }
 

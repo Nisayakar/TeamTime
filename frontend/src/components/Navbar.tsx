@@ -571,8 +571,8 @@ function Navbar() {
                                     onClick={toggleProfileMenu}
                                 >
                                     <div className="avatar-circle">
-                                        {userAvatar && !imageLoadError ? (
-                                            <img src={userAvatar} alt="Profil" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={() => setImageLoadError(true)} />
+                                        {userAvatar ? (
+                                            <img src={userAvatar} alt="Profil" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                         ) : (
                                             <span aria-hidden="true">{userInitials}</span>
                                         )}
@@ -585,8 +585,8 @@ function Navbar() {
                                         <div className="app-navbar-profile-menu" role="menu" aria-label="Hesap menüsü">
                                             <div className="app-navbar-profile-menu-header">
                                                 <div className="app-navbar-profile-menu-avatar" style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
-                                                    {userAvatar && !imageLoadError ? (
-                                                        <img src={userAvatar} alt="Profil" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={() => setImageLoadError(true)} />
+                                                    {userAvatar ? (
+                                                        <img src={userAvatar} alt="Profil" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                                     ) : (
                                                         <span aria-hidden="true">{userInitials}</span>
                                                     )}

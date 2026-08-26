@@ -20,9 +20,13 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     long countByStatus(String status);
 
-    void deleteByProjectId(Long projectId);
+    @org.springframework.data.jpa.repository.Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("DELETE FROM Task t WHERE t.project.id = :projectId")
+    void deleteByProjectId(@Param("projectId") Long projectId);
 
-    void deleteByProjectUserId(Long userId);
+    @org.springframework.data.jpa.repository.Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("DELETE FROM Task t WHERE t.project.user.id = :userId")
+    void deleteByProjectUserId(@Param("userId") Long userId);
 
     List<Task> findByProjectIdAndProjectUserId(Long projectId, Long userId);
 
@@ -34,7 +38,9 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     long countByProjectUserIdAndStatus(Long userId, String status);
 
-    void deleteByProjectIdAndProjectUserId(Long projectId, Long userId);
+    @org.springframework.data.jpa.repository.Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("DELETE FROM Task t WHERE t.project.id = :projectId AND t.project.user.id = :userId")
+    void deleteByProjectIdAndProjectUserId(@Param("projectId") Long projectId, @Param("userId") Long userId);
 
     @Query("""
             select distinct task
