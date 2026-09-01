@@ -310,4 +310,30 @@ public class TaskCommentTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].eventType").value("UNASSIGNED"));
     }
+
+    @Test
+    void deletingTaskAlsoDeletesCommentsAndAssignmentHistory() throws Exception {
+        mockMvc.perform(post("/api/tasks/{taskId}/comments", teamTask.getId())
+                        .header("Authorization", bearer(userA))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\": \"Delete with task\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put("/api/tasks/{id}/assignee", teamTask.getId())
+                        .header("Authorization", bearer(userA))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"userId\": " + userB.getId() + "}"))
+                .andExpect(status().isOk());
+
+        assertThat(commentRepository.findByTaskIdOrderByCreatedAtAsc(teamTask.getId())).hasSize(1);
+        assertThat(taskAssignmentHistoryRepository.findByTaskIdOrderByCreatedAtDesc(teamTask.getId())).hasSize(1);
+
+        mockMvc.perform(delete("/api/tasks/{id}", teamTask.getId())
+                        .header("Authorization", bearer(userA)))
+                .andExpect(status().isOk());
+
+        assertThat(taskRepository.findById(teamTask.getId())).isEmpty();
+        assertThat(commentRepository.findByTaskIdOrderByCreatedAtAsc(teamTask.getId())).isEmpty();
+        assertThat(taskAssignmentHistoryRepository.findByTaskIdOrderByCreatedAtDesc(teamTask.getId())).isEmpty();
+    }
 }

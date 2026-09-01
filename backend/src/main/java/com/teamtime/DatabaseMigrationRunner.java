@@ -46,6 +46,12 @@ public class DatabaseMigrationRunner implements CommandLineRunner {
             System.out.println("--- Migrating Avatars ---");
             jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_image_path VARCHAR(255)");
 
+            // 4. Task optimistic-locking migration
+            System.out.println("--- Migrating Task Versions ---");
+            jdbcTemplate.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS version BIGINT");
+            jdbcTemplate.execute("UPDATE tasks SET version = 0 WHERE version IS NULL");
+            jdbcTemplate.execute("ALTER TABLE tasks ALTER COLUMN version SET DEFAULT 0");
+
             System.out.println("=== MIGRATION APPLIED SUCCESSFULLY ===");
         } catch (Exception e) {
             e.printStackTrace();

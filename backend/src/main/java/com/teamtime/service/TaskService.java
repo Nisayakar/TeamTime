@@ -11,6 +11,7 @@ import com.teamtime.entity.TaskPriority;
 import com.teamtime.exception.ConflictException;
 import com.teamtime.exception.ResourceNotFoundException;
 import com.teamtime.repository.ProjectRepository;
+import com.teamtime.repository.TaskCommentRepository;
 import com.teamtime.repository.TaskRepository;
 import com.teamtime.repository.TeamMemberRepository;
 import jakarta.transaction.Transactional;
@@ -39,6 +40,7 @@ public class TaskService {
     private final NotificationService notificationService;
     private final UserRepository userRepository;
     private final TaskAssignmentHistoryRepository taskAssignmentHistoryRepository;
+    private final TaskCommentRepository taskCommentRepository;
     private final TaskAttachmentService taskAttachmentService;
 
 
@@ -48,6 +50,7 @@ public class TaskService {
                        NotificationService notificationService,
                        UserRepository userRepository,
                        TaskAssignmentHistoryRepository taskAssignmentHistoryRepository,
+                       TaskCommentRepository taskCommentRepository,
                        TaskAttachmentService taskAttachmentService) {
 
         this.taskRepository = taskRepository;
@@ -56,6 +59,7 @@ public class TaskService {
         this.notificationService = notificationService;
         this.userRepository = userRepository;
         this.taskAssignmentHistoryRepository = taskAssignmentHistoryRepository;
+        this.taskCommentRepository = taskCommentRepository;
         this.taskAttachmentService = taskAttachmentService;
     }
 
@@ -185,6 +189,7 @@ public class TaskService {
 
 
 
+    @Transactional
     public void deleteTask(Long id, Long userId) {
 
 
@@ -201,6 +206,8 @@ public class TaskService {
         requireTaskMutationAccess(existingTask.getProject(), userId);
 
         taskAttachmentService.deleteAttachmentsForTask(id);
+        taskCommentRepository.deleteByTaskId(id);
+        taskAssignmentHistoryRepository.deleteByTaskId(id);
 
         taskRepository.delete(existingTask);
     }
